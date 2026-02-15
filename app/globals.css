@@ -4,14 +4,14 @@
   --surface: #121212;
   --surface-hover: #1e1e1e;
   --border: #2a2a2a;
-  
+
   --primary: #3b82f6;
   --primary-glow: rgba(59, 130, 246, 0.5);
-  
+
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
-  
+
   --text-primary: #ffffff;
   --text-secondary: #a1a1aa;
   --text-muted: #52525b;
@@ -23,13 +23,13 @@
   --space-4: 1rem;
   --space-6: 1.5rem;
   --space-8: 2rem;
-  
+
   /* Radius */
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-full: 9999px;
-  
+
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-normal: 300ms ease;
@@ -56,8 +56,15 @@ a {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .fade-in {
@@ -106,4 +113,51 @@ a {
 .btn-primary:hover {
   opacity: 0.9;
   transform: translateY(-1px);
+}
+
+.interactive-card {
+  transition: all var(--transition-fast);
+}
+
+.interactive-card:hover {
+  background-color: var(--surface-hover) !important;
+  border-color: var(--primary);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.interactive-card:active {
+  transform: scale(0.98);
+}
+
+.button-primary {
+  background: var(--primary);
+  color: white;
+  padding: var(--space-2) var(--space-6);
+  border-radius: var(--radius-md);
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button-secondary {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  padding: var(--space-2) var(--space-6);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

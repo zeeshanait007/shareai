@@ -10,6 +10,7 @@ export interface StockData {
     regularMarketChangePercent: number;
     marketCap: number;
     shortName: string;
+    regularMarketVolume?: number;
 }
 
 export interface HistoricalData {
@@ -55,6 +56,7 @@ class MarketDataService {
                 regularMarketChangePercent: quote.regularMarketChangePercent || 0,
                 marketCap: quote.marketCap || 0,
                 shortName: quote.shortName || symbol,
+                regularMarketVolume: quote.regularMarketVolume || 0,
             };
         } catch (error) {
             console.error(`Error fetching quote for ${symbol}:`, error);

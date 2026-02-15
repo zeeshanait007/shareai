@@ -1,8 +1,20 @@
 import { marketData } from '@/lib/api';
 import StockChart from '@/components/StockChart';
 import WatchlistButton from '@/components/WatchlistButton';
-import { calculateRSI, calculateSMA, generateRecommendation, calculateMACD, calculateBollingerBands } from '@/lib/indicators';
-import { ArrowUpRight, ArrowDownRight, Activity, DollarSign, TrendingUp, AlertCircle } from 'lucide-react';
+import {
+    calculateRSI,
+    calculateSMA,
+    generateRecommendation,
+    calculateMACD,
+    calculateBollingerBands,
+    calculateLiquidityHealth,
+    calculateDrawdownExposure,
+    calculateTaxEfficiency,
+    calculateRiskScores,
+    generateDeepAIInsight
+} from '@/lib/indicators';
+import { ArrowUpRight, ArrowDownRight, Activity, DollarSign, TrendingUp, AlertCircle, Zap, BarChart3, Globe, Signal, ShieldCheck } from 'lucide-react';
+import RiskAIAnalysis from '@/components/RiskAIAnalysis';
 
 export default async function StockAnalysisPage({ params }: { params: { symbol: string } }) {
     const symbol = decodeURIComponent(params.symbol).toUpperCase();
@@ -38,6 +50,21 @@ export default async function StockAnalysisPage({ params }: { params: { symbol: 
     const bollingerData = calculateBollingerBands(closePrices);
 
     const recommendation = generateRecommendation(quote.regularMarketPrice, currentSMA50, currentRSI, macdData, bollingerData);
+    const deepInsight = generateDeepAIInsight(symbol, history, quote, currentRSI);
+
+    // Calculate AI Risk Scores
+    const liquidityScore = calculateLiquidityHealth(quote.regularMarketVolume || history[history.length - 1]?.volume || 0, quote.marketCap);
+    const drawdownScore = calculateDrawdownExposure(quote.regularMarketPrice, closePrices);
+    const taxScore = calculateTaxEfficiency(symbol);
+    const { concentration, diversification } = calculateRiskScores(symbol, quote.regularMarketChangePercent);
+
+    const riskScores = {
+        liquidity: liquidityScore,
+        drawdown: drawdownScore,
+        taxEfficiency: taxScore,
+        concentration,
+        diversification
+    };
 
     const recColor = recommendation.signal.includes('BUY') ? 'var(--success)' :
         recommendation.signal.includes('SELL') ? 'var(--danger)' : 'var(--warning)';
@@ -102,6 +129,8 @@ export default async function StockAnalysisPage({ params }: { params: { symbol: 
                             <span style={{ fontWeight: 'bold' }}>${currentSMA50 ? currentSMA50.toFixed(2) : 'N/A'}</span>
                         </div>
                     </div>
+
+                    <RiskAIAnalysis scores={riskScores} />
                 </div>
             </div>
 
@@ -125,23 +154,69 @@ export default async function StockAnalysisPage({ params }: { params: { symbol: 
                 </div>
             </div>
 
-            {/* AI Analysis Section */}
-            <div className="card" style={{ border: '1px solid var(--primary)', background: 'rgba(59, 130, 246, 0.05)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--primary)' }}>
-                    <TrendingUp size={24} />
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>AI Investment Insight</h2>
+            {/* AI Deep Insight Section */}
+            <div className="card" style={{
+                border: '1px solid var(--primary)',
+                background: 'rgba(59, 130, 246, 0.05)',
+                padding: 'var(--space-6)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--space-6)'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)' }}>
+                        <Zap size={28} />
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: '900', letterSpacing: '-0.025em' }}>IMAGINE AI DEEP INSIGHT</h2>
+                    </div>
+                    <div style={{ padding: '4px 12px', background: 'var(--primary)', color: 'white', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700 }}>
+                        ALPHA GEN ACTIVE
+                    </div>
                 </div>
-                <div style={{ lineHeight: '1.6', color: 'var(--text-primary)' }}>
-                    <p style={{ marginBottom: '1rem' }}>
-                        Based on the technical indicators and recent market sentiment, <strong>{quote.symbol}</strong> is showing signs of
-                        {isPositive ? ' strong bullish momentum.' : ' potential consolidation or bearish trend.'}
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+                    <div style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Activity size={14} /> Volatility Regime
+                        </div>
+                        <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{deepInsight.volatilityRegime}</div>
+                    </div>
+                    <div style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Signal size={14} /> Inst. Conviction
+                        </div>
+                        <div style={{ fontSize: '1.125rem', fontWeight: 800, color: deepInsight.institutionalConviction === 'High' ? 'var(--success)' : 'inherit' }}>
+                            {deepInsight.institutionalConviction}
+                        </div>
+                    </div>
+                    <div style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <BarChart3 size={14} /> Alpha Potential
+                        </div>
+                        <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{deepInsight.alphaScore}%</div>
+                    </div>
+                    <div style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <TrendingUp size={14} /> Risk/Reward
+                        </div>
+                        <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{deepInsight.riskRewardRatio}</div>
+                    </div>
+                </div>
+
+                <div style={{ padding: '1.25rem', background: 'rgba(255, 255, 255, 0.03)', borderRadius: 'var(--radius-lg)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                        <Globe size={16} /> Macro & Sentiment Narrative
+                    </div>
+                    <p style={{ lineHeight: '1.6', fontSize: '1rem', fontWeight: 500 }}>
+                        {deepInsight.narrative}
                     </p>
-                    <p>
-                        <strong>Action:</strong> {isPositive ? 'Consider accumulating positions on dips.' : 'Monitor for key support levels before entering.'}
-                        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'block', marginTop: '0.5rem' }}>
-                            (This analysis is generated by algorithmic rules. For detailed fundamental analysis, upgrade to Pro.)
-                        </span>
+                    <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                        {deepInsight.macroContext}
                     </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '1rem' }}>
+                    <ShieldCheck size={14} />
+                    Proprietary Imagine AI model utilizing Fourier transforms and ensemble learning for predictive modeling.
                 </div>
             </div>
         </div>
