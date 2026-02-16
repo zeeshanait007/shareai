@@ -1,25 +1,40 @@
 'use client';
 
-import React from 'react';
-import { ShieldCheck, Target, Droplets, Receipt, ArrowDownCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShieldCheck, Info } from 'lucide-react';
+import MetricInsightOverlay from './MetricInsightOverlay';
 
 interface RiskScoreProps {
+    id: string;
     label: string;
     score: number;
     icon: React.ReactNode;
     color: string;
+    onSelect: (id: string) => void;
 }
 
-const RiskScoreBar = ({ label, score, icon, color }: RiskScoreProps) => (
-    <div style={{ marginBottom: '1.25rem' }}>
+const RiskScoreBar = ({ id, label, score, icon, color, onSelect }: RiskScoreProps) => (
+    <div
+        onClick={() => onSelect(id)}
+        className="interactive-card"
+        style={{
+            marginBottom: '1.25rem',
+            padding: '0.75rem',
+            borderRadius: 'var(--radius-md)',
+            cursor: 'pointer'
+        }}
+    >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
                 <div style={{ color }}>{icon}</div>
-                <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{label}</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{label}</span>
             </div>
-            <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>{score.toFixed(0)}%</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontWeight: 800, fontSize: '1rem' }}>{score.toFixed(0)}%</span>
+                {/* ChevronRight removed as it's now part of MetricInsightOverlay */}
+            </div>
         </div>
-        <div style={{ width: '100%', height: '8px', background: 'var(--surface-hover)', borderRadius: '4px', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ width: '100%', height: '6px', background: 'var(--surface-hover)', borderRadius: '4px', overflow: 'hidden' }}>
             <div
                 style={{
                     width: `${score}%`,
@@ -44,8 +59,10 @@ interface RiskAIAnalysisProps {
 }
 
 export default function RiskAIAnalysis({ scores }: RiskAIAnalysisProps) {
+    const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+
     return (
-        <div className="card" style={{ padding: 'var(--space-6)' }}>
+        <div className="card" style={{ padding: 'var(--space-6)', position: 'relative', overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                 <ShieldCheck size={24} style={{ color: 'var(--primary)' }} />
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Imagine AI Risk Score</h2>
@@ -53,39 +70,54 @@ export default function RiskAIAnalysis({ scores }: RiskAIAnalysisProps) {
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <RiskScoreBar
-                    label="Diversification Risk"
+                    id="diversificationRisk"
+                    label="Diversification"
                     score={scores.diversification}
                     icon={<ShieldCheck size={18} />}
                     color="#3B82F6"
+                    onSelect={setSelectedMetric}
                 />
                 <RiskScoreBar
-                    label="Concentration Risk"
+                    id="concentrationRisk" // Changed id to be unique for concentration
+                    label="Concentration"
                     score={scores.concentration}
-                    icon={<Target size={18} />}
+                    icon={<ShieldCheck size={18} />} // Icon changed to ShieldCheck as Target was removed
                     color="#8B5CF6"
+                    onSelect={setSelectedMetric}
                 />
                 <RiskScoreBar
+                    id="liquidityHealth"
                     label="Liquidity Health"
                     score={scores.liquidity}
-                    icon={<Droplets size={18} />}
+                    icon={<ShieldCheck size={18} />} // Icon changed to ShieldCheck as Droplets was removed
                     color="#10B981"
+                    onSelect={setSelectedMetric}
                 />
                 <RiskScoreBar
+                    id="taxEfficiency"
                     label="Tax Efficiency"
                     score={scores.taxEfficiency}
-                    icon={<Receipt size={18} />}
+                    icon={<ShieldCheck size={18} />} // Icon changed to ShieldCheck as Receipt was removed
                     color="#F59E0B"
+                    onSelect={setSelectedMetric}
                 />
                 <RiskScoreBar
+                    id="drawdownExposure"
                     label="Drawdown Exposure"
                     score={scores.drawdown}
-                    icon={<ArrowDownCircle size={18} />}
+                    icon={<ShieldCheck size={18} />} // Icon changed to ShieldCheck as ArrowDownCircle was removed
                     color="#EF4444"
+                    onSelect={setSelectedMetric}
                 />
             </div>
 
-            <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                Imagine AI scores analyze real-time market data, turnover ratios, and historical volatility to quantify risk exposure. Higher scores generally indicate better health/management in that specific category.
+            {selectedMetric && (
+                <MetricInsightOverlay metricId={selectedMetric} onClose={() => setSelectedMetric(null)} />
+            )}
+
+            <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem' }}>
+                <Info size={16} />
+                <span>Click any metric above for a deep dive into the underlying data logic.</span>
             </div>
         </div>
     );

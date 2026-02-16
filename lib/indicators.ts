@@ -179,11 +179,12 @@ export function calculateTaxLiability(assets: any[]) {
     let shortTermGains = 0;
     let longTermGains = 0;
 
-    assets.forEach(asset => {
+    assets.forEach((asset, index) => {
         const gain = (asset.currentPrice - asset.purchasePrice) * asset.quantity;
         if (gain > 0) {
-            // Placeholder logic: assume 50% are long term
-            if (Math.random() > 0.5) {
+            // Deterministic heuristic: using asset name length + index to simulate LT/ST split
+            // This prevents hydration mismatches while still providing variety.
+            if ((asset.name.length + index) % 2 === 0) {
                 longTermGains += gain;
             } else {
                 shortTermGains += gain;

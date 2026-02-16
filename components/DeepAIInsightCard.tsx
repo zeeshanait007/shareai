@@ -1,0 +1,114 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Zap, Activity, Signal, BarChart3, TrendingUp, Globe, ShieldCheck } from 'lucide-react';
+import MetricInsightOverlay from './MetricInsightOverlay';
+
+interface DeepInsight {
+    volatilityRegime: 'Stable' | 'Trending' | 'Chaotic';
+    alphaScore: number;
+    institutionalConviction: 'High' | 'Medium' | 'Low';
+    macroContext: string;
+    riskRewardRatio: string;
+    narrative: string;
+}
+
+interface DeepAIInsightCardProps {
+    deepInsight: DeepInsight;
+}
+
+export default function DeepAIInsightCard({ deepInsight }: DeepAIInsightCardProps) {
+    const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+
+    return (
+        <div className="card" style={{
+            border: '1px solid var(--primary)',
+            background: 'rgba(59, 130, 246, 0.05)',
+            padding: 'var(--space-6)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--space-6)',
+            position: 'relative',
+            overflow: 'hidden'
+        }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)' }}>
+                    <Zap size={28} />
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: '900', letterSpacing: '-0.025em' }}>IMAGINE AI DEEP INSIGHT</h2>
+                </div>
+                <div style={{ padding: '4px 12px', background: 'var(--primary)', color: 'white', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700 }}>
+                    ALPHA GEN ACTIVE
+                </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+                <div
+                    onClick={() => setSelectedMetric('volatilityRegime')}
+                    className="interactive-card"
+                    style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', cursor: 'pointer' }}
+                >
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Activity size={14} /> Volatility Regime
+                    </div>
+                    <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{deepInsight.volatilityRegime}</div>
+                </div>
+
+                <div
+                    onClick={() => setSelectedMetric('institutionalConviction')}
+                    className="interactive-card"
+                    style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', cursor: 'pointer' }}
+                >
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Signal size={14} /> Inst. Conviction
+                    </div>
+                    <div style={{ fontSize: '1.125rem', fontWeight: 800, color: deepInsight.institutionalConviction === 'High' ? 'var(--success)' : 'inherit' }}>
+                        {deepInsight.institutionalConviction}
+                    </div>
+                </div>
+
+                <div
+                    onClick={() => setSelectedMetric('alphaScore')}
+                    className="interactive-card"
+                    style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', cursor: 'pointer' }}
+                >
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <BarChart3 size={14} /> Alpha Potential
+                    </div>
+                    <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{deepInsight.alphaScore}%</div>
+                </div>
+
+                <div
+                    onClick={() => setSelectedMetric('riskRewardRatio')}
+                    className="interactive-card"
+                    style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', cursor: 'pointer' }}
+                >
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <TrendingUp size={14} /> Risk/Reward
+                    </div>
+                    <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{deepInsight.riskRewardRatio}</div>
+                </div>
+            </div>
+
+            <div style={{ padding: '1.25rem', background: 'rgba(255, 255, 255, 0.03)', borderRadius: 'var(--radius-lg)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                    <Globe size={16} /> Macro & Sentiment Narrative
+                </div>
+                <p style={{ lineHeight: '1.6', fontSize: '1rem', fontWeight: 500 }}>
+                    {deepInsight.narrative}
+                </p>
+                <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                    {deepInsight.macroContext}
+                </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '1rem' }}>
+                <ShieldCheck size={14} />
+                Proprietary Imagine AI model utilizing Fourier transforms and ensemble learning for predictive modeling.
+            </div>
+
+            {selectedMetric && (
+                <MetricInsightOverlay metricId={selectedMetric} onClose={() => setSelectedMetric(null)} />
+            )}
+        </div>
+    );
+}

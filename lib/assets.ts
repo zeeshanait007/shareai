@@ -36,15 +36,59 @@ export const mockAssets: Asset[] = [
         sector: 'Technology'
     },
     {
+        id: '1b',
+        type: 'stock',
+        name: 'NVIDIA Corp.',
+        symbol: 'NVDA',
+        quantity: 120,
+        purchasePrice: 450,
+        currentPrice: 726.13,
+        valuationDate: new Date().toISOString(),
+        sector: 'Semiconductors'
+    },
+    {
+        id: '1c',
+        type: 'stock',
+        name: 'Microsoft',
+        symbol: 'MSFT',
+        quantity: 30,
+        purchasePrice: 320,
+        currentPrice: 404.06,
+        valuationDate: new Date().toISOString(),
+        sector: 'Software'
+    },
+    {
         id: '2',
         type: 'crypto',
         name: 'Bitcoin',
         symbol: 'BTC',
-        quantity: 0.5,
+        quantity: 0.85,
         purchasePrice: 30000,
-        currentPrice: 52400,
+        currentPrice: 52140,
         valuationDate: new Date().toISOString(),
-        sector: 'Currency'
+        sector: 'Digital Gold'
+    },
+    {
+        id: '2b',
+        type: 'crypto',
+        name: 'Ethereum',
+        symbol: 'ETH',
+        quantity: 12,
+        purchasePrice: 1800,
+        currentPrice: 2814,
+        valuationDate: new Date().toISOString(),
+        sector: 'Smart Contracts'
+    },
+    {
+        id: '2c',
+        type: 'crypto',
+        name: 'Solana',
+        symbol: 'SOL',
+        quantity: 150,
+        purchasePrice: 20,
+        currentPrice: 108.45,
+        valuationDate: new Date().toISOString(),
+        sector: 'Web3 Infrastructure'
     },
     {
         id: '3',
@@ -57,12 +101,22 @@ export const mockAssets: Asset[] = [
         location: 'New York, USA'
     },
     {
+        id: '3b',
+        type: 'real_estate',
+        name: 'Beachfront Villa',
+        quantity: 1,
+        purchasePrice: 1200000,
+        currentPrice: 1350000,
+        valuationDate: new Date().toISOString(),
+        location: 'Miami, Florida'
+    },
+    {
         id: '4',
         type: 'private_equity',
         name: 'Early Stage Tech Fund',
         quantity: 1,
         purchasePrice: 100000,
-        currentPrice: 145000,
+        currentPrice: 165000,
         valuationDate: new Date().toISOString(),
         sector: 'Venture Capital'
     },
@@ -71,9 +125,9 @@ export const mockAssets: Asset[] = [
         type: 'esop',
         name: 'Company Stock Options',
         symbol: 'TECHX',
-        quantity: 1000,
-        purchasePrice: 10,
-        currentPrice: 45,
+        quantity: 5000,
+        purchasePrice: 2.5,
+        currentPrice: 18.50,
         valuationDate: new Date().toISOString(),
         sector: 'Technology'
     }
