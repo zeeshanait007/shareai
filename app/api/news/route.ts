@@ -10,10 +10,10 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const quotes = await marketData.search(q);
-        return NextResponse.json(quotes);
+        const news = await marketData.getNews(q);
+        return NextResponse.json({ news });
     } catch (error) {
-        console.error(`Error searching ${q}:`, error);
-        return NextResponse.json({ error: 'Failed to search', details: String(error) }, { status: 500 });
+        console.error(`Error fetching news for ${q}:`, error);
+        return NextResponse.json({ error: 'Failed to fetch news' }, { status: 500 });
     }
 }

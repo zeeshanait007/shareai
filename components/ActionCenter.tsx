@@ -2,16 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Sparkles, ArrowRight, AlertTriangle, Lightbulb, ShieldCheck, X, Info, Loader2, CheckCircle2, Zap, Target, BarChart3 } from 'lucide-react';
-
 import { Asset } from '@/lib/assets';
+import { getPortfolioAdvisory, GeminiAdvisory } from '@/lib/gemini';
 
-interface Action {
-    type: string;
-    priority: 'high' | 'medium' | 'low';
-    title: string;
-    description: string;
-    impact: string;
-}
+import { Action } from '@/lib/types';
 
 type ExecutionState = 'idle' | 'analyzing' | 'executing' | 'success';
 
@@ -24,8 +18,31 @@ interface ActionCenterProps {
 export default function ActionCenter({ actions: initialActions, assets, onExecute }: ActionCenterProps) {
     const [actions, setActions] = useState<Action[]>(initialActions);
     const [selectedAction, setSelectedAction] = useState<Action | null>(null);
+    const [advisory, setAdvisory] = useState<GeminiAdvisory | null>(null);
+    const [isAdvisoryLoading, setIsAdvisoryLoading] = useState(false);
     const [executionState, setExecutionState] = useState<ExecutionState>('idle');
     const [progress, setProgress] = useState(0);
+
+    // Sync local actions with props if they change
+    useEffect(() => {
+        setActions(initialActions);
+    }, [initialActions]);
+
+    useEffect(() => {
+        // Optimized: Reduced debounce for faster advisory loading
+        const timer = setTimeout(() => {
+            if (selectedAction) {
+                setIsAdvisoryLoading(true);
+                getPortfolioAdvisory(assets, selectedAction.title, selectedAction.description)
+                    .then(setAdvisory)
+                    .finally(() => setIsAdvisoryLoading(false));
+            } else {
+                setAdvisory(null);
+            }
+        }, 300); // Reduced from 1s to 300ms
+
+        return () => clearTimeout(timer);
+    }, [selectedAction, assets]);
 
     const getIcon = (type: string) => {
         switch (type) {
@@ -115,7 +132,7 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                {actions.map((action, i) => (
+                {actions.map((action: Action, i: number) => (
                     <div
                         key={i}
                         onClick={() => setSelectedAction(action)}
@@ -163,24 +180,89 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
                     {executionState === 'idle' && (
                         <>
                             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>{selectedAction.title}</h3>
-                            <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>{getInsightDetails(selectedAction)}</p>
 
-                            <div style={{ background: 'var(--surface)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '2rem' }}>
-                                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>AI Benefit Analysis</div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
-                                        <Zap size={14} color="#F59E0B" /> <span>0.4s Execution</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
-                                        <Target size={14} color="#3B82F6" /> <span>99.9% Precision</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
-                                        <BarChart3 size={14} color="#10B981" /> <span>Max Tax Alpha</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
-                                        <ShieldCheck size={14} color="#8B5CF6" /> <span>Full Compliance</span>
-                                    </div>
+                            {isAdvisoryLoading ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
+                                    <Loader2 className="animate-spin" size={16} /> Gemini AI is analyzing...
                                 </div>
+                            ) : (
+                                <>
+                                    <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+                                        {advisory?.justification || selectedAction.description}
+                                    </p>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                                        <div style={{ background: 'rgba(59, 130, 246, 0.05)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                                            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#3B82F6', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Simple View</div>
+                                            <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{advisory?.simpleExplanation || 'Safe rebalancing for long-term growth.'}</div>
+                                        </div>
+                                        <div style={{ background: 'rgba(139, 92, 246, 0.05)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(139, 92, 246, 0.1)' }}>
+                                            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#8B5CF6', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Expert Alpha</div>
+                                            <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{advisory?.expertInsight || 'Portfolio beta optimization via risk-parity adjustment.'}</div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            <div style={{ background: 'var(--surface)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', border: '1px solid var(--border)' }}>
+                                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>AI Evidence & Benchmarking</span>
+                                    <span style={{ color: 'var(--success)', fontSize: '0.7rem' }}>● LIVE DATA Verified</span>
+                                </div>
+
+                                {selectedAction.evidence ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                            <div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>{selectedAction.evidence.label}</div>
+                                                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: selectedAction.evidence.status === 'critical' ? 'var(--danger)' : 'var(--text-primary)' }}>
+                                                    {selectedAction.evidence.value}
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Benchmark</div>
+                                                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                                                    {selectedAction.evidence.benchmark}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden', position: 'relative' }}>
+                                            <div style={{
+                                                position: 'absolute',
+                                                left: 0,
+                                                top: 0,
+                                                bottom: 0,
+                                                width: selectedAction.evidence.value,
+                                                background: selectedAction.evidence.status === 'critical' ? 'var(--danger)' : 'var(--warning)',
+                                                borderRadius: '3px'
+                                            }} />
+                                            <div style={{
+                                                position: 'absolute',
+                                                left: selectedAction.evidence.benchmark,
+                                                top: 0,
+                                                bottom: 0,
+                                                width: '2px',
+                                                background: 'var(--primary)',
+                                                zIndex: 2
+                                            }} />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
+                                            <Zap size={14} color="#F59E0B" /> <span>0.4s Execution</span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
+                                            <Target size={14} color="#3B82F6" /> <span>99.9% Precision</span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
+                                            <BarChart3 size={14} color="#10B981" /> <span>Max Tax Alpha</span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
+                                            <ShieldCheck size={14} color="#8B5CF6" /> <span>Full Compliance</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <button className="button-primary" style={{ width: '100%', marginTop: 'auto' }} onClick={handleExecute}>Confirm & Execute Plan</button>
@@ -209,7 +291,7 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
                                 <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{selectedAction.impact}</div>
                             </div>
 
-                            <button className="button-primary" style={{ width: '100%', marginTop: '2rem' }} onClick={() => { setSelectedAction(null); setExecutionState('idle'); setActions(prev => prev.filter(a => a.type !== selectedAction!.type)); }}>Close Report</button>
+                            <button className="button-primary" style={{ width: '100%', marginTop: '2rem' }} onClick={() => { setSelectedAction(null); setExecutionState('idle'); setActions((prev: Action[]) => prev.filter((a: Action) => a.type !== selectedAction!.type)); }}>Close Report</button>
                         </div>
                     )}
                 </div>

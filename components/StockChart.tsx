@@ -1,7 +1,7 @@
 'use client';
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { HistoricalData } from '@/lib/api';
+import { HistoricalData } from '@/lib/types';
 
 interface StockChartProps {
     data: HistoricalData[];

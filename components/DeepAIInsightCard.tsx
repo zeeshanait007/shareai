@@ -8,6 +8,7 @@ interface DeepInsight {
     volatilityRegime: 'Stable' | 'Trending' | 'Chaotic';
     alphaScore: number;
     institutionalConviction: 'High' | 'Medium' | 'Low';
+    convictionExplanation: string;
     macroContext: string;
     riskRewardRatio: string;
     narrative: string;
@@ -56,14 +57,19 @@ export default function DeepAIInsightCard({ deepInsight }: DeepAIInsightCardProp
                 <div
                     onClick={() => setSelectedMetric('institutionalConviction')}
                     className="interactive-card"
-                    style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', cursor: 'pointer' }}
+                    style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', cursor: 'pointer', gridColumn: 'span 1' }}
                 >
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <Signal size={14} /> Inst. Conviction
                     </div>
-                    <div style={{ fontSize: '1.125rem', fontWeight: 800, color: deepInsight.institutionalConviction === 'High' ? 'var(--success)' : 'inherit' }}>
+                    <div style={{ fontSize: '1.125rem', fontWeight: 800, color: deepInsight.institutionalConviction === 'High' ? 'var(--success)' : deepInsight.institutionalConviction === 'Low' ? 'var(--danger)' : 'var(--warning)' }}>
                         {deepInsight.institutionalConviction}
                     </div>
+                    {deepInsight.convictionExplanation && (
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontStyle: 'italic', lineHeight: '1.4' }}>
+                            {deepInsight.convictionExplanation}
+                        </div>
+                    )}
                 </div>
 
                 <div

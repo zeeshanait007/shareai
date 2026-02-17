@@ -10,17 +10,25 @@ import {
     calculateLiquidityHealth,
     calculateDrawdownExposure,
     calculateTaxEfficiency,
-    calculateRiskScores,
-    generateDeepAIInsight
+    calculateRiskScores
 } from '@/lib/indicators';
 import { ArrowUpRight, ArrowDownRight, Activity, DollarSign, TrendingUp, AlertCircle, ShieldCheck, Zap, Signal, BarChart3, Globe } from 'lucide-react';
 import RiskAIAnalysis from '@/components/RiskAIAnalysis';
-import DeepAIInsightCard from '@/components/DeepAIInsightCard';
+import AsyncDeepInsight from '@/components/AsyncDeepInsight';
+import AsyncConviction from '@/components/AsyncConviction';
+
+// OPTIMIZATION: Cache page for 5 minutes to reduce API calls
+export const revalidate = 300;
 
 export default async function StockAnalysisPage({ params }: { params: { symbol: string } }) {
     const symbol = decodeURIComponent(params.symbol).toUpperCase();
-    const quote = await marketData.getQuote(symbol);
-    const history = await marketData.getHistoricalData(symbol, '3mo');
+
+    // OPTIMIZATION: Fetch all data in parallel instead of sequentially
+    const [quote, history, newsContext] = await Promise.all([
+        marketData.getQuote(symbol),
+        marketData.getHistoricalData(symbol, '3mo'),
+        marketData.getNews(`${symbol} stock news market sentiment`)
+    ]);
 
     if (!quote) {
         return <div>Stock not found</div>;
@@ -39,7 +47,7 @@ export default async function StockAnalysisPage({ params }: { params: { symbol: 
     const ChangeIcon = isPositive ? ArrowUpRight : ArrowDownRight;
     const changeColor = isPositive ? 'var(--success)' : 'var(--danger)';
 
-    // Calculate Indicators
+    // Calculate Indicators (synchronous - no latency impact)
     const closePrices = history.map(h => h.close);
     const rsiValues = calculateRSI(closePrices);
     const currentRSI = rsiValues[rsiValues.length - 1] || 0;
@@ -51,9 +59,8 @@ export default async function StockAnalysisPage({ params }: { params: { symbol: 
     const bollingerData = calculateBollingerBands(closePrices);
 
     const recommendation = generateRecommendation(quote.regularMarketPrice, currentSMA50, currentRSI, macdData, bollingerData);
-    const deepInsight = generateDeepAIInsight(symbol, history, quote, currentRSI);
 
-    // Calculate AI Risk Scores
+    // OPTIMIZATION: Calculate risk scores synchronously (no blocking)
     const liquidityScore = calculateLiquidityHealth(quote.regularMarketVolume || history[history.length - 1]?.volume || 0, quote.marketCap);
     const drawdownScore = calculateDrawdownExposure(quote.regularMarketPrice, closePrices);
     const taxScore = calculateTaxEfficiency(symbol);
@@ -103,8 +110,13 @@ export default async function StockAnalysisPage({ params }: { params: { symbol: 
                         <div style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontWeight: 500 }}>AI Recommendation</div>
                         <div style={{ fontSize: '2.25rem', fontWeight: '900', color: recColor, textAlign: 'center' }}>{recommendation.signal}</div>
                         <div style={{ fontSize: '1rem', fontWeight: 'bold', marginTop: '0.5rem' }}>Conviction: {recommendation.score}%</div>
-                        <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)', padding: '0 1rem' }}>
-                            {recommendation.reason}
+
+                        {/* Gemini Evidence-Based Explanation - Loads Asynchronously */}
+                        <AsyncConviction symbol={symbol} rsi={currentRSI} />
+
+                        {/* Technical Basis */}
+                        <div style={{ marginTop: '0.75rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', padding: '0 1rem', fontStyle: 'italic' }}>
+                            Technical: {recommendation.reason}
                         </div>
                     </div>
 
@@ -156,7 +168,7 @@ export default async function StockAnalysisPage({ params }: { params: { symbol: 
             </div>
 
             {/* AI Deep Insight Section */}
-            <DeepAIInsightCard deepInsight={deepInsight} />
+            <AsyncDeepInsight symbol={symbol} history={history} quote={quote} rsi={currentRSI} />
         </div>
     );
 }

@@ -1,26 +1,8 @@
 import YF from 'yahoo-finance2';
 
-// In v3, we need to create an instance. 
-const yahooFinance = new (YF as any)();
+const yahooFinance = new YF();
 
-export interface StockData {
-    symbol: string;
-    regularMarketPrice: number;
-    regularMarketChange: number;
-    regularMarketChangePercent: number;
-    marketCap: number;
-    shortName: string;
-    regularMarketVolume?: number;
-}
-
-export interface HistoricalData {
-    date: string;
-    open: number;
-    high: number;
-    low: number;
-    close: number;
-    volume: number;
-}
+import { StockData, HistoricalData } from './types';
 
 class MarketDataService {
     /**
@@ -117,6 +99,20 @@ class MarketDataService {
         } catch (error) {
             console.error(`Error searching ${query}:`, error);
             return [];
+        }
+    }
+
+    /**
+     * Fetch news for a symbol
+     */
+    async getNews(symbol: string): Promise<string> {
+        try {
+            const result: any = await yahooFinance.search(symbol, { newsCount: 5 });
+            if (!result || !result.news) return "";
+            return result.news.map((n: any) => `${n.title} (${n.publisher})`).join("\n");
+        } catch (error) {
+            console.error(`Error fetching news for ${symbol}:`, error);
+            return "";
         }
     }
 }

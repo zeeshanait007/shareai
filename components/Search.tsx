@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search as SearchIcon, X } from 'lucide-react';
+import { Search as SearchIcon, X, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function Search() {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<any[]>([]);
     const [isOpen, setIsOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
 
@@ -24,6 +25,7 @@ export default function Search() {
     useEffect(() => {
         const delayDebounceFn = setTimeout(async () => {
             if (query.trim().length > 1) {
+                setIsLoading(true);
                 try {
                     const res = await fetch(`/api/search?q=${query}`);
                     const data = await res.json();
@@ -31,12 +33,15 @@ export default function Search() {
                     setIsOpen(true);
                 } catch (error) {
                     console.error('Search error:', error);
+                } finally {
+                    setIsLoading(false);
                 }
             } else {
                 setResults([]);
                 setIsOpen(false);
+                setIsLoading(false);
             }
-        }, 500);
+        }, 300); // OPTIMIZATION: Reduced from 500ms to 300ms for faster response
 
         return () => clearTimeout(delayDebounceFn);
     }, [query]);
@@ -49,7 +54,21 @@ export default function Search() {
 
     return (
         <div ref={wrapperRef} style={{ position: 'relative', width: '300px' }}>
-            <SearchIcon size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            {isLoading ? (
+                <Loader2
+                    size={18}
+                    style={{
+                        position: 'absolute',
+                        left: '1rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'var(--primary)',
+                        animation: 'spin 1s linear infinite'
+                    }}
+                />
+            ) : (
+                <SearchIcon size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            )}
             <input
                 type="text"
                 value={query}
@@ -96,21 +115,31 @@ export default function Search() {
                             key={result.symbol}
                             onClick={() => handleSelect(result.symbol)}
                             style={{
-                                padding: '0.75rem 1rem',
+                                padding: '0.875rem 1.25rem',
                                 cursor: 'pointer',
                                 borderBottom: '1px solid var(--border)',
                                 display: 'flex',
                                 justifyContent: 'space-between',
-                                alignItems: 'center'
+                                alignItems: 'center',
+                                transition: 'all 0.2s ease'
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
-                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'var(--surface-hover)';
+                                e.currentTarget.style.paddingLeft = '1.5rem';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'transparent';
+                                e.currentTarget.style.paddingLeft = '1.25rem';
+                            }}
                         >
-                            <div>
-                                <div style={{ fontWeight: 'bold' }}>{result.symbol}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                    {result.shortname || result.longname || result.exchange}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
+                                <div style={{ fontWeight: '800', fontSize: '0.9375rem', color: 'var(--text-primary)' }}>{result.symbol}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', maxWidth: '180px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {result.longname || result.shortname || result.exchange}
                                 </div>
+                            </div>
+                            <div style={{ fontSize: '0.625rem', fontWeight: 'bold', color: 'var(--primary)', background: 'rgba(59, 130, 246, 0.1)', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                                {result.quoteType}
                             </div>
                         </div>
                     ))}

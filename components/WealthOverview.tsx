@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Wallet, TrendingUp, PieChart, ShieldAlert, BadgePercent, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { Wallet, TrendingUp, PieChart, ShieldAlert, BadgePercent, ChevronDown, ChevronRight, Info, Sparkles } from 'lucide-react';
 import { Asset, AssetType } from '@/lib/assets';
 import MetricInsightOverlay from './MetricInsightOverlay';
 
@@ -13,9 +13,30 @@ interface WealthOverviewProps {
     riskScore: number;
 }
 
+import { getMarketNarrative } from '@/lib/gemini';
+
 export default function WealthOverview({ assets, netWorth, distribution, taxEfficiency, riskScore }: WealthOverviewProps) {
     const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+    const [narrative, setNarrative] = useState<string>('');
+
+    React.useEffect(() => {
+        const timer = setTimeout(async () => {
+            try {
+                const params = new URLSearchParams({
+                    netWorth: netWorth.toString(),
+                    distribution: JSON.stringify(distribution)
+                });
+                const res = await fetch(`/api/ai/narrative?${params.toString()}`);
+                const data = await res.json();
+                setNarrative(data.narrative || "");
+            } catch (error) {
+                console.error("Failed to fetch narrative from API:", error);
+            }
+        }, 5000); // 5s debounce for lower priority narrative
+
+        return () => clearTimeout(timer);
+    }, [netWorth, distribution]);
 
     const assetEntries = Object.entries(distribution).filter(([_, val]) => val > 0);
 
@@ -30,6 +51,13 @@ export default function WealthOverview({ assets, netWorth, distribution, taxEffi
                 <div style={{ fontSize: '2.5rem', fontWeight: 800 }}>
                     ${netWorth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
+
+                {narrative && (
+                    <div style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: 'var(--text-secondary)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.9 }}>
+                        <Sparkles size={14} style={{ color: 'var(--primary)' }} />
+                        {narrative}
+                    </div>
+                )}
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
                     <div style={{ flex: 1, padding: '0.75rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)' }}>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Tax Efficiency</div>
