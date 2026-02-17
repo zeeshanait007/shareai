@@ -19,6 +19,7 @@ export default function WealthOverview({ assets, netWorth, distribution, taxEffi
     const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
     const [narrative, setNarrative] = useState<string>('');
+    const [mounted, setMounted] = useState(false);
 
     React.useEffect(() => {
         const timer = setTimeout(async () => {
@@ -35,6 +36,7 @@ export default function WealthOverview({ assets, netWorth, distribution, taxEffi
             }
         }, 5000); // 5s debounce for lower priority narrative
 
+        setMounted(true);
         return () => clearTimeout(timer);
     }, [netWorth, distribution]);
 
@@ -49,7 +51,7 @@ export default function WealthOverview({ assets, netWorth, distribution, taxEffi
                     <span style={{ fontWeight: 600, fontSize: '1rem' }}>Total Managed Wealth</span>
                 </div>
                 <div style={{ fontSize: '2.5rem', fontWeight: 800 }}>
-                    ${netWorth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {mounted ? `$${netWorth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${netWorth.toFixed(2)}`}
                 </div>
 
                 {narrative && (
@@ -137,7 +139,9 @@ export default function WealthOverview({ assets, netWorth, distribution, taxEffi
                                         {categoryAssets.map(asset => (
                                             <div key={asset.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
                                                 <span style={{ color: 'var(--text-secondary)' }}>{asset.name}</span>
-                                                <span style={{ fontWeight: 500 }}>${(asset.quantity * asset.currentPrice).toLocaleString()}</span>
+                                                <span style={{ fontWeight: 500 }}>
+                                                    {mounted ? `$${(asset.quantity * asset.currentPrice).toLocaleString()}` : `$${(asset.quantity * asset.currentPrice).toFixed(0)}`}
+                                                </span>
                                             </div>
                                         ))}
                                     </div>

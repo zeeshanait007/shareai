@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { HistoricalData } from '@/lib/types';
 
@@ -8,6 +9,12 @@ interface StockChartProps {
 }
 
 export default function StockChart({ data }: StockChartProps) {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const validData = data.filter(item => item && typeof item.close === 'number' && !isNaN(item.close));
 
     if (!validData || validData.length === 0) {
@@ -20,6 +27,10 @@ export default function StockChart({ data }: StockChartProps) {
     const isUp = endPrice >= startPrice;
     const strokeColor = isUp ? 'var(--success)' : 'var(--danger)';
     const fillColor = isUp ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+
+    if (!mounted) {
+        return <div style={{ width: '100%', height: '400px', background: 'var(--surface)', borderRadius: 'var(--radius-md)', opacity: 0.1 }} />;
+    }
 
     return (
         <div style={{ width: '100%', height: '400px' }}>
