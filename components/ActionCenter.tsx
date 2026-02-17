@@ -130,39 +130,51 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
                     <Sparkles size={24} style={{ color: 'var(--primary)' }} />
                     <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Proactive Action Center</h2>
                 </div>
-                {actions.length > 0 && <span className="badge-primary">{actions.length} Pending</span>}
+                {isLoading ? (
+                    <Loader2 className="animate-spin" size={20} style={{ color: 'var(--primary)' }} />
+                ) : (
+                    actions.length > 0 && <span className="badge-primary">{actions.length} Pending</span>
+                )}
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                {actions.map((action: Action, i: number) => (
-                    <div
-                        key={i}
-                        onClick={() => setSelectedAction(action)}
-                        className="interactive-card"
-                        style={{
-                            padding: '1rem',
-                            background: 'var(--surface-hover)',
-                            borderRadius: 'var(--radius-md)',
-                            borderLeft: `4px solid ${action.priority === 'high' ? '#EF4444' : action.priority === 'medium' ? '#F59E0B' : '#3B82F6'}`,
-                            display: 'flex',
-                            gap: '1rem',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        <div style={{ marginTop: '0.25rem' }}>{getIcon(action.type)}</div>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                                <h3 style={{ fontSize: '0.9375rem', fontWeight: 700 }}>{action.title}</h3>
-                                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', background: 'var(--surface)', padding: '2px 8px', borderRadius: '10px' }}>
-                                    {action.impact}
+            {isLoading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', opacity: 0.5 }}>
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="card" style={{ height: '80px', background: 'var(--surface)' }} />
+                    ))}
+                </div>
+            ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                    {actions.map((action: Action, i: number) => (
+                        <div
+                            key={i}
+                            onClick={() => setSelectedAction(action)}
+                            className="interactive-card"
+                            style={{
+                                padding: '1rem',
+                                background: 'var(--surface-hover)',
+                                borderRadius: 'var(--radius-md)',
+                                borderLeft: `4px solid ${action.priority === 'high' ? '#EF4444' : action.priority === 'medium' ? '#F59E0B' : '#3B82F6'}`,
+                                display: 'flex',
+                                gap: '1rem',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <div style={{ marginTop: '0.25rem' }}>{getIcon(action.type)}</div>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                                    <h3 style={{ fontSize: '0.9375rem', fontWeight: 700 }}>{action.title}</h3>
+                                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', background: 'var(--surface)', padding: '2px 8px', borderRadius: '10px' }}>
+                                        {action.impact}
+                                    </div>
                                 </div>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{action.description}</p>
                             </div>
-                            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{action.description}</p>
+                            <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)' }}><ArrowRight size={18} /></div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)' }}><ArrowRight size={18} /></div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             {selectedAction && (
                 <div style={{

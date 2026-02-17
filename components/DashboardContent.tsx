@@ -19,6 +19,8 @@ import PortfolioComparison from '@/components/PortfolioComparison';
 import { Undo2, FileUp, Loader2, LogOut, User, Check, Menu, Plus } from 'lucide-react';
 import { savePortfolioSnapshot } from '@/lib/portfolio-service';
 import { read, utils } from 'xlsx';
+import { useDashboard } from '@/providers/DashboardProvider';
+import SaveDashboardModal from '@/components/SaveDashboardModal';
 
 export default function DashboardContent() {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -27,13 +29,26 @@ export default function DashboardContent() {
     const [isAddAssetOpen, setIsAddAssetOpen] = React.useState(false);
     const router = useRouter();
 
-    // Portfolio State
-    const [assets, setAssets] = React.useState<Asset[]>([]);
-    const [aiAssets, setAiAssets] = React.useState<Asset[]>([]);
+    // Dashboard Context
+    const {
+        currentDashboardId,
+        dashboards,
+        saveDashboard,
+        assets,
+        setAssets,
+        aiAssets,
+        setAiAssets,
+        insight: comparisonInsight,
+        setInsight: setComparisonInsight
+    } = useDashboard();
+
+    // Portfolio State - now managed by context
+    // const [assets, setAssets] = React.useState<Asset[]>([]); // Removed
+    // const [aiAssets, setAiAssets] = React.useState<Asset[]>([]); // Removed
     const [isGeneratingAI, setIsGeneratingAI] = React.useState(false);
 
-    // AI Insight State
-    const [comparisonInsight, setComparisonInsight] = React.useState<string>("");
+    // AI Insight State - now managed by context
+    // const [comparisonInsight, setComparisonInsight] = React.useState<string>(""); // Removed
     const [isGeneratingInsight, setIsGeneratingInsight] = React.useState(false);
 
     // AI Actions State
@@ -42,56 +57,53 @@ export default function DashboardContent() {
 
     React.useEffect(() => {
         setMounted(true);
-        // Load User Assets
-        const saved = localStorage.getItem('portfolio_assets');
-        if (saved) {
-            try {
-                setAssets(JSON.parse(saved));
-            } catch (e) {
-                console.error("Failed to parse assets", e);
+
+        // Initial Load Logic - if Context didn't already load it
+        // The Context handles loading from localStorage or specific dashboard on mount/change.
+        // So we might only need to handle the "mockAssets" fallback if the context is empty and it's the default dashboard.
+
+        if (!currentDashboardId && assets.length === 0 && mounted) {
+            // Check localStorage again or fallback to mock?
+            // Context provider attempts to load from localStorage.
+            // If context assets are empty, maybe we should init mockAssets?
+            const saved = localStorage.getItem('portfolio_assets');
+            if (!saved) {
                 setAssets(mockAssets);
             }
-        } else {
-            setAssets(mockAssets);
         }
+    }, [currentDashboardId, assets.length, mounted, setAssets]);
 
-        // Load AI Assets
-        const savedAI = localStorage.getItem('ai_portfolio_assets');
-        if (savedAI) {
-            try {
-                setAiAssets(JSON.parse(savedAI));
-            } catch (e) {
-                console.error("Failed to parse AI assets", e);
-            }
-        }
-
-        // Load AI Insight
-        const savedInsight = localStorage.getItem('ai_comparison_insight');
-        if (savedInsight) {
-            setComparisonInsight(savedInsight);
-        }
-    }, []);
-
-    // Save to local storage whenever assets change
+    // Save to local storage whenever assets change (ONLY if default dashboard)
     React.useEffect(() => {
-        if (mounted && assets.length > 0) {
+        if (mounted && !currentDashboardId && assets.length > 0) {
             localStorage.setItem('portfolio_assets', JSON.stringify(assets));
         }
-    }, [assets, mounted]);
+    }, [assets, mounted, currentDashboardId]);
 
-    // Save AI assets to local storage
+    // Save AI assets to local storage (ONLY if default dashboard)
     React.useEffect(() => {
-        if (mounted && aiAssets.length > 0) {
+        if (mounted && !currentDashboardId && aiAssets.length > 0) {
             localStorage.setItem('ai_portfolio_assets', JSON.stringify(aiAssets));
         }
-    }, [aiAssets, mounted]);
+    }, [aiAssets, mounted, currentDashboardId]);
 
-    // Save Insight
+    // Save Insight (ONLY if default dashboard)
     React.useEffect(() => {
-        if (mounted && comparisonInsight) {
+        if (mounted && !currentDashboardId && comparisonInsight) {
             localStorage.setItem('ai_comparison_insight', comparisonInsight);
         }
-    }, [comparisonInsight, mounted]);
+    }, [comparisonInsight, mounted, currentDashboardId]);
+
+    const [isSaveModalOpen, setIsSaveModalOpen] = React.useState(false);
+
+    const handleSaveAs = () => {
+        setIsSaveModalOpen(true);
+    };
+
+    const handleSaveDashboard = (name: string) => {
+        saveDashboard(name);
+        setIsSaveModalOpen(false);
+    };
 
     const handleGenerateAI = async () => {
         setIsGeneratingAI(true);
@@ -279,6 +291,14 @@ export default function DashboardContent() {
                                 <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{currentUser.name}</span>
                             </div>
                         )}
+                        <button
+                            onClick={handleSaveAs}
+                            className="btn btn-secondary"
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                            title="Save Dashboard As..."
+                        >
+                            <FileUp size={16} className="rotate-90" /> Save As
+                        </button>
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -414,7 +434,14 @@ export default function DashboardContent() {
                         setIsActionsLoading(true);
                     }}
                 />
+
+                <SaveDashboardModal
+                    isOpen={isSaveModalOpen}
+                    onClose={() => setIsSaveModalOpen(false)}
+                    onSave={handleSaveDashboard}
+                />
             </div>
         </>
     );
 }
+

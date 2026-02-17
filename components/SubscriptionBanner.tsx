@@ -4,11 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { getCurrentUser } from '@/lib/auth';
 import { getSubscriptionStatusMessage, getTrialTimeRemaining } from '@/lib/subscription';
 import { Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 export default function SubscriptionBanner() {
     const [message, setMessage] = useState<string>('');
     const [hoursRemaining, setHoursRemaining] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     useEffect(() => {
         async function loadSubscriptionStatus() {
@@ -107,14 +109,21 @@ export default function SubscriptionBanner() {
                         fontSize: '0.875rem',
                         whiteSpace: 'nowrap'
                     }}
-                    onClick={() => {
-                        // TODO: Navigate to upgrade page
-                        alert('Upgrade functionality coming soon!');
-                    }}
+                    onClick={() => setShowUpgradeModal(true)}
                 >
                     {isExpired ? 'Renew Now' : 'Upgrade'}
                 </button>
             )}
+
+            <ConfirmModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                onConfirm={() => setShowUpgradeModal(false)}
+                title="Upgrade Plan"
+                message="This feature is coming soon! Stay tuned for premium features including unlimited AI analysis and real-time alerts."
+                confirmText="Got it"
+                type="info"
+            />
         </div>
     );
 }

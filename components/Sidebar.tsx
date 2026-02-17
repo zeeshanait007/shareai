@@ -1,8 +1,11 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, LineChart, PieChart, Settings, Search, Sparkles, TrendingUp, Users } from 'lucide-react';
+import { LayoutDashboard, LineChart, PieChart, Settings, Search, Sparkles, TrendingUp, Users, Trash2, Save } from 'lucide-react';
+import { useDashboard } from '@/providers/DashboardProvider';
+import ConfirmModal from '@/components/ConfirmModal';
 
 const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -14,52 +17,196 @@ const navItems = [
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const { dashboards, currentDashboardId, loadDashboard, deleteDashboard, updateDashboard } = useDashboard();
+
+    const [confirmModal, setConfirmModal] = React.useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        type: 'danger' | 'warning' | 'info';
+        onConfirm: () => void;
+        confirmText?: string;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info',
+        onConfirm: () => { },
+    });
+
+    const closeConfirm = () => setConfirmModal(prev => ({ ...prev, isOpen: false }));
 
     return (
-        <aside style={{
-            width: '250px',
-            borderRight: '1px solid var(--border)',
-            height: '100vh',
-            position: 'fixed',
-            left: 0,
-            top: 0,
-            background: 'var(--background)',
-            padding: 'var(--space-6)',
-            display: 'flex',
-            flexDirection: 'column'
-        }}>
-            <div style={{ marginBottom: 'var(--space-8)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <div style={{ width: '32px', height: '32px', background: 'var(--primary)', borderRadius: '8px' }}></div>
-                <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>ShareAI</span>
-            </div>
+        <>
+            <aside style={{
+                width: '250px',
+                borderRight: '1px solid var(--border)',
+                height: '100vh',
+                position: 'fixed',
+                left: 0,
+                top: 0,
+                background: 'var(--background)',
+                padding: 'var(--space-6)',
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
+                <div style={{ marginBottom: 'var(--space-8)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ width: '32px', height: '32px', background: 'var(--primary)', borderRadius: '8px' }}></div>
+                    <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>ShareAI</span>
+                </div>
 
-            <nav style={{ flex: 1 }}>
-                <ul style={{ listStyle: 'none' }}>
-                    {navItems.map((item) => {
-                        const isActive = pathname === item.href;
-                        return (
-                            <li key={item.href} style={{ marginBottom: 'var(--space-2)' }}>
-                                <Link
-                                    href={item.href}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        padding: 'var(--space-2) var(--space-4)',
-                                        borderRadius: 'var(--radius-md)',
-                                        color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                        background: isActive ? 'var(--surface-hover)' : 'transparent',
-                                        fontWeight: isActive ? 500 : 400,
-                                        transition: 'all var(--transition-fast)'
-                                    }}
-                                >
-                                    <item.icon size={20} style={{ marginRight: 'var(--space-3)' }} />
-                                    {item.name}
-                                </Link>
-                            </li>
-                        );
-                    })}
-                </ul>
-            </nav>
-        </aside>
+                <nav style={{ flex: 1 }}>
+                    <ul style={{ listStyle: 'none' }}>
+                        {navItems.map((item) => {
+                            const isActive = pathname === item.href && currentDashboardId === null;
+
+                            if (item.name === 'Dashboard') {
+                                return (
+                                    <li key={item.href} style={{ marginBottom: 'var(--space-2)' }}>
+                                        <div
+                                            onClick={() => loadDashboard(null)}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                padding: 'var(--space-2) var(--space-4)',
+                                                borderRadius: 'var(--radius-md)',
+                                                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                                background: isActive ? 'var(--surface-hover)' : 'transparent',
+                                                fontWeight: isActive ? 500 : 400,
+                                                transition: 'all var(--transition-fast)',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <item.icon size={20} style={{ marginRight: 'var(--space-3)' }} />
+                                            {item.name}
+                                        </div>
+
+                                        {/* Saved Dashboards Sub-list */}
+                                        {dashboards.length > 0 && (
+                                            <ul style={{ listStyle: 'none', marginLeft: '2.5rem', marginTop: '0.5rem', borderLeft: '1px solid var(--border)' }}>
+                                                {dashboards.map(dash => (
+                                                    <li key={dash.id} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                                        <div
+                                                            onClick={() => loadDashboard(dash.id)}
+                                                            style={{
+                                                                flex: 1,
+                                                                padding: '0.5rem 1rem',
+                                                                fontSize: '0.875rem',
+                                                                color: currentDashboardId === dash.id ? 'var(--primary)' : 'var(--text-secondary)',
+                                                                cursor: 'pointer',
+                                                                fontWeight: currentDashboardId === dash.id ? 500 : 400,
+                                                                display: 'flex',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'center'
+                                                            }}
+                                                            className="sidebar-item"
+                                                        >
+                                                            {dash.name}
+                                                        </div>
+                                                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (currentDashboardId === dash.id) {
+                                                                        updateDashboard(dash.id);
+                                                                        // Optional: Show success toast instead of alert
+                                                                        // For now, removing the alert for cleaner UX or using a temporary "Saved" indicator
+                                                                    } else {
+                                                                        setConfirmModal({
+                                                                            isOpen: true,
+                                                                            title: 'Overwrite Dashboard?',
+                                                                            message: `Are you sure you want to overwrite "${dash.name}" with your current view?`,
+                                                                            type: 'warning',
+                                                                            confirmText: 'Overwrite',
+                                                                            onConfirm: () => updateDashboard(dash.id)
+                                                                        });
+                                                                    }
+                                                                }}
+                                                                style={{
+                                                                    background: 'none',
+                                                                    border: 'none',
+                                                                    color: 'var(--text-muted)',
+                                                                    cursor: 'pointer',
+                                                                    padding: '0 0.5rem',
+                                                                    opacity: 0.6,
+                                                                    transition: 'opacity 0.2s'
+                                                                }}
+                                                                onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                                                                onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
+                                                                title="Save Current State to Dashboard"
+                                                            >
+                                                                <Save size={14} />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setConfirmModal({
+                                                                        isOpen: true,
+                                                                        title: 'Delete Dashboard?',
+                                                                        message: `Are you sure you want to delete "${dash.name}"? This action cannot be undone.`,
+                                                                        type: 'danger',
+                                                                        confirmText: 'Delete',
+                                                                        onConfirm: () => deleteDashboard(dash.id)
+                                                                    });
+                                                                }}
+                                                                style={{
+                                                                    background: 'none',
+                                                                    border: 'none',
+                                                                    color: 'var(--text-muted)',
+                                                                    cursor: 'pointer',
+                                                                    padding: '0 0.5rem',
+                                                                    opacity: 0.6,
+                                                                    transition: 'opacity 0.2s'
+                                                                }}
+                                                                onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                                                                onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
+                                                                title="Delete Dashboard"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </li>
+                                );
+                            }
+
+                            return (
+                                <li key={item.href} style={{ marginBottom: 'var(--space-2)' }}>
+                                    <Link
+                                        href={item.href}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: 'var(--space-2) var(--space-4)',
+                                            borderRadius: 'var(--radius-md)',
+                                            color: pathname === item.href ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                            background: pathname === item.href ? 'var(--surface-hover)' : 'transparent',
+                                            fontWeight: pathname === item.href ? 500 : 400,
+                                            transition: 'all var(--transition-fast)'
+                                        }}
+                                    >
+                                        <item.icon size={20} style={{ marginRight: 'var(--space-3)' }} />
+                                        {item.name}
+                                    </Link>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </nav>
+            </aside>
+
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                onClose={closeConfirm}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                type={confirmModal.type}
+                confirmText={confirmModal.confirmText}
+            />
+        </>
     );
 }
