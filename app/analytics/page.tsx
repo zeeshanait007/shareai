@@ -9,6 +9,7 @@ export default function AnalyticsPage() {
     const [analytics, setAnalytics] = useState<any>(null);
     const [logins, setLogins] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         async function loadData() {
@@ -26,6 +27,7 @@ export default function AnalyticsPage() {
             }
         }
         loadData();
+        setMounted(true);
     }, []);
 
     const StatCard = ({ title, value, icon: Icon, color }: any) => (
@@ -78,7 +80,7 @@ export default function AnalyticsPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {logins.map((login: any, idx: number) => (
+                                        {mounted && logins.map((login: any, idx: number) => (
                                             <tr key={idx} style={{ borderBottom: idx === logins.length - 1 ? 'none' : '1px solid var(--border)' }}>
                                                 <td style={{ padding: '1rem', fontSize: '0.925rem' }}>{login.users?.name || 'Unknown'}</td>
                                                 <td style={{ padding: '1rem', fontSize: '0.925rem', color: 'var(--text-secondary)' }}>{login.users?.email}</td>
