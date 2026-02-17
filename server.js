@@ -3,8 +3,8 @@ const { parse } = require('url');
 const next = require('next');
 const path = require('path');
 
-const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
+const dev = false; // Force production mode for Hostinger
+const hostname = '0.0.0.0'; // Bind to all interfaces to avoid localhost IPv6 issues
 const port = process.env.PORT || 3000;
 
 // Explicitly define the directory to handle potential CWD mismatches on Hostinger
