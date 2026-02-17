@@ -39,6 +39,8 @@ export default function RootLayout({
             `,
           }}
         />
+        <meta name="build-timestamp" content={new Date().toISOString()} />
+        <meta name="version" content="v1.0.3-hostinger-fix" />
       </head>
       <body className={inter.className}>
         <GlobalErrorHandler />
