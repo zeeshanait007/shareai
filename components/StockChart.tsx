@@ -29,7 +29,9 @@ export default function StockChart({ data }: StockChartProps) {
     const fillColor = isUp ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
 
     if (!mounted) {
-        return <div style={{ width: '100%', height: '400px', background: 'var(--surface)', borderRadius: 'var(--radius-md)', opacity: 0.1 }} />;
+        return <div style={{ width: '100%', height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="animate-spin" style={{ width: '2rem', height: '2rem', border: '3px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
+        </div>;
     }
 
     return (

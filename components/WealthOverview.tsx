@@ -36,9 +36,12 @@ export default function WealthOverview({ assets, netWorth, distribution, taxEffi
             }
         }, 5000); // 5s debounce for lower priority narrative
 
-        setMounted(true);
         return () => clearTimeout(timer);
     }, [netWorth, distribution]);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const assetEntries = Object.entries(distribution).filter(([_, val]) => val > 0);
 
