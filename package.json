@@ -11,8 +11,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.95.3",
-    "@types/bcryptjs": "^3.0.0",
-    "bcryptjs": "^3.0.3",
+    "bcryptjs": "^2.4.3",
     "lucide-react": "^0.563.0",
     "next": "14.2.35",
     "react": "18.3.1",
@@ -22,8 +21,9 @@
   },
   "devDependencies": {
     "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/bcryptjs": "^2.4.2",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
     "eslint": "8.57.1",
     "eslint-config-next": "14.2.35",
     "typescript": "^5"

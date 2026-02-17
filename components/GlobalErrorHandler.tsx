@@ -23,11 +23,12 @@ export default function GlobalErrorHandler() {
                     message.includes('ChunkLoadError') ||
                     message.includes('Loading CSS chunk') ||
                     message.includes('Failed to fetch dynamically imported module') ||
-                    message.includes('Unexpected token') // Often happens when a 404 HTML page is served as JS
+                    message.includes('Unexpected token') || // Often happens when a 404 HTML page is served as JS
+                    message.includes('503') // Catch 503 Service Unavailable
                 );
 
             if (isChunkError || isResourceError) {
-                console.warn('Deployment mismatch or ChunkLoadError detected. Reloading page...', message || 'Resource load failure');
+                console.warn('Deployment mismatch or Server Error detected. Reloading page...', message || 'Resource load failure');
 
                 // Avoid infinite reload loops
                 const lastReload = sessionStorage.getItem('last_chunk_reload');
