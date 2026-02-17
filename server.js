@@ -31,12 +31,17 @@ if (!fs.existsSync(nextDir)) {
     });
 } else {
     // Normal Next.js startup
-    const app = next({ dev, hostname: '0.0.0.0', port, dir });
+    const app = next({ dev, port, dir }); // Removed explicit hostname
     const handle = app.getRequestHandler();
 
     app.prepare().then(() => {
         const server = createServer(async (req, res) => {
+            const startTime = Date.now();
+
             try {
+                // Log request basics
+                console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+
                 const parsedUrl = parse(req.url, true);
                 const { pathname } = parsedUrl;
 
@@ -52,6 +57,10 @@ if (!fs.existsSync(nextDir)) {
                 console.error('Error occurred handling', req.url, err);
                 res.statusCode = 500;
                 res.end('internal server error');
+            } finally {
+                // Log completion
+                const duration = Date.now() - startTime;
+                console.log(`[${req.method}] ${req.url} -> ${res.statusCode} (${duration}ms)`);
             }
         });
 

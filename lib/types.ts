@@ -43,3 +43,23 @@ export interface PortfolioSnapshot {
     };
     created_at: string;
 }
+
+export interface StockAnalysis {
+    symbol: string;
+    thesis: string; // 3 lines summary
+    drivers: {
+        valuation: string;
+        momentum: string;
+        macro: string;
+        earnings: string;
+    };
+    risks: string[];
+    scenarios: {
+        bullish: string;
+        bearish: string;
+        neutral: string;
+    };
+    confidenceScore: number; // 0-100
+    recommendation: 'Buy' | 'Add to Watch' | 'Monitor' | 'Ignore';
+    counterArgument: string; // "Why not?"
+}

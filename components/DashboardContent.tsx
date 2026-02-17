@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { mockAssets, calculateNetWorth, getAssetDistribution, Asset } from '@/lib/assets';
 import { calculatePortfolioBeta } from '@/lib/analytics';
 import { calculateTaxLiability } from '@/lib/indicators';
-import { getGeminiProactiveActions } from '@/lib/gemini';
+import { getGeminiProactiveActions, generateAIPortfolio, getPortfolioComparisonInsight } from '@/lib/gemini';
 import { Action } from '@/lib/types';
 import { logout, getCurrentUser } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
@@ -12,19 +12,129 @@ import WealthOverview from '@/components/WealthOverview';
 import ActionCenter from '@/components/ActionCenter';
 import EstateVault from '@/components/EstateVault';
 import WatchlistActivity from '@/components/WatchlistActivity';
-import CSVFormatGuide from '@/components/CSVFormatGuide';
-import HistoryPanel from '@/components/HistoryPanel';
+import StockAnalysisPanel from '@/components/StockAnalysisPanel';
 import SubscriptionBanner from '@/components/SubscriptionBanner';
-import { Undo2, FileUp, Loader2, LogOut, User, Check, History } from 'lucide-react';
+import AddAssetModal from '@/components/AddAssetModal';
+import PortfolioComparison from '@/components/PortfolioComparison';
+import { Undo2, FileUp, Loader2, LogOut, User, Check, Menu, Plus } from 'lucide-react';
 import { savePortfolioSnapshot } from '@/lib/portfolio-service';
+import { read, utils } from 'xlsx';
 
 export default function DashboardContent() {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [mounted, setMounted] = React.useState(false);
-    const [showHistory, setShowHistory] = React.useState(false);
+    const [selectedStock, setSelectedStock] = React.useState<string | null>(null);
+    const [isAddAssetOpen, setIsAddAssetOpen] = React.useState(false);
     const router = useRouter();
 
-    // ... existing mounting logic ...
+    // Portfolio State
+    const [assets, setAssets] = React.useState<Asset[]>([]);
+    const [aiAssets, setAiAssets] = React.useState<Asset[]>([]);
+    const [isGeneratingAI, setIsGeneratingAI] = React.useState(false);
+
+    // AI Insight State
+    const [comparisonInsight, setComparisonInsight] = React.useState<string>("");
+    const [isGeneratingInsight, setIsGeneratingInsight] = React.useState(false);
+
+    // AI Actions State
+    const [actions, setActions] = React.useState<Action[]>([]);
+    const [isActionsLoading, setIsActionsLoading] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+        // Load User Assets
+        const saved = localStorage.getItem('portfolio_assets');
+        if (saved) {
+            try {
+                setAssets(JSON.parse(saved));
+            } catch (e) {
+                console.error("Failed to parse assets", e);
+                setAssets(mockAssets);
+            }
+        } else {
+            setAssets(mockAssets);
+        }
+
+        // Load AI Assets
+        const savedAI = localStorage.getItem('ai_portfolio_assets');
+        if (savedAI) {
+            try {
+                setAiAssets(JSON.parse(savedAI));
+            } catch (e) {
+                console.error("Failed to parse AI assets", e);
+            }
+        }
+
+        // Load AI Insight
+        const savedInsight = localStorage.getItem('ai_comparison_insight');
+        if (savedInsight) {
+            setComparisonInsight(savedInsight);
+        }
+    }, []);
+
+    // Save to local storage whenever assets change
+    React.useEffect(() => {
+        if (mounted && assets.length > 0) {
+            localStorage.setItem('portfolio_assets', JSON.stringify(assets));
+        }
+    }, [assets, mounted]);
+
+    // Save AI assets to local storage
+    React.useEffect(() => {
+        if (mounted && aiAssets.length > 0) {
+            localStorage.setItem('ai_portfolio_assets', JSON.stringify(aiAssets));
+        }
+    }, [aiAssets, mounted]);
+
+    // Save Insight
+    React.useEffect(() => {
+        if (mounted && comparisonInsight) {
+            localStorage.setItem('ai_comparison_insight', comparisonInsight);
+        }
+    }, [comparisonInsight, mounted]);
+
+    const handleGenerateAI = async () => {
+        setIsGeneratingAI(true);
+        const totalNetWorth = calculateNetWorth(assets);
+        // Ensure at least some capital for the AI to work with
+        const capital = totalNetWorth > 0 ? totalNetWorth : 100000;
+
+        // 1. Generate Assets
+        const newAiAssets = await generateAIPortfolio(capital);
+        setAiAssets(newAiAssets);
+        setIsGeneratingAI(false);
+
+        // 2. Generate Insight (independently to not block UI)
+        setIsGeneratingInsight(true);
+        const insight = await getPortfolioComparisonInsight(assets, newAiAssets);
+        setComparisonInsight(insight);
+        setIsGeneratingInsight(false);
+    };
+
+    // Derived State
+    const stats = React.useMemo(() => {
+        return {
+            netWorth: calculateNetWorth(assets),
+            distribution: getAssetDistribution(assets),
+            taxStats: calculateTaxLiability(assets),
+            beta: calculatePortfolioBeta(assets)
+        };
+    }, [assets]);
+
+    // Fetch AI Actions when assets change
+    React.useEffect(() => {
+        if (!mounted) return;
+
+        const fetchActions = async () => {
+            setIsActionsLoading(true);
+            const newActions = await getGeminiProactiveActions(assets, stats);
+            setActions(newActions);
+            setIsActionsLoading(false);
+        };
+
+        const timer = setTimeout(fetchActions, 1000); // Debounce
+        return () => clearTimeout(timer);
+    }, [assets, mounted]); // stats is derived from assets, so just dependent on assets is enough basically (or memoized stats)
 
     const handleLogout = () => {
         logout();
@@ -37,273 +147,274 @@ export default function DashboardContent() {
         const file = event.target.files?.[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const content = e.target?.result as string;
-            const lines = content.split('\n');
-            const newAssets: Asset[] = [];
-            const timestamp = new Date().toISOString();
-
-            // Improved Parsing: Handle headers and various line formats
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-
-                const parts = line.split(',');
-                if (parts.length < 6) continue;
-
-                const type = parts[0].trim().toLowerCase();
-                const name = parts[1].trim();
-                const symbol = parts[2].trim() || ''; // Empty symbol for real estate is fine
-                const quantity = parseFloat(parts[3]) || 0;
-                const purchasePrice = parseFloat(parts[4]) || 0;
-                const currentPrice = parseFloat(parts[5]) || 0;
-                const sector = parts[6]?.trim() || 'Other';
-
-                if (name && (quantity > 0 || currentPrice > 0)) {
-                    newAssets.push({
-                        id: `imported-${Date.now()}-${i}`,
-                        type: (['stock', 'crypto', 'real_estate', 'private_equity', 'esop'].includes(type) ? type : 'stock') as any,
-                        name,
-                        symbol,
-                        quantity,
-                        purchasePrice,
-                        currentPrice,
-                        sector,
-                        valuationDate: timestamp
-                    });
-                }
-            }
-
+        const processAssets = (newAssets: Asset[]) => {
             if (newAssets.length > 0) {
                 setAssets(newAssets);
-                // Clear old actions to force visual "AI Scanning" state
                 setActions([]);
                 setIsActionsLoading(true);
-
-                // Save snapshot to history if user is logged in
-                // The getCurrentUser() returns a Session-like object, we need to extract the user ID safely
-                // Based on auth.ts, session might be stored as string or object.
-                // For now, let's assume if we have a valid session, we can use a fallback or properly typed ID.
-                const userId = currentUser && (typeof currentUser === 'string' ? currentUser : (currentUser as any).id || (currentUser as any).user?.id);
-
-                if (userId) {
-                    savePortfolioSnapshot(userId, newAssets, {
-                        source: 'csv_upload',
-                        filename: file.name
-                    }).catch(err => console.error("Failed to save snapshot", err));
-                }
-
-                // Set temporary success status
-                setImportStatus('success');
-                setTimeout(() => setImportStatus('idle'), 3000);
+                if (fileInputRef.current) fileInputRef.current.value = '';
             }
         };
-        reader.readAsText(file);
-        // Reset input value to allow the same file to be selected again if modified
-        (event.target as HTMLInputElement).value = '';
+
+        if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target?.result as ArrayBuffer);
+                const workbook = read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = utils.sheet_to_json(worksheet, { header: 1 });
+
+                const newAssets: Asset[] = [];
+                const timestamp = new Date().toISOString();
+
+                // Skip header row
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i] as any[];
+                    if (!row || row.length < 6) continue;
+
+                    const type = String(row[0] || '').trim().toLowerCase();
+                    const name = String(row[1] || '').trim();
+                    const symbol = String(row[2] || '').trim();
+                    const quantity = parseFloat(row[3]) || 0;
+                    const purchasePrice = parseFloat(row[4]) || 0;
+                    const currentPrice = parseFloat(row[5]) || 0;
+                    const sector = String(row[6] || 'Other').trim();
+
+                    if (name && (quantity > 0 || currentPrice > 0)) {
+                        newAssets.push({
+                            id: `imported-${Date.now()}-${i}`,
+                            type: (['stock', 'crypto', 'real_estate', 'private_equity', 'esop'].includes(type) ? type : 'stock') as any,
+                            name,
+                            symbol,
+                            quantity,
+                            purchasePrice,
+                            currentPrice,
+                            sector,
+                            valuationDate: timestamp
+                        });
+                    }
+                }
+                processAssets(newAssets);
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            // Existing CSV Logic
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target?.result as string;
+                const lines = content.split('\n');
+                const newAssets: Asset[] = [];
+                const timestamp = new Date().toISOString();
+
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+
+                    const parts = line.split(',');
+                    if (parts.length < 6) continue;
+
+                    const type = parts[0].trim().toLowerCase();
+                    const name = parts[1].trim();
+                    const symbol = parts[2].trim() || '';
+                    const quantity = parseFloat(parts[3]) || 0;
+                    const purchasePrice = parseFloat(parts[4]) || 0;
+                    const currentPrice = parseFloat(parts[5]) || 0;
+                    const sector = parts[6]?.trim() || 'Other';
+
+                    if (name && (quantity > 0 || currentPrice > 0)) {
+                        newAssets.push({
+                            id: `imported-${Date.now()}-${i}`,
+                            type: (['stock', 'crypto', 'real_estate', 'private_equity', 'esop'].includes(type) ? type : 'stock') as any,
+                            name,
+                            symbol,
+                            quantity,
+                            purchasePrice,
+                            currentPrice,
+                            sector,
+                            valuationDate: timestamp
+                        });
+                    }
+                }
+                processAssets(newAssets);
+            };
+            reader.readAsText(file);
+        }
     };
+
+    // Auto-scroll to analysis when stock is selected
+    const analysisRef = React.useRef<HTMLDivElement>(null);
+
     React.useEffect(() => {
-        const savedAssets = localStorage.getItem('portfolio_assets');
-        if (savedAssets) {
-            try {
-                setAssets(JSON.parse(savedAssets));
-            } catch (e) {
-                console.error("Failed to load assets from cache", e);
-            }
+        if (selectedStock) {
+            // Small delay to ensure render is complete and layout is stable
+            setTimeout(() => {
+                const element = document.getElementById('analysis-section');
+                if (element) {
+                    const headerOffset = 80; // approximate header height + padding
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.scrollY - headerOffset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 150);
         }
-        setMounted(true);
-    }, []);
-
-    const [assets, setAssets] = useState<Asset[]>(mockAssets);
-    const [history, setHistory] = useState<Asset[][]>([]);
-    const [actions, setActions] = useState<Action[]>([]);
-    const [isActionsLoading, setIsActionsLoading] = useState(false);
-    const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
-
-    // Save assets to localStorage whenever they change
-    React.useEffect(() => {
-        if (mounted) {
-            localStorage.setItem('portfolio_assets', JSON.stringify(assets));
-        }
-    }, [assets, mounted]);
-    const lastDataHashRef = React.useRef<string>('');
-
-    // Memoize stats to prevent unnecessary re-calculations and effect triggers
-    const stats = React.useMemo(() => ({
-        netWorth: calculateNetWorth(assets),
-        distribution: getAssetDistribution(assets),
-        taxStats: calculateTaxLiability(assets),
-        beta: calculatePortfolioBeta(assets)
-    }), [assets]);
-
-    // Optimized: Gemini Change Detection & Caching
-    React.useEffect(() => {
-        // Create a unique hash of the current portfolio state
-        const dataHash = JSON.stringify({
-            assetIds: assets.map(a => `${a.symbol}-${a.quantity}-${a.currentPrice}`),
-            netWorth: stats.netWorth,
-            beta: stats.beta
-        });
-
-        // Skip if data hasn't changed
-        if (dataHash === lastDataHashRef.current && actions.length > 0) {
-            return;
-        }
-
-        // Try to load from cache first
-        const cachedActions = localStorage.getItem('gemini_proactive_actions_cache');
-        const cachedHash = localStorage.getItem('gemini_proactive_actions_hash');
-
-        if (cachedActions && cachedHash === dataHash) {
-            try {
-                setActions(JSON.parse(cachedActions));
-                lastDataHashRef.current = dataHash;
-                setIsActionsLoading(false);
-                return;
-            } catch (e) {
-                console.error("Failed to parse cached actions", e);
-            }
-        }
-
-        setIsActionsLoading(true);
-        lastDataHashRef.current = dataHash;
-
-        const timer = setTimeout(() => {
-            getGeminiProactiveActions(assets, stats)
-                .then(newActions => {
-                    setActions(newActions);
-                    // Update cache
-                    localStorage.setItem('gemini_proactive_actions_cache', JSON.stringify(newActions));
-                    localStorage.setItem('gemini_proactive_actions_hash', dataHash);
-                })
-                .finally(() => setIsActionsLoading(false));
-        }, 800);
-
-        return () => clearTimeout(timer);
-    }, [assets, stats]);
-
-
-    const handleExecuteAction = useCallback((newAssets: Asset[]) => {
-        setHistory(prev => [...prev, assets]);
-        setAssets(newAssets);
-    }, [assets]);
-
-    const handleRevert = useCallback(() => {
-        if (history.length === 0) return;
-        const previous = history[history.length - 1];
-        setAssets(previous);
-        setHistory(prev => prev.slice(0, -1));
-    }, [history, assets]);
+    }, [selectedStock]);
 
     if (!mounted) return null;
 
     return (
-        <div className="fade-in">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
-                <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Imagine Wealth</h1>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    {/* User Info */}
-                    {currentUser && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '0.5rem' }}>
-                            <User size={16} style={{ color: 'var(--primary)' }} />
-                            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{currentUser.name}</span>
-                        </div>
-                    )}
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileUpload}
-                        accept=".csv"
-                        style={{ display: 'none' }}
-                    />
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="button-secondary"
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            borderColor: importStatus === 'success' ? 'var(--success)' : undefined,
-                            background: importStatus === 'success' ? 'rgba(16, 185, 129, 0.1)' : undefined
-                        }}
-                    >
-                        {importStatus === 'success' ? (
-                            <>
-                                <Check size={16} /> Imported!
-                            </>
-                        ) : (
-                            <>
-                                <FileUp size={16} /> Import CSV
-                            </>
+        <>
+            <div className="fade-in">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
+                    <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Imagine Wealth</h1>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        {/* User Info */}
+                        {currentUser && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '0.5rem' }}>
+                                <User size={16} style={{ color: 'var(--primary)' }} />
+                                <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{currentUser.name}</span>
+                            </div>
                         )}
-                    </button>
-                    <CSVFormatGuide />
-                    {history.length > 0 && (
-                        <button
-                            onClick={handleRevert}
-                            className="button-secondary"
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--primary)', color: 'var(--primary)' }}
-                        >
-                            <Undo2 size={16} /> Revert Last AI Action
-                        </button>
-                    )}
-                    <button
-                        onClick={handleLogout}
-                        className="button-secondary"
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--error)', color: 'var(--error)' }}
-                        title="Logout"
-                    >
-                        <LogOut size={16} /> Logout
-                    </button>
-                </div>
-            </div>
-
-            <SubscriptionBanner />
-
-            <WealthOverview
-                assets={assets}
-                netWorth={stats.netWorth}
-                distribution={stats.distribution}
-                taxEfficiency={Number(stats.taxStats.efficiency.toFixed(0))}
-                riskScore={45}
-            />
-
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-6)' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-                    {isActionsLoading ? (
-                        <div className="card" style={{ padding: '3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-                            <Loader2 size={32} className="animate-spin" style={{ color: 'var(--primary)' }} />
-                            <p style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Gemini AI is scanning your portfolio...</p>
-                        </div>
-                    ) : (
-                        <ActionCenter
-                            actions={actions}
-                            assets={assets}
-                            onExecute={handleExecuteAction}
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileUpload}
+                            accept=".csv, .xlsx, .xls"
+                            style={{ display: 'none' }}
                         />
-                    )}
-
-                    <div className="flex items-center gap-3 mb-6">
                         <button
-                            onClick={() => setShowHistory(true)}
-                            className="flex items-center gap-2 px-4 py-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-all font-medium border border-indigo-200"
+                            onClick={() => setIsAddAssetOpen(true)}
+                            className="btn btn-primary"
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                         >
-                            <History size={18} />
-                            <span>View Load History</span>
+                            <Plus size={16} /> Add Asset
+                        </button>
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="btn btn-secondary"
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        >
+                            <FileUp size={16} /> Import
+                        </button>
+                        <button
+                            onClick={() => {
+                                const wb = utils.book_new();
+                                const ws = utils.json_to_sheet([
+                                    { Type: 'stock', Name: 'Apple Inc.', Symbol: 'AAPL', Quantity: 10, PurchasePrice: 150, CurrentPrice: 180, Sector: 'Technology' },
+                                    { Type: 'crypto', Name: 'Bitcoin', Symbol: 'BTC', Quantity: 0.5, PurchasePrice: 40000, CurrentPrice: 52000, Sector: 'Digital Assets' },
+                                    { Type: 'real_estate', Name: 'Rental Property', Symbol: 'PROP1', Quantity: 1, PurchasePrice: 200000, CurrentPrice: 250000, Sector: 'Real Estate' }
+                                ]);
+                                utils.book_append_sheet(wb, ws, "Portfolio");
+                                import('xlsx').then(xlsx => {
+                                    xlsx.writeFile(wb, "portfolio_template.xlsx");
+                                });
+                            }}
+                            className="btn btn-secondary"
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                            title="Download Sample Template"
+                        >
+                            <FileUp size={16} className="rotate-180" /> Template
+                        </button>
+                        <button
+                            onClick={handleLogout}
+                            className="btn btn-secondary"
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                            title="Logout"
+                        >
+                            <LogOut size={16} /> Logout
                         </button>
                     </div>
+                </div>
 
-                    <div className="card">
-                        <h2 style={{ fontSize: '1.25rem', marginBottom: 'var(--space-4)' }}>Watchlist Activity</h2>
-                        <WatchlistActivity />
+                <SubscriptionBanner />
+
+                <main className="container-fluid py-6 space-y-6">
+                    <div className="max-w-7xl mx-auto space-y-6">
+                        <WealthOverview
+                            assets={assets}
+                            netWorth={stats.netWorth}
+                            distribution={stats.distribution}
+                            taxEfficiency={Number(stats.taxStats.efficiency.toFixed(0))}
+                            riskScore={45}
+                            onStockClick={(symbol) => setSelectedStock(symbol)}
+                        />
+
+                        {/* AI Portfolio Comparison */}
+                        <PortfolioComparison
+                            userAssets={assets}
+                            aiAssets={aiAssets}
+                            onGenerateAI={handleGenerateAI}
+                            isGenerating={isGeneratingAI}
+                            insight={comparisonInsight}
+                            isGeneratingInsight={isGeneratingInsight}
+                        />
+
+                        <div id="analysis-section" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-2 space-y-6" ref={analysisRef}>
+                                {selectedStock ? (
+                                    <StockAnalysisPanel
+                                        symbol={selectedStock}
+                                        currentPrice={assets.find(a => a.symbol === selectedStock)?.currentPrice}
+                                        onClose={() => setSelectedStock(null)}
+                                        onBuy={(symbol, qty, price) => {
+                                            const newAsset: Asset = {
+                                                id: `buy-${Date.now()}`,
+                                                type: 'stock',
+                                                name: symbol,
+                                                symbol: symbol,
+                                                quantity: qty,
+                                                purchasePrice: price,
+                                                currentPrice: price,
+                                                sector: 'Technology', // Default for now, could be improved with AI
+                                                valuationDate: new Date().toISOString()
+                                            };
+                                            setAssets([...assets, newAsset]);
+                                            setSelectedStock(null);
+                                        }}
+                                        onAddToWatchlist={(symbol) => {
+                                            // We can import addToWatchlist from lib
+                                            import('@/lib/watchlist').then(mod => {
+                                                mod.addToWatchlist({ symbol, name: symbol });
+                                                // Force refresh of watchlist could be tricky without state lift, 
+                                                // but WatchlistActivity might self-refresh on mount/interaction if we updated it to read from event or stick to simple localStorage poll
+                                            });
+                                        }}
+                                    />
+                                ) : (
+                                    <ActionCenter
+                                        actions={actions}
+                                        assets={assets}
+                                        onExecute={setAssets}
+                                        isLoading={isActionsLoading}
+                                    />
+                                )}
+                            </div>
+                            <div className="space-y-6">
+                                <div className="card">
+                                    <h2 style={{ fontSize: '1.25rem', marginBottom: 'var(--space-4)' }}>Watchlist Activity</h2>
+                                    <WatchlistActivity onStockClick={(symbol) => setSelectedStock(symbol)} />
+                                </div>
+                                <EstateVault />
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </main>
 
-                <div>
-                    <EstateVault />
-                </div>
+                <AddAssetModal
+                    isOpen={isAddAssetOpen}
+                    onClose={() => setIsAddAssetOpen(false)}
+                    onAdd={(newAsset) => {
+                        setAssets([...assets, newAsset]);
+                        // Trigger AI refresh
+                        setActions([]);
+                        setIsActionsLoading(true);
+                    }}
+                />
             </div>
-        </div>
+        </>
     );
 }

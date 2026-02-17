@@ -13,20 +13,22 @@ interface ActionCenterProps {
     actions: Action[];
     assets: Asset[];
     onExecute: (newAssets: Asset[]) => void;
+    isLoading?: boolean;
 }
 
-export default function ActionCenter({ actions: initialActions, assets, onExecute }: ActionCenterProps) {
+export default function ActionCenter({ actions: initialActions, assets, onExecute, isLoading }: ActionCenterProps) {
     const [actions, setActions] = useState<Action[]>(initialActions);
     const [selectedAction, setSelectedAction] = useState<Action | null>(null);
     const [advisory, setAdvisory] = useState<GeminiAdvisory | null>(null);
     const [isAdvisoryLoading, setIsAdvisoryLoading] = useState(false);
     const [executionState, setExecutionState] = useState<ExecutionState>('idle');
-    const [progress, setProgress] = useState(0);
 
-    // Sync local actions with props if they change
+    // Sync actions when prop changes
     useEffect(() => {
         setActions(initialActions);
     }, [initialActions]);
+    const [progress, setProgress] = useState(0);
+
 
     useEffect(() => {
         // Optimized: Reduced debounce for faster advisory loading

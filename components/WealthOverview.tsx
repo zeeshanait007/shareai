@@ -11,11 +11,12 @@ interface WealthOverviewProps {
     distribution: Record<string, number>;
     taxEfficiency: number;
     riskScore: number;
+    onStockClick?: (symbol: string) => void;
 }
 
 import { getMarketNarrative } from '@/lib/gemini';
 
-export default function WealthOverview({ assets, netWorth, distribution, taxEfficiency, riskScore }: WealthOverviewProps) {
+export default function WealthOverview({ assets, netWorth, distribution, taxEfficiency, riskScore, onStockClick }: WealthOverviewProps) {
     const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
     const [narrative, setNarrative] = useState<string>('');
@@ -140,7 +141,17 @@ export default function WealthOverview({ assets, netWorth, distribution, taxEffi
                                 {isExpanded && (
                                     <div style={{ margin: '0 0.75rem 0.5rem 0.75rem', padding: '0.75rem', borderLeft: '2px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.5rem', animation: 'fadeIn 0.2s ease' }}>
                                         {categoryAssets.map(asset => (
-                                            <div key={asset.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                                            <div
+                                                key={asset.id}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (asset.type === 'stock' && onStockClick) {
+                                                        onStockClick(asset.symbol || asset.name);
+                                                    }
+                                                }}
+                                                style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', cursor: 'pointer', padding: '2px 0' }}
+                                                className="hover:text-blue-400"
+                                            >
                                                 <span style={{ color: 'var(--text-secondary)' }}>{asset.name}</span>
                                                 <span style={{ fontWeight: 500 }}>
                                                     {mounted ? `$${(asset.quantity * asset.currentPrice).toLocaleString()}` : `$${(asset.quantity * asset.currentPrice).toFixed(0)}`}

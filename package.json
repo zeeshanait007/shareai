@@ -18,11 +18,12 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "recharts": "^3.7.0",
+    "xlsx": "^0.18.5",
     "yahoo-finance2": "^3.13.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
     "@types/bcryptjs": "^2.4.2",
+    "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "8.57.1",

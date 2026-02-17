@@ -5,7 +5,7 @@ import { ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { getWatchlist, WatchlistItem } from '@/lib/watchlist';
 
-export default function WatchlistActivity() {
+export default function WatchlistActivity({ onStockClick }: { onStockClick?: (symbol: string) => void }) {
     const [items, setItems] = useState<WatchlistItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -75,10 +75,10 @@ export default function WatchlistActivity() {
             {items.map((stock) => {
                 const isPositive = (stock.changePercent ?? 0) >= 0;
                 return (
-                    <Link
+                    <div
                         key={stock.symbol}
-                        href={`/dashboard/analysis/${stock.symbol}`}
-                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', textDecoration: 'none' }}
+                        onClick={() => onStockClick && onStockClick(stock.symbol)}
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
                         className="hover-opacity"
                     >
                         <div>
@@ -96,7 +96,7 @@ export default function WatchlistActivity() {
                             {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
                             {stock.changePercent !== undefined ? `${stock.changePercent.toFixed(2)}%` : '---'}
                         </div>
-                    </Link>
+                    </div>
                 );
             })}
             <div style={{ marginTop: '1rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
