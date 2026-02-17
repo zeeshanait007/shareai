@@ -17,6 +17,29 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('error', function(e) {
+                if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+                  const src = e.target.src || e.target.href;
+                  if (src && src.indexOf('/_next/static/') !== -1) {
+                    console.error('Critical asset failed to load:', src);
+                    // Check for infinity loop
+                    const lastReload = sessionStorage.getItem('chunk_reload_loop');
+                    const now = Date.now();
+                    if (!lastReload || now - parseInt(lastReload) > 10000) {
+                      sessionStorage.setItem('chunk_reload_loop', now.toString());
+                      window.location.reload();
+                    }
+                  }
+                }
+              }, true);
+            `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <GlobalErrorHandler />
         {children}
