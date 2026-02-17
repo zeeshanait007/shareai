@@ -10,6 +10,7 @@ import WealthOverview from '@/components/WealthOverview';
 import ActionCenter from '@/components/ActionCenter';
 import EstateVault from '@/components/EstateVault';
 import WatchlistActivity from '@/components/WatchlistActivity';
+import CSVFormatGuide from '@/components/CSVFormatGuide';
 import { Undo2, FileUp, Loader2 } from 'lucide-react';
 
 export default function DashboardContent() {
@@ -118,6 +119,7 @@ export default function DashboardContent() {
                     >
                         <FileUp size={16} /> Import CSV
                     </button>
+                    <CSVFormatGuide />
                     {history.length > 0 && (
                         <button
                             onClick={handleRevert}
