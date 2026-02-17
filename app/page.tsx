@@ -11,6 +11,15 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Clear potentially stale session data before rendering landing page
+    if (typeof window !== 'undefined') {
+      sessionStorage.clear();
+      // We keep localStorage for persistence (auth session, portfolio) 
+      // but clear session-specific build hashes
+      localStorage.removeItem('last_build_check');
+      localStorage.removeItem('gemini_proactive_actions_hash');
+    }
+
     setMounted(true);
     // Redirect to dashboard if already logged in
     if (isAuthenticated()) {
