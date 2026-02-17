@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
+    "start:hostinger": "cd /home/u571225696/domains/aishare.zeeideas.com/public_html && NODE_ENV=production node server.js",
     "lint": "eslint"
   },
   "dependencies": {
