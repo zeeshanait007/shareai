@@ -61,22 +61,7 @@ export default function Sidebar() {
                 </ul>
             </nav>
 
-            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-4)' }}>
-                <Link
-                    href="/dashboard/settings"
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: 'var(--space-2) var(--space-4)',
-                        borderRadius: 'var(--radius-md)',
-                        color: 'var(--text-secondary)',
-                        transition: 'all var(--transition-fast)'
-                    }}
-                >
-                    <Settings size={20} style={{ marginRight: 'var(--space-3)' }} />
-                    Settings
-                </Link>
-            </div>
+
         </aside>
     );
 }

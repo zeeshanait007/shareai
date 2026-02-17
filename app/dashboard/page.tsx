@@ -1,5 +1,10 @@
 import DashboardContent from '@/components/DashboardContent';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default async function DashboardPage() {
-    return <DashboardContent />;
+    return (
+        <ProtectedRoute>
+            <DashboardContent />
+        </ProtectedRoute>
+    );
 }

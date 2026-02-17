@@ -21,9 +21,6 @@ export default function Header() {
             <Search />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-                <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0 }}>
-                    <Bell size={20} />
-                </button>
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <User size={18} />
                 </div>

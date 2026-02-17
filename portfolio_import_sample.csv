@@ -1,8 +1,8 @@
 type,name,symbol,quantity,purchasePrice,currentPrice,sector
-stock,Apple Inc.,AAPL,50,150,185.92,Technology
+stock,Apple Inc.,AAPL,20,150,185.92,Technology
 crypto,Bitcoin,BTC,0.85,30000,64000,Digital Gold
 real_estate,Miami Apartment,,1,85000,95000,Residential
-private_equity,SpaceX common,,100,50,186,Aerospace
+private_equity,SpaceX common,,10,50,186,Aerospace
 esop,Company Options,TECHX,5000,2.5,18.5,Technology
-stock,Tesla Inc,TSLA,20,200,175,Automotive
-crypto,Ethereum,ETH,10,2000,3500,Smart Contracts
+stock,Tesla Inc,TSLA,200,200,175,Automotive
+crypto,Ethereum,ETH,2,2000,3500,Smart Contracts
