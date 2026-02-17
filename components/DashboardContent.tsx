@@ -13,12 +13,15 @@ import ActionCenter from '@/components/ActionCenter';
 import EstateVault from '@/components/EstateVault';
 import WatchlistActivity from '@/components/WatchlistActivity';
 import CSVFormatGuide from '@/components/CSVFormatGuide';
+import HistoryPanel from '@/components/HistoryPanel';
 import SubscriptionBanner from '@/components/SubscriptionBanner';
-import { Undo2, FileUp, Loader2, LogOut, User, Check } from 'lucide-react';
+import { Undo2, FileUp, Loader2, LogOut, User, Check, History } from 'lucide-react';
+import { savePortfolioSnapshot } from '@/lib/portfolio-service';
 
 export default function DashboardContent() {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [mounted, setMounted] = React.useState(false);
+    const [showHistory, setShowHistory] = React.useState(false);
     const router = useRouter();
 
     // ... existing mounting logic ...
@@ -73,11 +76,23 @@ export default function DashboardContent() {
             }
 
             if (newAssets.length > 0) {
-                setHistory(prev => [...prev, assets]);
                 setAssets(newAssets);
                 // Clear old actions to force visual "AI Scanning" state
                 setActions([]);
                 setIsActionsLoading(true);
+
+                // Save snapshot to history if user is logged in
+                // The getCurrentUser() returns a Session-like object, we need to extract the user ID safely
+                // Based on auth.ts, session might be stored as string or object.
+                // For now, let's assume if we have a valid session, we can use a fallback or properly typed ID.
+                const userId = currentUser && (typeof currentUser === 'string' ? currentUser : (currentUser as any).id || (currentUser as any).user?.id);
+
+                if (userId) {
+                    savePortfolioSnapshot(userId, newAssets, {
+                        source: 'csv_upload',
+                        filename: file.name
+                    }).catch(err => console.error("Failed to save snapshot", err));
+                }
 
                 // Set temporary success status
                 setImportStatus('success');
@@ -268,6 +283,16 @@ export default function DashboardContent() {
                             onExecute={handleExecuteAction}
                         />
                     )}
+
+                    <div className="flex items-center gap-3 mb-6">
+                        <button
+                            onClick={() => setShowHistory(true)}
+                            className="flex items-center gap-2 px-4 py-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-all font-medium border border-indigo-200"
+                        >
+                            <History size={18} />
+                            <span>View Load History</span>
+                        </button>
+                    </div>
 
                     <div className="card">
                         <h2 style={{ fontSize: '1.25rem', marginBottom: 'var(--space-4)' }}>Watchlist Activity</h2>

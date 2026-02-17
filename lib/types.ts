@@ -30,3 +30,16 @@ export interface HistoricalData {
     close: number;
     volume: number;
 }
+
+export interface PortfolioSnapshot {
+    id: string;
+    user_id: string;
+    assets: any[]; // Using any[] to avoid circular dependency with assets.ts, or move Asset type here
+    metadata: {
+        item_count: number;
+        total_value?: number;
+        source?: 'csv_upload' | 'manual_edit';
+        filename?: string;
+    };
+    created_at: string;
+}
