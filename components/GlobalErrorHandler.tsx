@@ -10,25 +10,40 @@ import { useEffect } from 'react';
 export default function GlobalErrorHandler() {
     useEffect(() => {
         const handleError = (event: ErrorEvent | PromiseRejectionEvent) => {
-            const message = 'message' in event ? event.message : (event as any).reason?.message;
+            const message = 'message' in event ? (event as any).message : (event as any).reason?.message;
+            const target = (event as any).target;
 
-            // Check for ChunkLoadError patterns
-            if (
-                message &&
-                (message.includes('Loading chunk') ||
+            // Check if it's a script/link load failure
+            const isResourceError = target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK');
+
+            // Check for various ChunkLoadError patterns across browsers
+            const isChunkError =
+                message && (
+                    message.includes('Loading chunk') ||
                     message.includes('ChunkLoadError') ||
-                    message.includes('Loading CSS chunk'))
-            ) {
-                console.warn('ChunkLoadError detected. Reloading page to fetch latest version...', message);
-                window.location.reload();
+                    message.includes('Loading CSS chunk') ||
+                    message.includes('Failed to fetch dynamically imported module') ||
+                    message.includes('Unexpected token') // Often happens when a 404 HTML page is served as JS
+                );
+
+            if (isChunkError || isResourceError) {
+                console.warn('Deployment mismatch or ChunkLoadError detected. Reloading page...', message || 'Resource load failure');
+
+                // Avoid infinite reload loops
+                const lastReload = sessionStorage.getItem('last_chunk_reload');
+                const now = Date.now();
+                if (!lastReload || now - parseInt(lastReload) > 5000) {
+                    sessionStorage.setItem('last_chunk_reload', now.toString());
+                    window.location.reload();
+                }
             }
         };
 
-        window.addEventListener('error', handleError);
+        window.addEventListener('error', handleError, true);
         window.addEventListener('unhandledrejection', handleError);
 
         return () => {
-            window.removeEventListener('error', handleError);
+            window.removeEventListener('error', handleError, true);
             window.removeEventListener('unhandledrejection', handleError);
         };
     }, []);
