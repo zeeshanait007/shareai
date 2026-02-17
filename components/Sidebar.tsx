@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, LineChart, PieChart, Settings, Search, Sparkles, TrendingUp, Users, Trash2, Save } from 'lucide-react';
 import { useDashboard } from '@/providers/DashboardProvider';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -17,7 +17,15 @@ const navItems = [
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const router = useRouter();
     const { dashboards, currentDashboardId, loadDashboard, deleteDashboard, updateDashboard } = useDashboard();
+
+    const handleDashboardClick = (id: string | null) => {
+        loadDashboard(id);
+        if (pathname !== '/dashboard') {
+            router.push('/dashboard');
+        }
+    };
 
     const [confirmModal, setConfirmModal] = React.useState<{
         isOpen: boolean;
@@ -64,7 +72,7 @@ export default function Sidebar() {
                                 return (
                                     <li key={item.href} style={{ marginBottom: 'var(--space-2)' }}>
                                         <div
-                                            onClick={() => loadDashboard(null)}
+                                            onClick={() => handleDashboardClick(null)}
                                             style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
@@ -87,7 +95,7 @@ export default function Sidebar() {
                                                 {dashboards.map(dash => (
                                                     <li key={dash.id} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                                         <div
-                                                            onClick={() => loadDashboard(dash.id)}
+                                                            onClick={() => handleDashboardClick(dash.id)}
                                                             style={{
                                                                 flex: 1,
                                                                 padding: '0.5rem 1rem',
