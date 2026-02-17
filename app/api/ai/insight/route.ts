@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
                             
                             ASSET DATA:
                             - Symbol: ${symbol}
-                            - Current Price: $${quote.regularMarketPrice || quote.price || 'N/A'}
+                            - Current Price: $${quote.regularMarketPrice || 'N/A'}
                             - Market Cap: $${quote.marketCap ? (quote.marketCap / 1e9).toFixed(2) : 'N/A'}B
                             - 30-Day Performance: ${priceChange30d}%
                             - 30-Day Range: $${low30d.toFixed(2)} - $${high30d.toFixed(2)}
