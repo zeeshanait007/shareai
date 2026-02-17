@@ -2,34 +2,68 @@ const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
 const path = require('path');
+const fs = require('fs');
 
-const dev = false; // Force production mode for Hostinger
-const hostname = '0.0.0.0'; // Bind to all interfaces to avoid localhost IPv6 issues
+const dev = false;
 const port = process.env.PORT || 3000;
-
-// Explicitly define the directory to handle potential CWD mismatches on Hostinger
 const dir = path.join(__dirname);
-const app = next({ dev, hostname, port, dir });
-const handle = app.getRequestHandler();
 
-app.prepare().then(() => {
-    const server = createServer(async (req, res) => {
-        try {
-            const parsedUrl = parse(req.url, true);
-            await handle(req, res, parsedUrl);
-        } catch (err) {
-            console.error('Error occurred handling', req.url, err);
-            res.statusCode = 500;
-            res.end('internal server error');
-        }
+// DIAGNOSTIC 1: Check if .next folder exists
+const nextDir = path.join(dir, '.next');
+if (!fs.existsSync(nextDir)) {
+    console.error(`CRITICAL: .next directory not found at ${nextDir}`);
+    // Start a simple server to report the error to the browser
+    createServer((req, res) => {
+        res.writeHead(500, { 'Content-Type': 'text/html' });
+        res.end(`
+            <h1>Deployment Error: Build Missing</h1>
+            <p>The <code>.next</code> build directory was not found.</p>
+            <p><strong>Path checked:</strong> ${nextDir}</p>
+            <hr>
+            <h3>How to Fix:</h3>
+            <ol>
+                <li>Run <code>npm run build</code> in the Hostinger terminal.</li>
+                <li>Check for build errors in the console.</li>
+            </ol>
+        `);
+    }).listen(port, () => {
+        console.log(`> Diagnostic server ready on port ${port}`);
     });
+} else {
+    // Normal Next.js startup
+    const app = next({ dev, hostname: '0.0.0.0', port, dir });
+    const handle = app.getRequestHandler();
 
-    server.listen(port, (err) => {
-        if (err) throw err;
-        console.log(`> Ready on http://${hostname}:${port}`);
+    app.prepare().then(() => {
+        const server = createServer(async (req, res) => {
+            try {
+                const parsedUrl = parse(req.url, true);
+                const { pathname } = parsedUrl;
+
+                // DIAGNOSTIC 2: Health check endpoint
+                if (pathname === '/health') {
+                    res.statusCode = 200;
+                    res.end('OK');
+                    return;
+                }
+
+                await handle(req, res, parsedUrl);
+            } catch (err) {
+                console.error('Error occurred handling', req.url, err);
+                res.statusCode = 500;
+                res.end('internal server error');
+            }
+        });
+
+        server.listen(port, (err) => {
+            if (err) throw err;
+            console.log(`> Ready on port ${port}`);
+        });
+
+        server.keepAliveTimeout = 61 * 1000;
+        server.headersTimeout = 62 * 1000;
+    }).catch(err => {
+        console.error('Next.js failed to start:', err);
+        process.exit(1);
     });
-
-    // Important for handling keep-alive timeouts on Load Balancers (like Hostinger/LiteSpeed)
-    server.keepAliveTimeout = 61 * 1000;
-    server.headersTimeout = 62 * 1000;
-});
+}
