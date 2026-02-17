@@ -1,12 +1,15 @@
 const { createServer } = require('http');
 const { parse } = require('url');
+const path = require('path');
 const next = require('next');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
 const port = process.env.PORT || 3000;
-// when using middleware `hostname` and `port` must be provided below
-const app = next({ dev, hostname, port });
+
+// Explicitly define the directory to handle potential CWD mismatches on Hostinger
+const dir = path.join(__dirname);
+const app = next({ dev, hostname, port, dir });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
