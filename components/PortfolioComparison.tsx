@@ -20,6 +20,9 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
     const userNetWorth = calculateNetWorth(userAssets);
     const aiNetWorth = calculateNetWorth(aiAssets);
 
+    const [userDrillDownSector, setUserDrillDownSector] = React.useState<string | null>(null);
+    const [aiDrillDownSector, setAiDrillDownSector] = React.useState<string | null>(null);
+
     // Helper to group assets by sector for charts
     const getSectorData = (assets: Asset[]) => {
         const distribution: Record<string, number> = {};
@@ -29,6 +32,16 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
             distribution[sector] = (distribution[sector] || 0) + value;
         });
         return Object.entries(distribution).map(([name, value]) => ({ name, value }));
+    };
+
+    const getAssetDataForSector = (assets: Asset[], sector: string) => {
+        return assets
+            .filter(a => (a.sector || 'Other') === sector)
+            .map(a => ({
+                name: a.name,
+                value: a.quantity * a.currentPrice
+            }))
+            .sort((a, b) => b.value - a.value);
     };
 
     const userSectorData = getSectorData(userAssets);
@@ -77,24 +90,38 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* User Side */}
                 <div style={{ padding: '1rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-lg)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                        <span style={{ fontWeight: 'bold', color: 'var(--text-secondary)' }}>YOU</span>
-                        <span style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>${userNetWorth.toLocaleString()}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
+                        <div>
+                            <span style={{ fontWeight: 'bold', color: 'var(--text-secondary)' }}>YOU</span>
+                            {userDrillDownSector && <span className="text-xs text-muted-foreground ml-2">({userDrillDownSector})</span>}
+                        </div>
+                        {userDrillDownSector ? (
+                            <button
+                                onClick={() => setUserDrillDownSector(null)}
+                                className="text-xs flex items-center gap-1 text-blue-500 hover:underline"
+                            >
+                                ← Back
+                            </button>
+                        ) : (
+                            <span style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>${userNetWorth.toLocaleString()}</span>
+                        )}
                     </div>
 
                     <div style={{ height: '200px', marginBottom: '1rem' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={userSectorData}
+                                    data={userDrillDownSector ? getAssetDataForSector(userAssets, userDrillDownSector) : userSectorData}
                                     cx="50%"
                                     cy="50%"
                                     innerRadius={40}
                                     outerRadius={70}
                                     paddingAngle={5}
                                     dataKey="value"
+                                    onClick={(data) => !userDrillDownSector && setUserDrillDownSector(data.name)}
+                                    style={{ cursor: userDrillDownSector ? 'default' : 'pointer' }}
                                 >
-                                    {userSectorData.map((entry, index) => (
+                                    {(userDrillDownSector ? getAssetDataForSector(userAssets, userDrillDownSector) : userSectorData).map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
@@ -108,7 +135,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                                         zIndex: 100
                                     }}
                                     itemStyle={{ color: 'var(--text-primary)' }}
-                                    formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Value']}
+                                    formatter={(value: any, name: any) => [`$${Number(value).toLocaleString()}`, name]}
                                 />
                             </PieChart>
                         </ResponsiveContainer>
@@ -140,26 +167,40 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                             </div>
                         </div>
                     )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                        <span style={{ fontWeight: 'bold', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Sparkles size={16} /> GEMINI AI MODEL
-                        </span>
-                        <span style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>${aiNetWorth.toLocaleString()}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
+                        <div>
+                            <span style={{ fontWeight: 'bold', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Sparkles size={16} /> GEMINI AI MODEL
+                            </span>
+                            {aiDrillDownSector && <span className="text-xs text-muted-foreground ml-6">({aiDrillDownSector})</span>}
+                        </div>
+                        {aiDrillDownSector ? (
+                            <button
+                                onClick={() => setAiDrillDownSector(null)}
+                                className="text-xs flex items-center gap-1 text-blue-500 hover:underline"
+                            >
+                                ← Back
+                            </button>
+                        ) : (
+                            <span style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>${aiNetWorth.toLocaleString()}</span>
+                        )}
                     </div>
 
                     <div style={{ height: '200px', marginBottom: '1rem' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={aiSectorData}
+                                    data={aiDrillDownSector ? getAssetDataForSector(aiAssets, aiDrillDownSector) : aiSectorData}
                                     cx="50%"
                                     cy="50%"
                                     innerRadius={40}
                                     outerRadius={70}
                                     paddingAngle={5}
                                     dataKey="value"
+                                    onClick={(data) => !aiDrillDownSector && setAiDrillDownSector(data.name)}
+                                    style={{ cursor: aiDrillDownSector ? 'default' : 'pointer' }}
                                 >
-                                    {aiSectorData.map((entry, index) => (
+                                    {(aiDrillDownSector ? getAssetDataForSector(aiAssets, aiDrillDownSector) : aiSectorData).map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
                                     ))}
                                 </Pie>
@@ -173,7 +214,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                                         zIndex: 100
                                     }}
                                     itemStyle={{ color: 'var(--text-primary)' }}
-                                    formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Value']}
+                                    formatter={(value: any, name: any) => [`$${Number(value).toLocaleString()}`, name]}
                                 />
                             </PieChart>
                         </ResponsiveContainer>
