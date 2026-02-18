@@ -295,14 +295,42 @@ export async function generateAIPortfolio(totalCapital: number, userAssets: any[
         const userPortfolioString = userAssets.length > 0
             ? `USER'S CURRENT PORTFOLIO:\n${userAssets.map(a => {
                 const value = a.quantity * a.currentPrice;
-                return `- ${a.name}${a.symbol ? ` (${a.symbol})` : ''}: $${value.toLocaleString()}`;
+                const sectorStr = a.sector || (a.type === 'real_estate' ? 'Real Estate' : (a.type === 'crypto' ? 'Crypto' : 'Other'));
+                return `- ${a.name}${a.symbol ? ` (${a.symbol})` : ''}: $${value.toLocaleString()} [Type: ${a.type}, Sector: ${sectorStr}]`;
             }).join('\n')}`
             : "No current assets.";
 
         const prompt = `
-            Analyze user's holdings and create a TARGET PROFITABLE PORTFOLIO for $${totalCapital}.
+            You are a World-Class Portfolio Manager and Quantitative Strategist.
+            Total Capital to distribute: $${totalCapital}.
+            
             ${userPortfolioString}
-            Return a JSON array of assets. Each asset must have [type: "stock"|"crypto"|"etf"|"real_estate", name, symbol, quantity, price, sector].
+
+            TASK:
+            Analyze the user's current holdings and create a TARGET PROFITABLE PORTFOLIO for the same $${totalCapital}.
+            The goal is to MAXIMIZE PROFITABILITY and ROI while maintaining moderate risk.
+            
+            IMPORTANT CONTEXT:
+            - The user has PHYSICAL REAL ESTATE often generating RENTAL INCOME. 
+            - DO NOT suggest selling physical real estate unless it is severely underperforming or highly illiquid.
+            - Instead, treat Real Estate as a core yield-generating foundation.
+            
+            ALLOCATION STRATEGY:
+            - Growth Stocks (Tech, AI, Semiconductors): 30-40%
+            - Value/Defensive (Finance, Healthcare, Energy): 15-20%
+            - Crypto (High Conviction - BTC/ETH): 5-10%
+            - Real Estate (Rental Properties, REITs): 20-30%
+            - Cash/ETFs (Index tracking): balance
+            
+            Return a JSON array of assets. Each asset must have:
+            - type: "stock" | "crypto" | "etf" | "real_estate"
+            - name: Full name
+            - symbol: Ticker symbol
+            - quantity: Calculated based on price and allocation
+            - price: Current approx price
+            - sector: Industry sector
+            
+            CRITICAL: Return ONLY valid JSON array.
         `;
 
         const result = await model.generateContent(prompt);
@@ -337,8 +365,27 @@ export async function getPortfolioComparisonInsight(
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
+        const userSectors = [...new Set(userAssets.map(a => a.sector || 'Other'))].join(', ');
+        const aiSectors = [...new Set(aiAssets.map(a => a.sector || 'Other'))].join(', ');
+
         const prompt = `
-            Compare USER'S CURRENT PORTFOLIO with AI TARGET PORTFOLIO.
+            You are a Ruthless Portfolio Strategist and ROI Optimizer.
+            Compare the USER'S CURRENT PORTFOLIO with the AI TARGET PROFITABLE PORTFOLIO.
+            
+            USER PORTFOLIO:
+            - Assets: ${userAssets.length}
+            - Sectors: ${userSectors}
+            - Top Holdings: ${userAssets.slice(0, 3).map(a => a.name).join(', ')}
+            
+            AI TARGET (Optimized for Profit):
+            - Assets: ${aiAssets.length}
+            - Sectors: ${aiSectors}
+            - Top Holdings: ${aiAssets.slice(0, 3).map(a => a.name).join(', ')}
+
+            Task:
+            Write a detailed institutional-grade comparison and redistribution strategy.
+            Address the user's RENTAL INCOME and physical properties. 
+
             Return ONLY a JSON object with this EXACT structure:
             {
                 "convictionExplanation": "string",

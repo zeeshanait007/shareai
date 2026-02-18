@@ -146,7 +146,29 @@ export default function DashboardContent() {
 
         const timer = setTimeout(fetchActions, 1000); // Debounce
         return () => clearTimeout(timer);
-    }, [assets, mounted]); // stats is derived from assets, so just dependent on assets is enough basically (or memoized stats)
+    }, [assets, mounted]);
+
+    // Auto-repair for comparison insight if it's in a synchronization error state
+    React.useEffect(() => {
+        if (!mounted || isGeneratingInsight) return;
+
+        const errorPhrase = "Comparison currently unavailable due to institutional data synchronization.";
+        if (typeof comparisonInsight === 'string' && comparisonInsight === errorPhrase && aiAssets.length > 0) {
+            console.log("Auto-repairing corrupted AI comparison insight...");
+            const repairInsight = async () => {
+                setIsGeneratingInsight(true);
+                try {
+                    const insight = await getPortfolioComparisonInsight(assets, aiAssets);
+                    setComparisonInsight(insight);
+                } catch (error) {
+                    console.error("Auto-repair failed:", error);
+                } finally {
+                    setIsGeneratingInsight(false);
+                }
+            };
+            repairInsight();
+        }
+    }, [comparisonInsight, aiAssets, assets, mounted, isGeneratingInsight, setComparisonInsight]);
 
     const handleLogout = () => {
         logout();
