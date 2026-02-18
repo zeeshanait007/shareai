@@ -588,7 +588,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', alignItems: 'center' }}>
                                 <div>
                                     <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                        <Sparkles size={13} /> AI PORTFOLIO
+                                        <Sparkles size={13} /> AI RECOMMENDED PORTFOLIO
                                     </span>
                                     {aiDrillDownSector && <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: '1rem' }}>({aiDrillDownSector})</span>}
                                 </div>
