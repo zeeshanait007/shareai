@@ -136,7 +136,7 @@ export default function InstitutionalAnalysis({ symbol, insight, isStreaming }: 
                             <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
                                 <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-3 block">QUANTITATIVE DRIVERS</span>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                                    {insight.evidence.quantitativeDrivers.map((d: string, i: number) => (
+                                    {(insight.evidence?.quantitativeDrivers || []).map((d: string, i: number) => (
                                         <div key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                             <div style={{ width: '6px', height: '6px', background: 'var(--primary)', borderRadius: '50%' }} />
                                             <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{d}</span>
@@ -146,7 +146,7 @@ export default function InstitutionalAnalysis({ symbol, insight, isStreaming }: 
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
-                                {Object.entries(insight.evidence.factorExposure || {}).map(([key, val]: [string, string]) => (
+                                {Object.entries(insight.evidence?.factorExposure || {}).map(([key, val]: [string, string]) => (
                                     <div key={key} style={{
                                         padding: '0.75rem',
                                         background: 'var(--surface-hover)',
@@ -184,7 +184,7 @@ export default function InstitutionalAnalysis({ symbol, insight, isStreaming }: 
                                 <Search size={18} className="text-blue-400" />
                                 <div style={{ fontSize: '0.85rem' }}>
                                     <span className="text-muted-foreground">Historical Reliability:</span>
-                                    <span className="font-black ml-2" style={{ color: 'var(--primary)' }}>{insight.evidence.historicalProbability}</span>
+                                    <span className="font-black ml-2" style={{ color: 'var(--primary)' }}>{insight.evidence?.historicalProbability || '---'}</span>
                                 </div>
                             </div>
                         </div>
@@ -206,14 +206,14 @@ export default function InstitutionalAnalysis({ symbol, insight, isStreaming }: 
                                         <Zap size={14} />
                                         <span className="text-[10px] font-black uppercase tracking-widest">Rate Exposure</span>
                                     </div>
-                                    <span style={{ fontSize: '0.875rem', lineHeight: '1.4', color: 'var(--text-secondary)' }}>{insight.riskSensitivity.rateHikeImpact}</span>
+                                    <span style={{ fontSize: '0.875rem', lineHeight: '1.4', color: 'var(--text-secondary)' }}>{insight.riskSensitivity?.rateHikeImpact || '---'}</span>
                                 </div>
                                 <div style={{ padding: '1rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', marginBottom: '0.75rem' }}>
                                         <TrendingDown size={14} />
                                         <span className="text-[10px] font-black uppercase tracking-widest">Macro Shock</span>
                                     </div>
-                                    <span style={{ fontSize: '0.875rem', lineHeight: '1.4', color: 'var(--text-secondary)' }}>{insight.riskSensitivity.recessionImpact}</span>
+                                    <span style={{ fontSize: '0.875rem', lineHeight: '1.4', color: 'var(--text-secondary)' }}>{insight.riskSensitivity?.recessionImpact || '---'}</span>
                                 </div>
                             </div>
 
@@ -228,7 +228,7 @@ export default function InstitutionalAnalysis({ symbol, insight, isStreaming }: 
                             }}>
                                 <div>
                                     <span style={{ fontSize: '0.7rem', fontWeight: '900', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>DR_MAX_DRAWDOWN_ESTIMATE</span>
-                                    <div style={{ fontSize: '1.75rem', fontWeight: '900', color: 'white', letterSpacing: '-0.02em' }}>{insight.riskSensitivity.worstCaseBand}</div>
+                                    <div style={{ fontSize: '1.75rem', fontWeight: '900', color: 'white', letterSpacing: '-0.02em' }}>{insight.riskSensitivity?.worstCaseBand || '---'}</div>
                                 </div>
                                 <ShieldAlert size={40} color="white" style={{ opacity: 0.3 }} />
                             </div>
@@ -255,7 +255,7 @@ export default function InstitutionalAnalysis({ symbol, insight, isStreaming }: 
                                 </div>
                                 <span className="text-[10px] font-black text-orange-600 uppercase mb-1 block">Thesis Invalidation Vectors</span>
                                 <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
-                                    {insight.counterCase.thesisInvalidation}
+                                    {insight.counterCase?.thesisInvalidation || '---'}
                                 </p>
                             </div>
 
@@ -265,7 +265,7 @@ export default function InstitutionalAnalysis({ symbol, insight, isStreaming }: 
                                 </div>
                                 <span className="text-[10px] font-black text-blue-600 uppercase mb-1 block">Structural Market Shift Risks</span>
                                 <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
-                                    {insight.counterCase.marketShiftRisks}
+                                    {insight.counterCase?.marketShiftRisks || '---'}
                                 </p>
                             </div>
                         </div>
@@ -287,7 +287,7 @@ export default function InstitutionalAnalysis({ symbol, insight, isStreaming }: 
                                         <CheckCircle2 size={24} />
                                     </div>
                                     <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Risk Match</div>
-                                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>{insight.compliance.riskMatch}</div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>{insight.compliance?.riskMatch || '---'}</div>
                                 </div>
                                 <div style={{ width: '1px', background: 'var(--border)', height: '100%' }} />
                                 <div style={{ textAlign: 'center' }}>
@@ -295,14 +295,14 @@ export default function InstitutionalAnalysis({ symbol, insight, isStreaming }: 
                                         <Scale size={24} />
                                     </div>
                                     <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Suitability</div>
-                                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>{insight.compliance.suitabilityStatus}</div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>{insight.compliance?.suitabilityStatus || '---'}</div>
                                 </div>
                             </div>
 
                             <div>
                                 <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-3 block">REGULATORY STANDING & FLAGS</span>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                    {insight.compliance.regulatoryFlags.map((flag: string, i: number) => (
+                                    {(insight.compliance?.regulatoryFlags || []).map((flag: string, i: number) => (
                                         <div key={i} style={{
                                             padding: '0.4rem 0.75rem',
                                             background: 'var(--surface-hover)',

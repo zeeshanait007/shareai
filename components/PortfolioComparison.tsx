@@ -36,6 +36,11 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
     const [userDrillDownSector, setUserDrillDownSector] = React.useState<string | null>(null);
     const [aiDrillDownSector, setAiDrillDownSector] = React.useState<string | null>(null);
     const [chartType, setChartType] = React.useState<'doughnut' | 'stacked'>('doughnut');
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Helper to group assets by sector for charts
     const getSectorData = (assets: Asset[]) => {
@@ -88,7 +93,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
     const topPickSymbol = insightObj?.topPick?.symbol || aiAssets[0]?.symbol || '—';
     const topPickImpact = insightObj?.topPick?.impact || aiAssets[0]?.sector || 'Strategic Pick';
     const topPickReason = insightObj?.topPick?.reason || 'AI-optimized sector alignment for maximum alpha capture.';
-    const narrativeText = insightObj?.narrative || `Your portfolio of $${userNetWorth.toLocaleString()} is being compared against an AI-optimized allocation of $${aiNetWorth.toLocaleString()} across ${aiSectorData.length} sectors. Regenerate to get fresh AI analysis.`;
+    const narrativeText = insightObj?.narrative || `Your portfolio of $${userNetWorth.toLocaleString('en-US')} is being compared against an AI-optimized allocation of $${aiNetWorth.toLocaleString('en-US')} across ${aiSectorData.length} sectors. Regenerate to get fresh AI analysis.`;
 
     // Stacked Chart Data Preparation
     const stackedDrillDown = userDrillDownSector; // Use user sector as the driver
@@ -136,6 +141,12 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
     };
 
     const { keys: stackedKeys, data: stackedChartData } = getStackedData();
+
+    if (!mounted) {
+        return <div style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="animate-pulse" style={{ color: 'var(--text-muted)' }}>Loading Analysis...</div>
+        </div>;
+    }
 
     if (aiAssets.length === 0) {
         return (
@@ -357,7 +368,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                             <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>Human vs AI Weight %</span>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                            {insightObj.sectorGaps.slice(0, 4).map((gap, i) => {
+                            {(insightObj.sectorGaps || []).slice(0, 4).map((gap, i) => {
                                 const maxVal = Math.max(gap.userWeight, gap.aiWeight, 1);
                                 return (
                                     <div key={i} style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '0.75rem', alignItems: 'center' }}>
@@ -481,7 +492,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                                     cursor={{ fill: 'var(--surface)', opacity: 0.1 }}
                                     contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.5)', color: 'var(--text-primary)' }}
                                     itemStyle={{ color: 'var(--text-primary)' }}
-                                    formatter={(value: any, name: any) => [`$${Number(value).toLocaleString()}`, name]}
+                                    formatter={(value: any, name: any) => [`$${Number(value).toLocaleString('en-US')}`, name]}
                                 />
                                 <Legend wrapperStyle={{ paddingTop: '10px' }} />
                                 {stackedKeys.map((key, index) => (
@@ -522,7 +533,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                                     {userDrillDownSector ? (
                                         <button onClick={() => setUserDrillDownSector(null)} style={{ fontSize: '0.7rem', color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}>← Back</button>
                                     ) : (
-                                        <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>${userNetWorth.toLocaleString()}</span>
+                                        <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>${userNetWorth.toLocaleString('en-US')}</span>
                                     )}
                                 </div>
                             </div>
@@ -533,7 +544,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" opacity={0.5} />
                                             <XAxis type="number" hide />
                                             <YAxis type="category" dataKey="name" hide width={0} />
-                                            <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.5)', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} formatter={(value: any, name: any) => [`$${Number(value).toLocaleString()}`, name]} />
+                                            <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.5)', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} formatter={(value: any, name: any) => [`$${Number(value).toLocaleString('en-US')}`, name]} />
                                             {stackedKeys.map((key, index) => (
                                                 <Bar key={key} dataKey={key} stackId="a" fill={COLORS[index % COLORS.length]} radius={index === stackedKeys.length - 1 ? [0, 4, 4, 0] : [0, 0, 0, 0]} onClick={() => !stackedDrillDown && setUserDrillDownSector(key)} style={{ cursor: stackedDrillDown ? 'default' : 'pointer' }} />
                                             ))}
@@ -550,7 +561,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                 ))}
                                             </Pie>
-                                            <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.5)', color: 'var(--text-primary)', zIndex: 100 }} itemStyle={{ color: 'var(--text-primary)' }} formatter={(value: any, name: any) => [`$${Number(value).toLocaleString()}`, name]} />
+                                            <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.5)', color: 'var(--text-primary)', zIndex: 100 }} itemStyle={{ color: 'var(--text-primary)' }} formatter={(value: any, name: any) => [`$${Number(value).toLocaleString('en-US')}`, name]} />
                                         </PieChart>
                                     )}
                                 </ResponsiveContainer>
@@ -601,7 +612,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                                     {aiDrillDownSector ? (
                                         <button onClick={() => setAiDrillDownSector(null)} style={{ fontSize: '0.7rem', color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}>← Back</button>
                                     ) : (
-                                        <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>${aiNetWorth.toLocaleString()}</span>
+                                        <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>${aiNetWorth.toLocaleString('en-US')}</span>
                                     )}
                                 </div>
                             </div>
@@ -612,7 +623,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" opacity={0.5} />
                                             <XAxis type="number" hide />
                                             <YAxis type="category" dataKey="name" hide width={0} />
-                                            <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.5)', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} formatter={(value: any, name: any) => [`$${Number(value).toLocaleString()}`, name]} />
+                                            <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.5)', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} formatter={(value: any, name: any) => [`$${Number(value).toLocaleString('en-US')}`, name]} />
                                             {stackedKeys.map((key, index) => (
                                                 <Bar key={key} dataKey={key} stackId="a" fill={COLORS[(index + 2) % COLORS.length]} radius={index === stackedKeys.length - 1 ? [0, 4, 4, 0] : [0, 0, 0, 0]} onClick={() => !aiDrillDownSector && setAiDrillDownSector(key)} style={{ cursor: aiDrillDownSector ? 'default' : 'pointer' }} />
                                             ))}
@@ -629,7 +640,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                                                     <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
                                                 ))}
                                             </Pie>
-                                            <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.5)', color: 'var(--text-primary)', zIndex: 100 }} itemStyle={{ color: 'var(--text-primary)' }} formatter={(value: any, name: any) => [`$${Number(value).toLocaleString()}`, name]} />
+                                            <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.5)', color: 'var(--text-primary)', zIndex: 100 }} itemStyle={{ color: 'var(--text-primary)' }} formatter={(value: any, name: any) => [`$${Number(value).toLocaleString('en-US')}`, name]} />
                                         </PieChart>
                                     )}
                                 </ResponsiveContainer>

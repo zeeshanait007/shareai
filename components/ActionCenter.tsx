@@ -53,7 +53,7 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
                 const sortedAssets = [...assets].sort((a, b) => (b.quantity * b.currentPrice) - (a.quantity * a.currentPrice));
                 const largest = sortedAssets[0];
 
-                const newAssets = assets.map(a => {
+                const newAssets = (assets || []).map(a => {
                     if (a.id === largest.id) {
                         return { ...a, quantity: a.quantity * 0.9 };
                     }
@@ -88,7 +88,7 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
                 clearInterval(interval);
 
                 // Massive rebalance simulation
-                const newAssets = assets.map(a => ({
+                const newAssets = (assets || []).map(a => ({
                     ...a,
                     currentPrice: a.currentPrice * (0.95 + Math.random() * 0.1) // Randomize prices slightly
                 }));

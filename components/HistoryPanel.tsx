@@ -26,7 +26,7 @@ export default function HistoryPanel({ userId, onRestore, onClose }: HistoryPane
     };
 
     const formatDate = (isoString: string) => {
-        return new Date(isoString).toLocaleString(undefined, {
+        return new Date(isoString).toLocaleString('en-US', {
             dateStyle: 'medium',
             timeStyle: 'short'
         });

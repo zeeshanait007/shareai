@@ -24,7 +24,7 @@ export default function WatchlistActivity({ onStockClick }: { onStockClick?: (sy
 
         try {
             const updated = await Promise.all(
-                saved.map(async (item) => {
+                (saved || []).map(async (item) => {
                     try {
                         const res = await fetch(`/api/quote?symbol=${item.symbol}&range=${range}`);
                         if (!res.ok) return item;

@@ -18,6 +18,11 @@ export default function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const { dashboards, currentDashboardId, loadDashboard, deleteDashboard, updateDashboard } = useDashboard();
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleDashboardClick = (id: string | null) => {
         loadDashboard(id);
@@ -89,7 +94,7 @@ export default function Sidebar() {
                                         </div>
 
                                         {/* Saved Dashboards Sub-list */}
-                                        {dashboards.length > 0 && (
+                                        {mounted && dashboards.length > 0 && (
                                             <ul style={{ listStyle: 'none', marginLeft: '2.5rem', marginTop: '0.5rem', borderLeft: '1px solid var(--border)' }}>
                                                 {dashboards.map(dash => (
                                                     <li key={dash.id} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>

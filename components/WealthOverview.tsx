@@ -53,7 +53,7 @@ export default function WealthOverview({ assets, netWorth, distribution, taxEffi
                     )}
                 </div>
                 <div style={{ fontSize: '2.5rem', fontWeight: 800 }}>
-                    {mounted ? `$${netWorth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${netWorth.toFixed(2)}`}
+                    {mounted ? `$${netWorth.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${netWorth.toFixed(2)}`}
                 </div>
 
                 {narrative && (
@@ -152,7 +152,7 @@ export default function WealthOverview({ assets, netWorth, distribution, taxEffi
                                             >
                                                 <span style={{ color: 'var(--text-secondary)' }}>{asset.name}</span>
                                                 <span style={{ fontWeight: 500 }}>
-                                                    {mounted ? `$${(asset.quantity * asset.currentPrice).toLocaleString()}` : `$${(asset.quantity * asset.currentPrice).toFixed(0)}`}
+                                                    {mounted ? `$${(asset.quantity * asset.currentPrice).toLocaleString('en-US')}` : `$${(asset.quantity * asset.currentPrice).toFixed(0)}`}
                                                 </span>
                                             </div>
                                         ))}

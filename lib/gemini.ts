@@ -218,9 +218,61 @@ export async function getGeminiDeepInsight(
 ): Promise<DeepInsight> {
     try {
         const model = genAI.getGenerativeModel(fastModelConfig);
+
+        // Calculate summary stats for the prompt
+        const recent30 = history.slice(-30);
+        const priceChange30d = recent30.length > 0
+            ? ((recent30[recent30.length - 1].close - recent30[0].close) / recent30[0].close * 100).toFixed(2)
+            : 0;
+        const high30d = Math.max(...recent30.map(d => d.high));
+        const low30d = Math.min(...recent30.map(d => d.low));
+        const avgVolume = recent30.reduce((sum, d) => sum + d.volume, 0) / (recent30.length || 1);
+
         const prompt = `
-            Institutional Deep Analysis: ${symbol} at $${quote.regularMarketPrice}. RSI: ${rsi}. ${webContext ? `News: ${webContext.slice(0, 300)}` : ''}
-            Return JSON structure: { convictionExplanation, narrative, volatilityRegime, alphaScore, institutionalConviction, macroContext, riskRewardRatio, evidence: { quantitativeDrivers, factorExposure, historicalProbability, correlationImpacts }, riskSensitivity: { rateHikeImpact, recessionImpact, worstCaseBand }, counterCase: { thesisInvalidation, marketShiftRisks }, compliance: { riskMatch, suitabilityStatus, regulatoryFlags } }
+            You are a Lead Equity Analyst at a Global Hedge Fund with 15+ years of experience.
+            Provide an institutional-grade deep analysis of ${symbol}.
+            
+            ASSET DATA:
+            - Symbol: ${symbol}
+            - Current Price: $${quote.regularMarketPrice || 'N/A'}
+            - Market Cap: $${quote.marketCap ? (quote.marketCap / 1e9).toFixed(2) : 'N/A'}B
+            - 30-Day Performance: ${priceChange30d}%
+            - 30-Day Range: $${low30d.toFixed(2)} - $${high30d.toFixed(2)}
+            - Avg Volume (30d): ${(avgVolume / 1e6).toFixed(2)}M
+            - RSI: ${rsi}
+            
+            ${webContext ? `RECENT NEWS:\n${webContext.slice(0, 400)}\n` : ''}
+            
+            CRITICAL: Return ONLY a JSON object with this EXACT structure:
+            {
+                "convictionExplanation": "Specific institutional context...",
+                "narrative": "Detailed market narrative...",
+                "volatilityRegime": "Stable" | "Trending" | "Chaotic",
+                "alphaScore": number (0-100),
+                "institutionalConviction": "High" | "Medium" | "Low",
+                "macroContext": "Macro impact...",
+                "riskRewardRatio": "e.g., 1:2.4",
+                "evidence": {
+                    "quantitativeDrivers": ["driver1", "driver2"],
+                    "factorExposure": {"Quality": "High", "Value": "Low"},
+                    "historicalProbability": "Historical success rate...",
+                    "correlationImpacts": "Correlation details..."
+                },
+                "riskSensitivity": {
+                    "rateHikeImpact": "Impact of hikes",
+                    "recessionImpact": "Impact of recession",
+                    "worstCaseBand": "Worst case %"
+                },
+                "counterCase": {
+                    "thesisInvalidation": "What makes this wrong",
+                    "marketShiftRisks": "Market shift details"
+                },
+                "compliance": {
+                    "riskMatch": "Risk profile match",
+                    "suitabilityStatus": "Suitability status",
+                    "regulatoryFlags": ["None" or specific flags]
+                }
+            }
         `;
 
         const result = await model.generateContent(prompt);
