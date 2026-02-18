@@ -141,6 +141,8 @@ export default function DashboardContent() {
         };
     }, [assets]);
 
+    const isSyncing = isActionsLoading || isGeneratingAI || isGeneratingInsight;
+
     // Unified Synchronization Effect (Auto-Refresh everything on Asset changes)
     React.useEffect(() => {
         if (!mounted) return;
@@ -244,8 +246,7 @@ export default function DashboardContent() {
         const processAssets = (newAssets: Asset[]) => {
             if (newAssets.length > 0) {
                 setAssets(newAssets);
-                setActions([]);
-                setIsActionsLoading(true);
+                // The useEffect will trigger isActionsLoading globally
                 if (fileInputRef.current) fileInputRef.current.value = '';
             }
         };
@@ -364,7 +365,15 @@ export default function DashboardContent() {
         <>
             <div className="fade-in">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
-                    <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Imagine Wealth</h1>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Imagine Wealth</h1>
+                        {isSyncing && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontSize: '0.8125rem', fontWeight: 600 }}>
+                                <Loader2 className="animate-spin" size={14} />
+                                Synchronizing Institutional Intelligence...
+                            </div>
+                        )}
+                    </div>
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                         {/* User Info */}
                         {currentUser && (
@@ -391,16 +400,20 @@ export default function DashboardContent() {
                         <button
                             onClick={() => setIsAddAssetOpen(true)}
                             className="btn btn-primary"
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                            disabled={isSyncing}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: isSyncing ? 0.7 : 1 }}
                         >
-                            <Plus size={16} /> Add Asset
+                            {isSyncing ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                            {isSyncing ? 'Syncing...' : 'Add Asset'}
                         </button>
                         <button
                             onClick={() => fileInputRef.current?.click()}
                             className="btn btn-secondary"
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                            disabled={isSyncing}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: isSyncing ? 0.7 : 1 }}
                         >
-                            <FileUp size={16} /> Import
+                            {isSyncing ? <Loader2 size={16} className="animate-spin" /> : <FileUp size={16} />}
+                            {isSyncing ? 'Processing...' : 'Import'}
                         </button>
                         <button
                             onClick={() => {
