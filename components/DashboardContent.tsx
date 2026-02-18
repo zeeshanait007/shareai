@@ -112,7 +112,7 @@ export default function DashboardContent() {
         const capital = totalNetWorth > 0 ? totalNetWorth : 100000;
 
         // 1. Generate Assets
-        const newAiAssets = await generateAIPortfolio(capital);
+        const newAiAssets = await generateAIPortfolio(capital, assets);
         setAiAssets(newAiAssets);
         setIsGeneratingAI(false);
 

@@ -304,31 +304,42 @@ export async function getGeminiStockAnalysis(symbol: string): Promise<import('./
     }
 }
 
-export async function generateAIPortfolio(totalCapital: number): Promise<any[]> {
+export async function generateAIPortfolio(totalCapital: number, userAssets: any[] = []): Promise<any[]> {
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+
+        const userPortfolioString = userAssets.length > 0
+            ? `USER'S CURRENT PORTFOLIO:\n${userAssets.map(a => `- ${a.name} (${a.symbol}): $${(a.quantity * a.currentPrice).toLocaleString()} in ${a.sector}`).join('\n')}`
+            : "No current assets.";
+
         const prompt = `
-            You are a World-Class Portfolio Manager.
-            Create an IDEAL diversified portfolio with a total capital of $${totalCapital}.
+            You are a World-Class Portfolio Manager and Quantitative Strategist.
+            Total Capital to distribute: $${totalCapital}.
             
-            The portfolio should be balanced for high growth with moderate risk.
-            Include a mix of:
-            - Growth Stocks (Tech, AI)
-            - Value Stocks (Finance, Healthcare)
-            - ETFs (S&P 500, Nasdaq)
-            - Crypto (Bitcoin/Ethereum - max 5-10%)
+            ${userPortfolioString}
+
+            TASK:
+            Analyze the user's current holdings and create a TARGET PROFITABLE PORTFOLIO for the same $${totalCapital}.
+            The goal is to MAXIMIZE PROFITABILITY while maintaining moderate risk through optimized distribution.
             
-            Return a JSON array of assets. Each asset object must have:
-            - type: "stock" | "crypto" | "etf"
-            - name: Full name of the asset
+            ALLOCATION STRATEGY:
+            - Growth Stocks (Tech, AI, Semiconductors): 40-50%
+            - Value/Defensive (Finance, Healthcare, Energy): 20-30%
+            - Crypto (High Conviction - BTC/ETH): 5-10%
+            - Real Estate (REITs or Physical exposure): 10-15%
+            - Cash/ETFs (Index tracking): balance
+            
+            Return a JSON array of assets representing the TARGET distribution. Each asset must have:
+            - type: "stock" | "crypto" | "etf" | "real_estate"
+            - name: Full name
             - symbol: Ticker symbol
-            - quantity: Number of shares (calculated based on price and allocation)
-            - price: Current approximate market price per share
+            - quantity: Calculated based on price and allocation
+            - price: Current approximate market price
             - sector: Industry sector
             
-            Total value of all assets must match approximately $${totalCapital}.
+            Total value must be approx $${totalCapital}.
             
-            CRITICAL: Return ONLY valid JSON array. No markdown.
+            CRITICAL: Return ONLY a valid JSON array. No markdown.
         `;
 
         const result = await model.generateContent(prompt);
@@ -339,11 +350,11 @@ export async function generateAIPortfolio(totalCapital: number): Promise<any[]> 
         // Map to internal Asset interface
         return assets.map((a: any, index: number) => ({
             id: `ai-${Date.now()}-${index}`,
-            type: a.type === 'crypto' ? 'crypto' : 'stock',
+            type: (['crypto', 'real_estate', 'stock', 'etf'].includes(a.type) ? a.type : 'stock') as any,
             name: a.name,
             symbol: a.symbol,
             quantity: a.quantity,
-            purchasePrice: a.price, // AI buys at "current" price
+            purchasePrice: a.price,
             currentPrice: a.price,
             sector: a.sector,
             valuationDate: new Date().toISOString()
@@ -415,24 +426,26 @@ export async function getPortfolioComparisonInsight(
         const aiSectors = [...new Set(aiAssets.map(a => a.sector || 'Other'))].join(', ');
 
         const prompt = `
-            You are a ruthless Portfolio Analyst. Compare these two portfolios:
+            You are a Ruthless Portfolio Strategist and ROI Optimizer.
+            Compare the USER'S CURRENT PORTFOLIO with the AI TARGET PROFITABLE PORTFOLIO.
             
             USER PORTFOLIO:
             - Assets: ${userAssets.length}
             - Sectors: ${userSectors}
             - Top Holdings: ${userAssets.slice(0, 3).map(a => a.name).join(', ')}
             
-            AI MODEL PORTFOLIO (Target):
+            AI TARGET (Optimized for Profit):
             - Assets: ${aiAssets.length}
             - Sectors: ${aiSectors}
             - Top Holdings: ${aiAssets.slice(0, 3).map(a => a.name).join(', ')}
             
             Task:
-            Write a single, high-impact paragraph (max 40 words) comparing them.
-            Focus on the biggest GAP or MISSED OPPORTUNITY for the User.
-            Be direct and specific. Example: "You are heavily exposed to slow-growth Utilities, while the AI Model is capturing alpha in Semiconductor and Crypto. Pivot capital to high-beta sectors to match the model's projected 18% return."
+            Write a single, high-impact paragraph (max 45 words) on how to make the portfolio more PROFITABLE.
+            Identify exactly WHERE to add or redistribute capital. 
+            Mention specific gaps in Growth, Crypto, or Real Estate.
+            Example: "Your current heavy cash position is bleeding value. Redistribute 20% into AI-driven Tech and 10% into REITs for yield. This shift from defensive to growth-oriented sectors is projected to increase your annual ROI by 5.4%."
             
-            Tone: Professional, Insightful, slightly urgent.
+            Tone: Professional, Direct, ROI-focused.
         `;
 
         const result = await model.generateContent(prompt);
