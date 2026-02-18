@@ -83,6 +83,12 @@ export async function getGeminiProactiveActions(
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
+        const assetString = assets.map(a => {
+            const value = a.quantity * a.currentPrice;
+            const sectorStr = a.sector || (a.type === 'real_estate' ? 'Real Estate' : (a.type === 'crypto' ? 'Crypto' : 'Other'));
+            return `- ${a.name}: $${value.toLocaleString()} [Type: ${a.type}, Sector: ${sectorStr}]`;
+        }).join('\n');
+
         const topSectors = Object.entries(stats.distribution)
             .sort(([, a]: any, [, b]: any) => b - a)
             .slice(0, 3)
@@ -90,28 +96,36 @@ export async function getGeminiProactiveActions(
             .join(', ');
 
         const prompt = `
-            Analyze this portfolio and suggest 2-3 specific actionable recommendations.
+            You are a Proactive Wealth Management AI for high-net-worth individuals.
+            Analyze this portfolio and suggest 2-3 specific, high-impact actionable recommendations.
             
-            PORTFOLIO:
+            PORTFOLIO SUMMARY:
             - Net Worth: $${stats.netWorth.toLocaleString()}
             - Top Sectors: ${topSectors}
             - Portfolio Beta: ${stats.beta}
             - Tax Liability: $${stats.taxStats.taxEstimate.toLocaleString()}
             
+            DETAILED ASSETS:
+            ${assetString}
+            
             S&P 500 Benchmarks: Tech 28%, Financials 13%, Health 12%
             
+            TASK:
+            Identify risks (concentration, volatility) or opportunities (tax harvesting, under-allocation).
+            Focus on RENTAL INCOME properties and long-term tech growth.
+
             Return JSON array with this structure:
             [
                 {
                     "type": "rebalance" | "tax" | "governance",
                     "priority": "high" | "medium" | "low",
-                    "title": "Specific action (e.g., Overweight in Tech)",
-                    "description": "Specific rationale with numbers",
+                    "title": "Specific action (e.g., Yield Optimization for Properties)",
+                    "description": "Specific rationale with numbers and technical insight",
                     "impact": "Financial benefit (e.g., $4,200 Tax Alpha)",
                     "evidence": {
-                        "label": "Metric (e.g., Sector Exposure)",
-                        "value": "Your value (e.g., 45%)",
-                        "benchmark": "Benchmark (e.g., 28%)",
+                        "label": "Metric (e.g., Real Estate Yield)",
+                        "value": "Your value (e.g., 4.2%)",
+                        "benchmark": "Benchmark (e.g., 5.8%)",
                         "status": "critical" | "warning" | "good"
                     }
                 }

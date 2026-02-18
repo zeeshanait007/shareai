@@ -170,6 +170,28 @@ export default function DashboardContent() {
         }
     }, [comparisonInsight, aiAssets, assets, mounted, isGeneratingInsight, setComparisonInsight]);
 
+    // Auto-repair for proactive actions if it's in a standby state
+    React.useEffect(() => {
+        if (!mounted || isActionsLoading) return;
+
+        const isStandby = actions.length === 1 && actions[0].title === 'AI Analysis Standby';
+        if (isStandby && assets.length > 0) {
+            console.log("Auto-repairing Proactive Action Center standby state...");
+            const repairActions = async () => {
+                setIsActionsLoading(true);
+                try {
+                    const newActions = await getGeminiProactiveActions(assets, stats);
+                    setActions(newActions);
+                } catch (error) {
+                    console.error("Proactive auto-repair failed:", error);
+                } finally {
+                    setIsActionsLoading(false);
+                }
+            };
+            repairActions();
+        }
+    }, [actions.length, assets.length, mounted, isActionsLoading, stats, assets, setActions]);
+
     const handleLogout = () => {
         logout();
         router.push('/login');
