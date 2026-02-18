@@ -60,20 +60,24 @@ export default function DashboardContent() {
     const [actions, setActions] = React.useState<Action[]>([]);
     const [isActionsLoading, setIsActionsLoading] = React.useState(false);
     const [showActionCenter, setShowActionCenter] = React.useState(false);
+    const [showStrategyOverview, setShowStrategyOverview] = React.useState(false);
 
     React.useEffect(() => {
         setMounted(true);
     }, []);
 
     // Derived State (Moved up to fix hoisting issues)
+    const isDemoMode = assets.length === 0;
+    const displayAssets = isDemoMode ? mockAssets : assets;
+
     const stats = React.useMemo(() => {
         return {
-            netWorth: calculateNetWorth(assets),
-            distribution: getAssetDistribution(assets),
-            taxStats: calculateTaxLiability(assets),
-            beta: calculatePortfolioBeta(assets)
+            netWorth: calculateNetWorth(displayAssets),
+            distribution: getAssetDistribution(displayAssets),
+            taxStats: calculateTaxLiability(displayAssets),
+            beta: calculatePortfolioBeta(displayAssets)
         };
-    }, [assets]);
+    }, [displayAssets]);
 
     // ... [Omitted existing useEffects for localStorage saving] ...
 
@@ -124,11 +128,12 @@ export default function DashboardContent() {
         setIsGeneratingInsight(true);
 
         try {
-            const totalNetWorth = calculateNetWorth(assets);
+            const assetsToAnalyze = displayAssets; // Use displayAssets (mock or real)
+            const totalNetWorth = calculateNetWorth(assetsToAnalyze);
             const capital = totalNetWorth > 0 ? totalNetWorth : 100000;
 
             // Use the robust unified sync even for manual triggers
-            const { actions, aiAssets: newAiAssets, insight, marketNarrative: newNarrative } = await getUnifiedDashboardSync(assets, stats, capital);
+            const { actions, aiAssets: newAiAssets, insight, marketNarrative: newNarrative } = await getUnifiedDashboardSync(assetsToAnalyze, stats, capital);
 
             if (newAiAssets && newAiAssets.length > 0) {
                 setAiAssets(newAiAssets);
@@ -145,7 +150,7 @@ export default function DashboardContent() {
             setIsGeneratingAI(false);
             setIsGeneratingInsight(false);
         }
-    }, [assets, stats, setAiAssets, setComparisonInsight, setActions, setMarketNarrative]);
+    }, [displayAssets, stats, setAiAssets, setComparisonInsight, setActions, setMarketNarrative]);
 
 
     const isSyncing = isActionsLoading || isGeneratingAI || isGeneratingInsight || isImporting || isAutoSyncing;
@@ -153,6 +158,10 @@ export default function DashboardContent() {
     // Unified Synchronization Effect (Auto-Refresh everything on Asset changes)
     React.useEffect(() => {
         if (!mounted || isImporting) return; // Don't auto-sync while manually importing to avoid double-processing
+        if (isDemoMode) {
+            setMarketNarrative("Demo Mode: Visualize how AI optimizes this sample portfolio.");
+            return; // consistent early return
+        }
 
         const syncAllAI = async () => {
             console.log("Synchronizing institutional intelligence (Unified Mode)...");
@@ -183,7 +192,7 @@ export default function DashboardContent() {
 
         const timer = setTimeout(syncAllAI, 5000); // 5s debounce for lower API load
         return () => clearTimeout(timer);
-    }, [assets, mounted, stats, isImporting, setAiAssets, setComparisonInsight, setMarketNarrative]);
+    }, [assets, mounted, stats, isImporting, isDemoMode, setAiAssets, setComparisonInsight, setMarketNarrative]);
 
     // Auto-repair for comparison insight ... [Omitted for brevity, kept same] ...
     // Auto-repair for proactive actions ... [Omitted for brevity, kept same] ...
@@ -482,26 +491,26 @@ export default function DashboardContent() {
                 <main className="container-fluid py-6 space-y-6">
                     <div className="max-w-7xl mx-auto space-y-6">
                         <WealthOverview
-                            assets={assets}
+                            assets={displayAssets}
                             netWorth={stats.netWorth}
                             distribution={stats.distribution}
                             taxEfficiency={Number(stats.taxStats.efficiency.toFixed(0))}
                             riskScore={45}
                             narrative={marketNarrative}
+                            isDemo={isDemoMode}
                             onStockClick={(symbol) => setSelectedStock(symbol)}
                         />
 
-
                         <div id="analysis-section" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div className="lg:col-span-2 space-y-6" ref={analysisRef}>
-                                {true ? (
+                                {showStrategyOverview ? (
                                     <div className="space-y-6 animate-in fade-in duration-500">
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0rem' }}>
                                             <BrainCircuit size={20} className="text-primary" />
                                             <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Strategy Overview</h3>
                                         </div>
                                         <PortfolioComparison
-                                            userAssets={assets}
+                                            userAssets={displayAssets}
                                             aiAssets={aiAssets}
                                             onGenerateAI={handleGenerateAI}
                                             isGenerating={isGeneratingAI}
@@ -510,7 +519,53 @@ export default function DashboardContent() {
                                         />
                                     </div>
                                 ) : (
-                                    <div />
+                                    <div className="card" style={{
+                                        padding: '3rem',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '1.5rem',
+                                        background: 'linear-gradient(135deg, var(--surface) 0%, var(--surface-hover) 100%)',
+                                        border: '1px solid var(--border)',
+                                        textAlign: 'center',
+                                        minHeight: '400px'
+                                    }}>
+                                        <div style={{
+                                            width: '64px',
+                                            height: '64px',
+                                            borderRadius: '50%',
+                                            background: 'rgba(59, 130, 246, 0.1)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginBottom: '0.5rem'
+                                        }}>
+                                            <BrainCircuit size={32} className="text-primary animate-pulse" />
+                                        </div>
+                                        <div style={{ maxWidth: '400px' }}>
+                                            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem' }}>Strategy Overview</h3>
+                                            <p style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                                                Unlock institutional-grade portfolio comparisons. Our AI simulates thousands of market scenarios to benchmark your strategy against optimal alpha-seeking allocations.
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setShowStrategyOverview(true);
+                                                handleGenerateAI();
+                                            }}
+                                            className="btn btn-primary"
+                                            style={{
+                                                padding: '0.75rem 2rem',
+                                                fontSize: '1rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem'
+                                            }}
+                                        >
+                                            <Zap size={18} /> Run Market Simulation
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                             <div className="space-y-6">
@@ -532,7 +587,10 @@ export default function DashboardContent() {
                                             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Run deep analysis to see proactive portfolio optimizations.</p>
                                         </div>
                                         <button
-                                            onClick={() => setShowActionCenter(true)}
+                                            onClick={() => {
+                                                setShowActionCenter(true);
+                                                handleGenerateAI();
+                                            }}
                                             className="btn btn-primary"
                                             style={{ width: '100%', fontSize: '0.875rem' }}
                                         >
@@ -544,7 +602,7 @@ export default function DashboardContent() {
                                         actions={actions}
                                         assets={assets}
                                         onExecute={setAssets}
-                                        isLoading={isActionsLoading}
+                                        isLoading={isSyncing}
                                     />
                                 )}
                                 <div className="card" style={{ minHeight: '400px' }}>
@@ -564,9 +622,8 @@ export default function DashboardContent() {
                     onClose={() => setIsAddAssetOpen(false)}
                     onAdd={(newAsset) => {
                         setAssets([...assets, newAsset]);
-                        // Trigger AI refresh
+                        // Trigger AI refresh but DO NOT auto-open panel
                         setActions([]);
-                        setIsActionsLoading(true);
                     }}
                 />
 

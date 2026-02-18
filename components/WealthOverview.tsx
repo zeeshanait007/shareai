@@ -12,12 +12,13 @@ interface WealthOverviewProps {
     taxEfficiency: number;
     riskScore: number;
     narrative?: string;
+    isDemo?: boolean;
     onStockClick?: (symbol: string) => void;
 }
 
 import { getMarketNarrative } from '@/lib/gemini';
 
-export default function WealthOverview({ assets, netWorth, distribution, taxEfficiency, riskScore, narrative: externalNarrative, onStockClick }: WealthOverviewProps) {
+export default function WealthOverview({ assets, netWorth, distribution, taxEfficiency, riskScore, narrative: externalNarrative, isDemo, onStockClick }: WealthOverviewProps) {
     const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
@@ -37,6 +38,19 @@ export default function WealthOverview({ assets, netWorth, distribution, taxEffi
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)', marginBottom: '1rem' }}>
                     <Wallet size={24} />
                     <span style={{ fontWeight: 600, fontSize: '1rem' }}>Total Managed Wealth</span>
+                    {isDemo && (
+                        <span style={{
+                            fontSize: '0.65rem',
+                            padding: '0.1rem 0.4rem',
+                            borderRadius: '4px',
+                            background: 'var(--warning)',
+                            color: 'black',
+                            fontWeight: 800,
+                            marginLeft: 'auto'
+                        }}>
+                            DEMO DATA
+                        </span>
+                    )}
                 </div>
                 <div style={{ fontSize: '2.5rem', fontWeight: 800 }}>
                     {mounted ? `$${netWorth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${netWorth.toFixed(2)}`}
