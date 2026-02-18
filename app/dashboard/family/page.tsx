@@ -1,5 +1,5 @@
 import React from 'react';
-import EstateVault from '@/components/EstateVault';
+
 import { ShieldCheck, Users, Landmark, FileText } from 'lucide-react';
 
 export default function FamilyGovernancePage() {
@@ -7,11 +7,7 @@ export default function FamilyGovernancePage() {
         <div className="fade-in">
             <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', marginBottom: 'var(--space-6)' }}>Family Governance & Estate</h1>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 'var(--space-6)' }}>
-                <div>
-                    <EstateVault />
-                </div>
-
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-6)' }}>
                 <div className="card" style={{ padding: 'var(--space-6)' }}>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Users size={24} color="var(--primary)" /> Managed Beneficiaries

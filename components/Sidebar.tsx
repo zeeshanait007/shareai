@@ -12,7 +12,6 @@ const navItems = [
     { name: 'AI Picks', href: '/dashboard/discovery', icon: Sparkles },
     { name: 'Watchlist', href: '/dashboard/watchlist', icon: TrendingUp },
     { name: 'Analysis', href: '/dashboard/analysis', icon: LineChart },
-    { name: 'Family', href: '/dashboard/family', icon: Users },
 ];
 
 export default function Sidebar() {

@@ -10,17 +10,18 @@ import { logout, getCurrentUser } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import WealthOverview from '@/components/WealthOverview';
 import ActionCenter from '@/components/ActionCenter';
-import EstateVault from '@/components/EstateVault';
+
 import WatchlistActivity from '@/components/WatchlistActivity';
 import StockAnalysisPanel from '@/components/StockAnalysisPanel';
 import SubscriptionBanner from '@/components/SubscriptionBanner';
 import AddAssetModal from '@/components/AddAssetModal';
 import PortfolioComparison from '@/components/PortfolioComparison';
-import { Undo2, FileUp, Loader2, LogOut, User, Check, Menu, Plus, Sparkles, BrainCircuit, Zap } from 'lucide-react';
+import { Undo2, FileUp, Loader2, LogOut, User, Check, Menu, Plus, Sparkles, BrainCircuit, Zap, Sun } from 'lucide-react';
 import { savePortfolioSnapshot } from '@/lib/portfolio-service';
 import { read, utils } from 'xlsx';
 import { useDashboard } from '@/providers/DashboardProvider';
 import SaveDashboardModal from '@/components/SaveDashboardModal';
+import DailyCheckInModal from '@/components/DailyCheckInModal';
 
 export default function DashboardContent() {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -61,6 +62,7 @@ export default function DashboardContent() {
     const [isActionsLoading, setIsActionsLoading] = React.useState(false);
     const [showActionCenter, setShowActionCenter] = React.useState(false);
     const [showStrategyOverview, setShowStrategyOverview] = React.useState(false);
+    const [isDailyCheckInOpen, setIsDailyCheckInOpen] = React.useState(false);
 
     React.useEffect(() => {
         setMounted(true);
@@ -123,7 +125,12 @@ export default function DashboardContent() {
         setIsSaveModalOpen(false);
     };
 
+    const [dailyPerformance, setDailyPerformance] = React.useState<{ dailyChangeValue: number, dailyChangePct: number, topMover: { symbol: string, changePct: number } } | null>(null);
+
+    const isSyncing = isActionsLoading || isGeneratingAI || isGeneratingInsight || isImporting || isAutoSyncing;
+
     const handleGenerateAI = useCallback(async () => {
+        if (isSyncing) return; // Prevent double-triggering
         setIsGeneratingAI(true);
         setIsGeneratingInsight(true);
 
@@ -133,7 +140,7 @@ export default function DashboardContent() {
             const capital = totalNetWorth > 0 ? totalNetWorth : 100000;
 
             // Use the robust unified sync even for manual triggers
-            const { actions, aiAssets: newAiAssets, insight, marketNarrative: newNarrative } = await getUnifiedDashboardSync(assetsToAnalyze, stats, capital);
+            const { actions, aiAssets: newAiAssets, insight, marketNarrative: newNarrative, performanceMetrics } = await getUnifiedDashboardSync(assetsToAnalyze, stats, capital);
 
             if (newAiAssets && newAiAssets.length > 0) {
                 setAiAssets(newAiAssets);
@@ -141,6 +148,9 @@ export default function DashboardContent() {
             if (insight) {
                 console.log('[UI] Setting comparison insight:', typeof insight);
                 setComparisonInsight(insight);
+            }
+            if (performanceMetrics) {
+                setDailyPerformance(performanceMetrics as any);
             }
             setActions(actions);
             setMarketNarrative(newNarrative);
@@ -150,12 +160,14 @@ export default function DashboardContent() {
             setIsGeneratingAI(false);
             setIsGeneratingInsight(false);
         }
-    }, [displayAssets, stats, setAiAssets, setComparisonInsight, setActions, setMarketNarrative]);
+    }, [displayAssets, stats, isSyncing, setAiAssets, setComparisonInsight, setActions, setMarketNarrative]);
 
 
-    const isSyncing = isActionsLoading || isGeneratingAI || isGeneratingInsight || isImporting || isAutoSyncing;
+
 
     // Unified Synchronization Effect (Auto-Refresh everything on Asset changes)
+    // DISABLED: User requested manual trigger only for "Market Simulation"
+    /*
     React.useEffect(() => {
         if (!mounted || isImporting) return; // Don't auto-sync while manually importing to avoid double-processing
         if (isDemoMode) {
@@ -172,7 +184,7 @@ export default function DashboardContent() {
 
             try {
                 // Task: Unified Sync (Replaces 3 parallel tasks for 70% latency reduction)
-                const { actions, aiAssets: newAiAssets, insight, marketNarrative: newNarrative } =
+                const { actions, aiAssets: newAiAssets, insight, marketNarrative: newNarrative, performanceMetrics } =
                     await getUnifiedDashboardSync(assets, stats, capital);
 
                 if (newAiAssets && newAiAssets.length > 0) {
@@ -180,6 +192,9 @@ export default function DashboardContent() {
                 }
                 if (insight) {
                     setComparisonInsight(insight);
+                }
+                if (performanceMetrics) {
+                    setDailyPerformance(performanceMetrics as any);
                 }
                 setActions(actions);
                 setMarketNarrative(newNarrative);
@@ -193,6 +208,7 @@ export default function DashboardContent() {
         const timer = setTimeout(syncAllAI, 5000); // 5s debounce for lower API load
         return () => clearTimeout(timer);
     }, [assets, mounted, stats, isImporting, isDemoMode, setAiAssets, setComparisonInsight, setMarketNarrative]);
+    */
 
     // Auto-repair for comparison insight ... [Omitted for brevity, kept same] ...
     // Auto-repair for proactive actions ... [Omitted for brevity, kept same] ...
@@ -407,6 +423,53 @@ export default function DashboardContent() {
                             accept=".csv, .xlsx, .xls"
                             style={{ display: 'none' }}
                         />
+                        <div style={{ position: 'relative' }}>
+                            <button
+                                onClick={() => {
+                                    setIsDailyCheckInOpen(!isDailyCheckInOpen);
+                                    // Auto-refresh if data is stale or missing
+                                    if (!isDailyCheckInOpen && actions.length === 0) {
+                                        handleGenerateAI();
+                                    }
+                                }}
+                                className="btn"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem',
+                                    background: isDailyCheckInOpen ? 'rgba(245, 158, 11, 0.2)' : 'rgba(245, 158, 11, 0.1)',
+                                    color: '#F59E0B',
+                                    border: '1px solid rgba(245, 158, 11, 0.2)',
+                                    width: '140px',
+                                    flexShrink: 0,
+                                    fontWeight: 600
+                                }}
+                            >
+                                <Sun size={16} /> Daily Briefing
+                            </button>
+
+                            {/* Click Outside Handler */}
+                            {isDailyCheckInOpen && (
+                                <div
+                                    style={{ position: 'fixed', inset: 0, zIndex: 90 }}
+                                    onClick={() => setIsDailyCheckInOpen(false)}
+                                />
+                            )}
+
+                            {/* Daily Briefing Popover */}
+                            <DailyCheckInModal
+                                isOpen={isDailyCheckInOpen}
+                                onClose={() => setIsDailyCheckInOpen(false)}
+                                assets={displayAssets}
+                                netWorth={calculateNetWorth(displayAssets)}
+                                marketNarrative={marketNarrative}
+                                topAction={actions[0]}
+                                isLoading={isSyncing}
+                                onRefresh={handleGenerateAI}
+                                dailyPerformance={dailyPerformance}
+                            />
+                        </div>
                         <button
                             onClick={() => setIsAddAssetOpen(true)}
                             className="btn btn-primary"
@@ -609,9 +672,7 @@ export default function DashboardContent() {
                                     <h2 style={{ fontSize: '1.25rem', marginBottom: 'var(--space-4)' }}>Watchlist Activity</h2>
                                     <WatchlistActivity onStockClick={(symbol) => setSelectedStock(symbol)} />
                                 </div>
-                                <div style={{ minHeight: '300px' }}>
-                                    <EstateVault />
-                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -632,6 +693,8 @@ export default function DashboardContent() {
                     onClose={() => setIsSaveModalOpen(false)}
                     onSave={handleSaveDashboard}
                 />
+
+
 
             </div>
         </>

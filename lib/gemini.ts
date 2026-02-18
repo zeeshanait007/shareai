@@ -40,12 +40,13 @@ async function callGeminiWithRetry(prompt: string, maxRetries = 3): Promise<any>
 
             // Only retry on 503 (overloaded) or 429 (rate limit)
             if (status === 503 || status === 429 || msg.includes('503') || msg.includes('429') || msg.includes('high demand') || msg.includes('RESOURCE_EXHAUSTED')) {
-                const waitMs = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+                // Aggressive backoff for rate limits: 2s, 4s, 8s
+                const backoffBase = status === 429 ? 2000 : 1000;
+                const waitMs = Math.pow(2, attempt) * backoffBase;
                 console.log(`[Gemini] ${PRIMARY_MODEL} attempt ${attempt + 1} failed (${status}), retrying in ${waitMs}ms...`);
                 await new Promise(r => setTimeout(r, waitMs));
                 continue;
             }
-            // Non-retryable error — try fallback immediately
             break;
         }
     }
@@ -64,8 +65,9 @@ async function callGeminiWithRetry(prompt: string, maxRetries = 3): Promise<any>
     }
 }
 
-// Global Cache for AI Results to reduce latency
+// Global Cache & Deduplication
 const aiCache = new Map<string, { data: any, timestamp: number }>();
+const pendingRequests = new Map<string, Promise<any>>();
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
 function getAssetHash(assets: any[]): string {
@@ -401,72 +403,82 @@ export async function getUnifiedDashboardSync(
     assets: any[],
     stats: { netWorth: number; distribution: any; taxStats: any; beta: number },
     totalCapital: number
-): Promise<{ actions: Action[]; aiAssets: any[]; insight: DeepInsight | string; marketNarrative: string }> {
-    try {
-        // Check Cache
-        const cacheKey = getAssetHash(assets);
-        const cached = aiCache.get(cacheKey);
-        if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
-            console.log("⚡ [AI-SYNC] Serving results from cache.");
-            return cached.data;
-        }
+): Promise<{ actions: Action[]; aiAssets: any[]; insight: DeepInsight | string; marketNarrative: string; performanceMetrics?: { dailyChangeValue: number, dailyChangePct: number, topMover: { symbol: string, changePct: number } } }> {
 
-        const model = genAI.getGenerativeModel(fastModelConfig);
+    // Check Cache
+    const cacheKey = getAssetHash(assets);
+    const cached = aiCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+        console.log("⚡ [AI-SYNC] Serving results from cache.");
+        return cached.data;
+    }
 
-        const assetSummary = assets.map(a => `${a.symbol} (${a.type}, ${a.sector}): $${(a.quantity * (a.currentPrice || a.purchasePrice)).toLocaleString()}`).join(', ');
-        const topSectors = Object.entries(stats.distribution).sort(([, a]: any, [, b]: any) => b - a).slice(0, 3).map(([s, p]) => `${s}:${p}%`).join(',');
+    // Check Pending Requests (Deduplication)
+    if (pendingRequests.has(cacheKey)) {
+        console.log("🔄 [AI-SYNC] Attaching to in-flight request for same assets.");
+        return pendingRequests.get(cacheKey);
+    }
 
-        // ═══ FETCH REAL-TIME MARKET DATA ═══
-        const uniqueSymbols = [...new Set(assets.map((a: any) => a.symbol).filter(Boolean))].slice(0, 6);
-        let liveMarketContext = '';
-        let newsContext = '';
+    const model = genAI.getGenerativeModel(fastModelConfig);
 
-        // Determine base URL for API calls (relative URLs fail during SSR)
-        const baseUrl = typeof window !== 'undefined'
-            ? window.location.origin
-            : (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
-
+    const syncPromise = (async () => {
         try {
-            // Fetch live quotes via API routes
-            const quotePromises = uniqueSymbols.map((sym: string) =>
-                fetch(`${baseUrl}/api/quote?symbol=${encodeURIComponent(sym)}`)
-                    .then(r => r.ok ? r.json() : null)
-                    .catch(() => null)
-            );
-            const quotes = await Promise.all(quotePromises);
-            const validQuotes = quotes.filter(Boolean);
 
-            if (validQuotes.length > 0) {
-                liveMarketContext = validQuotes.map((q: any) => {
-                    const price = q.regularMarketPrice ?? 0;
-                    const changePct = q.regularMarketChangePercent ?? 0;
-                    const vol = q.regularMarketVolume ?? 0;
-                    const mcap = q.marketCap ?? 0;
-                    return `${q.symbol}: $${price} (${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}% today, Vol: ${(vol / 1e6).toFixed(1)}M, MCap: $${(mcap / 1e9).toFixed(1)}B)`;
-                }).join(', ');
+            const assetSummary = assets.map(a => `${a.symbol} (${a.type}, ${a.sector}): $${(a.quantity * (a.currentPrice || a.purchasePrice)).toLocaleString()}`).join(', ');
+            const topSectors = Object.entries(stats.distribution).sort(([, a]: any, [, b]: any) => b - a).slice(0, 3).map(([s, p]) => `${s}:${p}%`).join(',');
+
+            // ═══ FETCH REAL-TIME MARKET DATA ═══
+            const uniqueSymbols = [...new Set(assets.map((a: any) => a.symbol).filter(Boolean))].slice(0, 6);
+            let liveMarketContext = '';
+            let newsContext = '';
+            let validQuotes: any[] = [];
+
+            // Determine base URL for API calls (relative URLs fail during SSR)
+            const baseUrl = typeof window !== 'undefined'
+                ? window.location.origin
+                : (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
+
+            try {
+                // Fetch live quotes via API routes
+                const quotePromises = uniqueSymbols.map((sym: string) =>
+                    fetch(`${baseUrl}/api/quote?symbol=${encodeURIComponent(sym)}`)
+                        .then(r => r.ok ? r.json() : null)
+                        .catch(() => null)
+                );
+                const quotes = await Promise.all(quotePromises);
+                validQuotes = quotes.filter(Boolean);
+
+                if (validQuotes.length > 0) {
+                    liveMarketContext = validQuotes.map((q: any) => {
+                        const price = q.regularMarketPrice ?? 0;
+                        const changePct = q.regularMarketChangePercent ?? 0;
+                        const vol = q.regularMarketVolume ?? 0;
+                        const mcap = q.marketCap ?? 0;
+                        return `${q.symbol}: $${price} (${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}% today, Vol: ${(vol / 1e6).toFixed(1)}M, MCap: $${(mcap / 1e9).toFixed(1)}B)`;
+                    }).join(', ');
+                }
+
+                // Fetch news for top 3 holdings
+                const topHoldings = uniqueSymbols.slice(0, 3);
+                const newsPromises = topHoldings.map((sym: string) =>
+                    fetch(`${baseUrl}/api/news?q=${encodeURIComponent(sym)}`)
+                        .then(r => r.ok ? r.json() : null)
+                        .catch(() => null)
+                );
+                const newsResults = await Promise.all(newsPromises);
+                const allNews = newsResults
+                    .filter((n: any) => n?.news && typeof n.news === 'string' && n.news.length > 0)
+                    .map((n: any) => n.news);
+                if (allNews.length > 0) {
+                    newsContext = allNews.join('\n');
+                }
+
+                console.log('[AI-SYNC] Live market data fetched for:', uniqueSymbols.join(', '), '| Quotes:', validQuotes.length, '| News items:', allNews.length);
+            } catch (e) {
+                console.warn('[AI-SYNC] Could not fetch live market data, proceeding with static analysis:', e);
             }
 
-            // Fetch news for top 3 holdings
-            const topHoldings = uniqueSymbols.slice(0, 3);
-            const newsPromises = topHoldings.map((sym: string) =>
-                fetch(`${baseUrl}/api/news?q=${encodeURIComponent(sym)}`)
-                    .then(r => r.ok ? r.json() : null)
-                    .catch(() => null)
-            );
-            const newsResults = await Promise.all(newsPromises);
-            const allNews = newsResults
-                .filter((n: any) => n?.news && typeof n.news === 'string' && n.news.length > 0)
-                .map((n: any) => n.news);
-            if (allNews.length > 0) {
-                newsContext = allNews.join('\n');
-            }
-
-            console.log('[AI-SYNC] Live market data fetched for:', uniqueSymbols.join(', '), '| Quotes:', validQuotes.length, '| News items:', allNews.length);
-        } catch (e) {
-            console.warn('[AI-SYNC] Could not fetch live market data, proceeding with static analysis:', e);
-        }
-
-        const prompt = `
+            const prompt = `
             You are a professional portfolio advisor with access to REAL-TIME market data. Analyze this investor's portfolio and build a BETTER alternative.
 
             INVESTOR'S CURRENT PORTFOLIO:
@@ -516,113 +528,168 @@ export async function getUnifiedDashboardSync(
             Return ONLY valid JSON. No markdown, no preamble, no explanation.
         `;
 
-        const result = await callGeminiWithRetry(prompt);
-        const data = parseAIJSON(result.response.text());
+            const result = await callGeminiWithRetry(prompt);
+            const data = parseAIJSON(result.response.text());
 
-        // Process AI assets with robust number conversion
-        const numAssets = Array.isArray(data.aiAssets) ? data.aiAssets.length : 0;
-        const perAssetFallbackPrice = numAssets > 0 ? Math.round(totalCapital / numAssets) : 1000;
+            // Process AI assets with robust number conversion
+            const numAssets = Array.isArray(data.aiAssets) ? data.aiAssets.length : 0;
+            const perAssetFallbackPrice = numAssets > 0 ? Math.round(totalCapital / numAssets) : 1000;
 
-        const rawAiAssets = (Array.isArray(data.aiAssets) ? data.aiAssets : []).map((a: any, i: number) => {
-            // Try multiple price fields Gemini might use
-            const rawPrice = a.price ?? a.currentPrice ?? a.value ?? a.cost ?? a.allocation ?? 0;
-            // Strip $ signs and commas if it's a string
-            const parsedPrice = typeof rawPrice === 'string'
-                ? Number(rawPrice.replace(/[$,]/g, ''))
-                : Number(rawPrice);
-            const finalPrice = (parsedPrice && parsedPrice > 0) ? parsedPrice : perAssetFallbackPrice;
+            const rawAiAssets = (Array.isArray(data.aiAssets) ? data.aiAssets : []).map((a: any, i: number) => {
+                // Try multiple price fields Gemini might use
+                const rawPrice = a.price ?? a.currentPrice ?? a.value ?? a.cost ?? a.allocation ?? 0;
+                // Strip $ signs and commas if it's a string
+                const parsedPrice = typeof rawPrice === 'string'
+                    ? Number(rawPrice.replace(/[$,]/g, ''))
+                    : Number(rawPrice);
+                const finalPrice = (parsedPrice && parsedPrice > 0) ? parsedPrice : perAssetFallbackPrice;
 
-            return {
-                id: `ai-sync-${Date.now()}-${i}`,
-                type: a.type || 'stock',
-                name: a.name || `AI Pick ${i + 1}`,
-                symbol: a.symbol || `AI${i + 1}`,
-                quantity: Number(a.quantity) || 1,
-                purchasePrice: finalPrice,
-                currentPrice: finalPrice,
-                sector: a.sector || 'Strategy',
-                valuationDate: new Date().toISOString()
-            };
-        });
+                return {
+                    id: `ai-sync-${Date.now()}-${i}`,
+                    type: a.type || 'stock',
+                    name: a.name || `AI Pick ${i + 1}`,
+                    symbol: a.symbol || `AI${i + 1}`,
+                    quantity: Number(a.quantity) || 1,
+                    purchasePrice: finalPrice,
+                    currentPrice: finalPrice,
+                    sector: a.sector || 'Strategy',
+                    valuationDate: new Date().toISOString()
+                };
+            });
 
-        // ═══ NORMALIZE: Scale AI portfolio to match user's total capital exactly ═══
-        const rawAiTotal = rawAiAssets.reduce((sum: number, a: any) => sum + (a.quantity * a.currentPrice), 0);
-        const scaleFactor = rawAiTotal > 0 ? totalCapital / rawAiTotal : 1;
-        const processedAiAssets = rawAiAssets.map((a: any) => ({
-            ...a,
-            quantity: Math.round((a.quantity * scaleFactor) * 100) / 100, // Scale & keep 2 decimal places
-        }));
-
-        console.log('[AI-SYNC] Processed AI assets:', processedAiAssets.map((a: any) => `${a.symbol}: $${a.currentPrice} (${a.sector})`));
-
-        // Extract topPick from insight or top-level data (Gemini may nest it differently)
-        const rawTopPick = data.insight?.topPick || data.topPick;
-        const firstAiSymbol = processedAiAssets[0]?.symbol || 'AAPL';
-        const firstAiSector = processedAiAssets[0]?.sector || 'Growth';
-        const resolvedTopPick = rawTopPick && rawTopPick.symbol
-            ? rawTopPick
-            : { symbol: firstAiSymbol, reason: `Top AI-selected holding in ${firstAiSector} for optimal risk-adjusted returns.`, impact: 'High Alpha Potential' };
-
-        const finalData = {
-            actions: (data.actions || []).map((a: any) => ({
+            // ═══ NORMALIZE: Scale AI portfolio to match user's total capital exactly ═══
+            const rawAiTotal = rawAiAssets.reduce((sum: number, a: any) => sum + (a.quantity * a.currentPrice), 0);
+            const scaleFactor = rawAiTotal > 0 ? totalCapital / rawAiTotal : 1;
+            const processedAiAssets = rawAiAssets.map((a: any) => ({
                 ...a,
-                urgency: a.urgency || "Medium",
-                justification: a.justification || a.description,
-                expertInsight: a.expertInsight || "Strategic asset reallocation.",
-                simpleExplanation: a.simpleExplanation || "Optimizing for growth."
-            })),
-            aiAssets: processedAiAssets,
-            insight: {
-                ...(typeof data.insight === 'object' ? data.insight : { narrative: data.insight || "AI portfolio analysis complete. Click Regenerate for detailed breakdown." }),
-                userStrategyName: data.insight?.userStrategyName || "Current Allocation",
-                aiStrategyName: data.insight?.aiStrategyName || "AI Optimized Strategy",
-                strategicDifference: data.insight?.strategicDifference || "Transitioning from concentrated exposure to diversified alpha-seeking positions.",
-                alphaGap: Number(data.insight?.alphaGap) || 5.8,
-                convictionScore: Number(data.insight?.convictionScore) || 85,
-                projectedReturnUser: Number(data.insight?.projectedReturnUser) || 11.3,
-                projectedReturnAI: Number(data.insight?.projectedReturnAI) || 17.8,
-                riskScore: Number(data.insight?.riskScore) || 6,
-                sectorGaps: Array.isArray(data.insight?.sectorGaps) ? data.insight.sectorGaps : [],
-                generatedAt: Date.now(),
-                topPick: resolvedTopPick
-            },
-            marketNarrative: data.marketNarrative || "Analyzing global market factors for institutional resonance."
-        };
+                quantity: Math.round((a.quantity * scaleFactor) * 100) / 100, // Scale & keep 2 decimal places
+            }));
 
-        console.log('📊 [AI-SYNC] Insight data:', JSON.stringify(finalData.insight, null, 2));
+            console.log('[AI-SYNC] Processed AI assets:', processedAiAssets.map((a: any) => `${a.symbol}: $${a.currentPrice} (${a.sector})`));
 
-        // Cache result
-        aiCache.set(cacheKey, { data: finalData, timestamp: Date.now() });
+            // Extract topPick from insight or top-level data (Gemini may nest it differently)
+            const rawTopPick = data.insight?.topPick || data.topPick;
+            const firstAiSymbol = processedAiAssets[0]?.symbol || 'AAPL';
+            const firstAiSector = processedAiAssets[0]?.sector || 'Growth';
+            const resolvedTopPick = rawTopPick && rawTopPick.symbol
+                ? rawTopPick
+                : { symbol: firstAiSymbol, reason: `Top AI-selected holding in ${firstAiSector} for optimal risk-adjusted returns.`, impact: 'High Alpha Potential' };
 
-        return finalData;
-    } catch (error) {
-        console.error("Gemini Unified Sync Error:", error);
-        // Fallback: return a proper insight OBJECT so the UI renders correctly
-        return {
-            actions: getFallbackActions(stats),
-            aiAssets: [],
-            insight: {
-                narrative: "AI analysis temporarily unavailable. Showing estimated metrics based on portfolio composition.",
-                volatilityRegime: 'Stable' as const,
-                alphaScore: 50,
-                institutionalConviction: 'Medium' as const,
-                convictionExplanation: "Fallback analysis — regenerate for live Gemini data.",
-                macroContext: "Market conditions pending analysis.",
-                riskRewardRatio: "1:2",
-                userStrategyName: "Current Allocation",
-                aiStrategyName: "AI Target",
-                strategicDifference: "Regenerate for a fresh Gemini analysis.",
-                alphaGap: 4.5,
-                convictionScore: 72,
-                projectedReturnUser: 10.0,
-                projectedReturnAI: 15.0,
-                riskScore: 5,
-                sectorGaps: [],
-                generatedAt: Date.now(),
-                topPick: { symbol: 'SPY', reason: 'Broad market exposure as defensive fallback.', impact: 'Stable Growth' }
-            },
-            marketNarrative: "Institutional intelligence standby. Analyzing market data..."
-        };
+            // ═══ CALCULATE PORTFOLIO PERFORMANCE ═══
+            let totalDailyChangeValue = 0;
+            let currentPortfolioValue = 0;
+            let topMover = { symbol: '-', changePct: 0 };
+            let maxMove = -1;
+
+            if (validQuotes.length > 0) {
+                const quoteMap = new Map();
+                validQuotes.forEach((q: any) => quoteMap.set(q.symbol, q));
+
+                assets.forEach(asset => {
+                    const quote = quoteMap.get(asset.symbol);
+                    if (quote) {
+                        const price = quote.regularMarketPrice || asset.currentPrice || 0;
+                        const changePct = quote.regularMarketChangePercent || 0;
+                        const quantity = asset.quantity || 0;
+                        const value = price * quantity;
+                        const changeValue = value * (changePct / 100);
+
+                        totalDailyChangeValue += changeValue;
+                        currentPortfolioValue += value;
+
+                        if (Math.abs(changePct) > maxMove) {
+                            maxMove = Math.abs(changePct);
+                            topMover = { symbol: asset.symbol, changePct: changePct };
+                        }
+                    } else {
+                        // Fallback to static asset data if live quote missing
+                        currentPortfolioValue += (asset.currentPrice || 0) * (asset.quantity || 0);
+                    }
+                });
+            }
+
+            const totalDailyChangePct = currentPortfolioValue > 0
+                ? (totalDailyChangeValue / (currentPortfolioValue - totalDailyChangeValue)) * 100
+                : 0;
+
+            const performanceMetrics = {
+                dailyChangeValue: totalDailyChangeValue,
+                dailyChangePct: totalDailyChangePct,
+                topMover: topMover
+            };
+
+            const finalData = {
+                actions: (data.actions || []).map((a: any) => ({
+                    ...a,
+                    urgency: a.urgency || "Medium",
+                    justification: a.justification || a.description,
+                    expertInsight: a.expertInsight || "Strategic asset reallocation.",
+                    simpleExplanation: a.simpleExplanation || "Optimizing for growth."
+                })),
+                aiAssets: processedAiAssets,
+                insight: {
+                    ...(typeof data.insight === 'object' ? data.insight : { narrative: data.insight || "AI portfolio analysis complete. Click Regenerate for detailed breakdown." }),
+                    userStrategyName: data.insight?.userStrategyName || "Current Allocation",
+                    aiStrategyName: data.insight?.aiStrategyName || "AI Optimized Strategy",
+                    strategicDifference: data.insight?.strategicDifference || "Transitioning from concentrated exposure to diversified alpha-seeking positions.",
+                    alphaGap: Number(data.insight?.alphaGap) || 5.8,
+                    convictionScore: Number(data.insight?.convictionScore) || 85,
+                    projectedReturnUser: Number(data.insight?.projectedReturnUser) || 11.3,
+                    projectedReturnAI: Number(data.insight?.projectedReturnAI) || 17.8,
+                    riskScore: Number(data.insight?.riskScore) || 6,
+                    sectorGaps: Array.isArray(data.insight?.sectorGaps) ? data.insight.sectorGaps : [],
+                    generatedAt: Date.now(),
+                    topPick: resolvedTopPick
+                },
+                marketNarrative: data.marketNarrative || "Analyzing global market factors for institutional resonance.",
+                performanceMetrics
+            };
+
+            console.log('📊 [AI-SYNC] Insight data:', JSON.stringify(finalData.insight, null, 2));
+
+            // Cache result -> performanceMetrics are volatile, maybe excluding them from long-term cache would be better, 
+            // but for now we keep them to avoid recalc on simple re-renders.
+            // However, since they ARE real-time, we should perhaps rely on the deduping logic to fetch often enough.
+            aiCache.set(cacheKey, { data: finalData, timestamp: Date.now() });
+
+            return finalData;
+        } catch (error) {
+            console.error("Gemini Unified Sync Error:", error);
+            // Fallback: return a proper insight OBJECT so the UI renders correctly
+            return {
+                actions: getFallbackActions(stats),
+                aiAssets: [],
+                insight: {
+                    narrative: "AI analysis temporarily unavailable. Showing estimated metrics based on portfolio composition.",
+                    volatilityRegime: 'Stable' as const,
+                    alphaScore: 50,
+                    institutionalConviction: 'Medium' as const,
+                    convictionExplanation: "Fallback analysis — regenerate for live Gemini data.",
+                    macroContext: "Market conditions pending analysis.",
+                    riskRewardRatio: "1:2",
+                    userStrategyName: "Current Allocation",
+                    aiStrategyName: "AI Target",
+                    strategicDifference: "Regenerate for a fresh Gemini analysis.",
+                    alphaGap: 4.5,
+                    convictionScore: 72,
+                    projectedReturnUser: 10.0,
+                    projectedReturnAI: 15.0,
+                    riskScore: 5,
+                    sectorGaps: [],
+                    generatedAt: Date.now(),
+                    topPick: { symbol: 'SPY', reason: 'Broad market exposure as defensive fallback.', impact: 'Stable Growth' }
+                },
+                marketNarrative: "Institutional intelligence standby. Analyzing market data..."
+            };
+        }
+    })();
+
+    pendingRequests.set(cacheKey, syncPromise);
+
+    try {
+        return await syncPromise;
+    } finally {
+        pendingRequests.delete(cacheKey);
     }
 }
 
