@@ -101,18 +101,16 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                     {aiAssets.length > 0 && (
                         <button
                             onClick={() => {
-                                if (typeof insight === 'object' && insight !== null) {
+                                if (insight) {
                                     generateAuditPDF('PORTFOLIO_ADVISORY', insight);
-                                } else {
-                                    alert('Please "Regenerate" the AI portfolio to enable the Institutional Audit features.');
                                 }
                             }}
                             className="btn btn-primary"
                             style={{
                                 fontSize: '0.75rem',
                                 padding: '0.25rem 0.75rem',
-                                background: typeof insight === 'object' ? 'var(--success)' : 'var(--text-muted)',
-                                opacity: typeof insight === 'object' ? 1 : 0.7
+                                background: !!insight ? 'var(--success)' : 'var(--text-muted)',
+                                opacity: !!insight ? 1 : 0.7
                             }}
                         >
                             <FileCheck size={14} /> Full Institutional Audit

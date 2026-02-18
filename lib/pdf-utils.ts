@@ -4,7 +4,7 @@ import { InstitutionalAnalysis, DeepInsight } from './types';
 
 export const generateAuditPDF = (
     symbol: string,
-    insight: DeepInsight
+    insight: any // Support both object and string
 ) => {
     const doc = new jsPDF();
     const timestamp = new Date().toLocaleString();
@@ -26,9 +26,17 @@ export const generateAuditPDF = (
 
     doc.setFontSize(11);
     doc.setTextColor(0, 0, 0);
-    const summaryText = insight.convictionExplanation || 'Strategic rebalancing based on current market volatility and asset concentration.';
+    const summaryText = typeof insight === 'object'
+        ? (insight.convictionExplanation || 'Strategic rebalancing based on current market volatility and asset concentration.')
+        : String(insight);
     const splitExplanation = doc.splitTextToSize(summaryText, 180);
     doc.text(splitExplanation, 14, 60);
+
+    // If it's just a string, we skip the complex tables and just save
+    if (typeof insight !== 'object') {
+        doc.save(`${symbol}_Basic_Audit_${Date.now()}.pdf`);
+        return;
+    }
 
     // Evidence Breakdown
     let currentY = 60 + (splitExplanation.length * 7) + 10;
