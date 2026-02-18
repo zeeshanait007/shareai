@@ -11,34 +11,18 @@ interface WealthOverviewProps {
     distribution: Record<string, number>;
     taxEfficiency: number;
     riskScore: number;
+    narrative?: string;
     onStockClick?: (symbol: string) => void;
 }
 
 import { getMarketNarrative } from '@/lib/gemini';
 
-export default function WealthOverview({ assets, netWorth, distribution, taxEfficiency, riskScore, onStockClick }: WealthOverviewProps) {
+export default function WealthOverview({ assets, netWorth, distribution, taxEfficiency, riskScore, narrative: externalNarrative, onStockClick }: WealthOverviewProps) {
     const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-    const [narrative, setNarrative] = useState<string>('');
     const [mounted, setMounted] = useState(false);
 
-    React.useEffect(() => {
-        const timer = setTimeout(async () => {
-            try {
-                const params = new URLSearchParams({
-                    netWorth: netWorth.toString(),
-                    distribution: JSON.stringify(distribution)
-                });
-                const res = await fetch(`/api/ai/narrative?${params.toString()}`);
-                const data = await res.json();
-                setNarrative(data.narrative || "");
-            } catch (error) {
-                console.error("Failed to fetch narrative from API:", error);
-            }
-        }, 5000); // 5s debounce for lower priority narrative
-
-        return () => clearTimeout(timer);
-    }, [netWorth, distribution]);
+    const narrative = externalNarrative || "";
 
     React.useEffect(() => {
         setMounted(true);

@@ -3,8 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, ArrowRight, AlertTriangle, Lightbulb, ShieldCheck, X, Info, Loader2, CheckCircle2, Zap, Target, BarChart3 } from 'lucide-react';
 import { Asset } from '@/lib/assets';
-import { getPortfolioAdvisory, GeminiAdvisory } from '@/lib/gemini';
-
 import { Action } from '@/lib/types';
 
 type ExecutionState = 'idle' | 'analyzing' | 'executing' | 'success';
@@ -19,8 +17,6 @@ interface ActionCenterProps {
 export default function ActionCenter({ actions: initialActions, assets, onExecute, isLoading }: ActionCenterProps) {
     const [actions, setActions] = useState<Action[]>(initialActions);
     const [selectedAction, setSelectedAction] = useState<Action | null>(null);
-    const [advisory, setAdvisory] = useState<GeminiAdvisory | null>(null);
-    const [isAdvisoryLoading, setIsAdvisoryLoading] = useState(false);
     const [executionState, setExecutionState] = useState<ExecutionState>('idle');
 
     // Sync actions when prop changes
@@ -30,21 +26,7 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
     const [progress, setProgress] = useState(0);
 
 
-    useEffect(() => {
-        // Optimized: Reduced debounce for faster advisory loading
-        const timer = setTimeout(() => {
-            if (selectedAction) {
-                setIsAdvisoryLoading(true);
-                getPortfolioAdvisory(assets, selectedAction.title, selectedAction.description)
-                    .then(setAdvisory)
-                    .finally(() => setIsAdvisoryLoading(false));
-            } else {
-                setAdvisory(null);
-            }
-        }, 300); // Reduced from 1s to 300ms
-
-        return () => clearTimeout(timer);
-    }, [selectedAction, assets]);
+    // Unified Advisory Effect removed in favor of pre-loaded AI data in syncAllAI
 
     const getIcon = (type: string) => {
         switch (type) {
@@ -137,44 +119,77 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
                 )}
             </div>
 
-            {isLoading ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', opacity: 0.5 }}>
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="card" style={{ height: '80px', background: 'var(--surface)' }} />
-                    ))}
-                </div>
-            ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                    {actions.map((action: Action, i: number) => (
-                        <div
-                            key={i}
-                            onClick={() => setSelectedAction(action)}
-                            className="interactive-card"
-                            style={{
+            <div style={{ minHeight: '276px', marginBottom: '1.5rem' }}>
+                {isLoading && actions.length === 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', opacity: 0.5 }}>
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="card" style={{
+                                height: '78px',
+                                background: 'var(--surface)',
+                                borderLeft: '4px solid transparent',
                                 padding: '1rem',
-                                background: 'var(--surface-hover)',
-                                borderRadius: 'var(--radius-md)',
-                                borderLeft: `4px solid ${action.priority === 'high' ? '#EF4444' : action.priority === 'medium' ? '#F59E0B' : '#3B82F6'}`,
-                                display: 'flex',
-                                gap: '1rem',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            <div style={{ marginTop: '0.25rem' }}>{getIcon(action.type)}</div>
-                            <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                                    <h3 style={{ fontSize: '0.9375rem', fontWeight: 700 }}>{action.title}</h3>
-                                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', background: 'var(--surface)', padding: '2px 8px', borderRadius: '10px' }}>
-                                        {action.impact}
+                                boxSizing: 'border-box'
+                            }} />
+                        ))}
+                    </div>
+                ) : (
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 'var(--space-4)',
+                        opacity: isLoading ? 0.6 : 1,
+                        transition: 'opacity 0.3s ease',
+                        pointerEvents: isLoading ? 'none' : 'auto'
+                    }}>
+                        {actions.map((action: Action, i: number) => (
+                            <div
+                                key={i}
+                                onClick={() => setSelectedAction(action)}
+                                className="interactive-card"
+                                style={{
+                                    padding: '1rem',
+                                    height: '78px',
+                                    background: 'var(--surface-hover)',
+                                    borderRadius: 'var(--radius-md)',
+                                    borderLeft: `4px solid ${action.priority === 'high' ? '#EF4444' : action.priority === 'medium' ? '#F59E0B' : '#3B82F6'}`,
+                                    display: 'flex',
+                                    gap: '1rem',
+                                    cursor: 'pointer',
+                                    overflow: 'hidden',
+                                    boxSizing: 'border-box'
+                                }}
+                            >
+                                <div style={{ marginTop: '0.25rem' }}>{getIcon(action.type)}</div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <h3 style={{ fontSize: '0.9375rem', fontWeight: 700 }}>{action.title}</h3>
+                                            {action.urgency && (
+                                                <span style={{
+                                                    fontSize: '0.65rem',
+                                                    padding: '1px 6px',
+                                                    borderRadius: '4px',
+                                                    background: action.urgency === 'High' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                                                    color: action.urgency === 'High' ? '#EF4444' : '#F59E0B',
+                                                    fontWeight: 800,
+                                                    border: `1px solid ${action.urgency === 'High' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`
+                                                }}>
+                                                    {action.urgency} Urgency
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--success)', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 8px', borderRadius: '10px' }}>
+                                            {action.impact}
+                                        </div>
                                     </div>
+                                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{action.description}</p>
                                 </div>
-                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{action.description}</p>
+                                <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)' }}><ArrowRight size={18} /></div>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)' }}><ArrowRight size={18} /></div>
-                        </div>
-                    ))}
-                </div>
-            )}
+                        ))}
+                    </div>
+                )}
+            </div>
 
             {!!selectedAction && (
                 <div style={{
@@ -195,28 +210,20 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
                         <>
                             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>{selectedAction.title}</h3>
 
-                            {isAdvisoryLoading ? (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
-                                    <Loader2 className="animate-spin" size={16} /> Gemini AI is analyzing...
-                                </div>
-                            ) : (
-                                <>
-                                    <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-                                        {advisory?.justification || selectedAction.description}
-                                    </p>
+                            <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+                                {selectedAction.justification || selectedAction.description}
+                            </p>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                                        <div style={{ background: 'rgba(59, 130, 246, 0.05)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
-                                            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#3B82F6', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Simple View</div>
-                                            <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{advisory?.simpleExplanation || 'Safe rebalancing for long-term growth.'}</div>
-                                        </div>
-                                        <div style={{ background: 'rgba(139, 92, 246, 0.05)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(139, 92, 246, 0.1)' }}>
-                                            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#8B5CF6', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Expert Alpha</div>
-                                            <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{advisory?.expertInsight || 'Portfolio beta optimization via risk-parity adjustment.'}</div>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                                <div style={{ background: 'rgba(59, 130, 246, 0.05)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                                    <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#3B82F6', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Simple View</div>
+                                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{selectedAction.simpleExplanation || 'Safe rebalancing for long-term growth.'}</div>
+                                </div>
+                                <div style={{ background: 'rgba(139, 92, 246, 0.05)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(139, 92, 246, 0.1)' }}>
+                                    <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#8B5CF6', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Expert Alpha</div>
+                                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{selectedAction.expertInsight || 'Portfolio beta optimization via risk-parity adjustment.'}</div>
+                                </div>
+                            </div>
 
                             <div style={{ background: 'var(--surface)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', border: '1px solid var(--border)' }}>
                                 <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between' }}>
@@ -312,7 +319,7 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
             )}
 
             {actions.length > 0 && (
-                <button className="button-secondary" style={{ width: '100%', marginTop: '1.5rem', justifyContent: 'center', gap: '0.5rem' }} onClick={handleExecuteAll}>
+                <button className="button-secondary" style={{ width: '100%', justifyContent: 'center', gap: '0.5rem' }} onClick={handleExecuteAll}>
                     <Zap size={16} /> Execute All AI Suggestions
                 </button>
             )}

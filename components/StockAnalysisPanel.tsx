@@ -16,31 +16,45 @@ interface StockAnalysisPanelProps {
 export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, onBuy, onAddToWatchlist }: StockAnalysisPanelProps) {
     const [analysis, setAnalysis] = useState<StockAnalysis | null>(null);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [showBuyInput, setShowBuyInput] = useState(false);
     const [quantity, setQuantity] = useState(10);
     const [price, setPrice] = useState(currentPrice);
     const [addedToWatchlist, setAddedToWatchlist] = useState(false);
 
+    const fetchAnalysis = async () => {
+        if (!symbol) return;
+        setLoading(true);
+        setError(null);
+        setAnalysis(null);
+
+        // Reset UI state
+        setShowBuyInput(false);
+        setAddedToWatchlist(false);
+        setPrice(currentPrice > 0 ? currentPrice : 0);
+
+        try {
+            console.log(`[StockAnalysisPanel] Fetching analysis for ${symbol}...`);
+            const result = await getGeminiStockAnalysis(symbol);
+
+            if (result.thesis.includes("temporarily unavailable") || result.thesis.includes("Unable to generate")) {
+                setError("Analysis temporarily unavailable. Please try again.");
+            } else {
+                setAnalysis(result);
+            }
+        } catch (error) {
+            console.error("Error fetching analysis:", error);
+            setError("Failed to load analysis. Please check your connection.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (symbol) {
-            // Reset UI state
-            setShowBuyInput(false);
-            setAddedToWatchlist(false);
-            setPrice(currentPrice > 0 ? currentPrice : 0); // Update price if provided (could be fetched later)
-
-            setLoading(true);
-            setAnalysis(null);
-            getGeminiStockAnalysis(symbol)
-                .then(data => {
-                    setAnalysis(data);
-                    setLoading(false);
-                })
-                .catch(() => setLoading(false));
-
-            // If we didn't get a price prop, try to fetch it (or just let user input)
-            // For now relying on user input or previous data
+            fetchAnalysis();
         }
-    }, [symbol, currentPrice]);
+    }, [symbol]);
 
     const handleBuy = () => {
         if (symbol && onBuy && quantity > 0) {
@@ -127,6 +141,14 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
                         <div className="animate-spin" style={{ width: '40px', height: '40px', border: '3px solid var(--surface-hover)', borderTop: '3px solid var(--primary)', borderRadius: '50%' }} />
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Analyzing market data...</p>
                     </div>
+                ) : error ? (
+                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--danger)' }}>
+                        <AlertTriangle size={32} style={{ display: 'block', margin: '0 auto 1rem', opacity: 0.8 }} />
+                        <p style={{ marginBottom: '1rem' }}>{error}</p>
+                        <button onClick={fetchAnalysis} className="btn btn-secondary">
+                            Retry Analysis
+                        </button>
+                    </div>
                 ) : analysis ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
 
@@ -171,7 +193,7 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
                                 <Crosshair size={16} style={{ color: 'var(--accent)' }} /> Key Drivers
                             </h3>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
-                                {Object.entries(analysis.drivers).map(([key, value]) => (
+                                {analysis.drivers && Object.entries(analysis.drivers).map(([key, value]) => (
                                     <div key={key} style={{ padding: 'var(--space-3)', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)' }}>
                                         <div style={{ textTransform: 'capitalize', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>{key}</div>
                                         <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{value}</div>
@@ -186,7 +208,7 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
                                 <AlertTriangle size={16} style={{ color: 'var(--warning)' }} /> Risk Factors
                             </h3>
                             <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                {analysis.risks.map((risk, i) => (
+                                {analysis.risks?.map((risk, i) => (
                                     <li key={i} style={{ display: 'flex', alignItems: 'start', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                                         <span style={{ color: 'var(--warning)', marginTop: '4px' }}>•</span>
                                         {risk}

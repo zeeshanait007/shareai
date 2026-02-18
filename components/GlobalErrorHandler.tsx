@@ -18,13 +18,15 @@ export default function GlobalErrorHandler() {
 
             // Check for various ChunkLoadError patterns across browsers
             const isChunkError =
-                message && (
+                message &&
+                !message.includes('generativelanguage') && // Don't reload for Gemini API errors
+                !message.includes('/api/') && // Don't reload for our API errors
+                (
                     message.includes('Loading chunk') ||
                     message.includes('ChunkLoadError') ||
                     message.includes('Loading CSS chunk') ||
                     message.includes('Failed to fetch dynamically imported module') ||
-                    message.includes('Unexpected token') || // Often happens when a 404 HTML page is served as JS
-                    message.includes('503') // Catch 503 Service Unavailable
+                    message.includes('Unexpected token') // Often happens when a 404 HTML page is served as JS
                 );
 
             if (isChunkError || isResourceError) {

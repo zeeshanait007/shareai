@@ -4,12 +4,16 @@ export interface Action {
     title: string;
     description: string;
     impact: string;
+    urgency?: 'High' | 'Medium' | 'Low';
     evidence?: {
         label: string;
         value: string;
         benchmark: string;
         status: 'critical' | 'warning' | 'good';
     };
+    justification?: string;
+    expertInsight?: string;
+    simpleExplanation?: string;
 }
 
 export interface StockData {
@@ -52,6 +56,21 @@ export interface DeepInsight {
     macroContext: string;
     riskRewardRatio: string;
     narrative: string;
+    userStrategyName?: string;
+    aiStrategyName?: string;
+    strategicDifference?: string;
+    alphaGap?: number;
+    convictionScore?: number;
+    projectedReturnUser?: number;
+    projectedReturnAI?: number;
+    riskScore?: number;
+    sectorGaps?: Array<{ sector: string; userWeight: number; aiWeight: number }>;
+    generatedAt?: number;
+    topPick?: {
+        symbol: string;
+        reason: string;
+        impact: string;
+    };
     evidence?: {
         quantitativeDrivers: string[];
         factorExposure: Record<string, string>;

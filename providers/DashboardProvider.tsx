@@ -87,9 +87,17 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
             const savedInsight = localStorage.getItem('ai_comparison_insight');
             if (savedInsight) {
                 try {
-                    setInsight(JSON.parse(savedInsight));
+                    const parsed = JSON.parse(savedInsight);
+                    // Only use cached insight if it's a rich object with new fields
+                    if (parsed && typeof parsed === 'object' && parsed.generatedAt && parsed.topPick) {
+                        setInsight(parsed);
+                    } else {
+                        // Stale cache — clear it so next sync provides fresh data
+                        localStorage.removeItem('ai_comparison_insight');
+                    }
                 } catch (e) {
-                    setInsight(savedInsight); // Fallback to raw string if not JSON
+                    // Raw string like "Sync success." — discard it
+                    localStorage.removeItem('ai_comparison_insight');
                 }
             }
         }

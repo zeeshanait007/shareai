@@ -91,6 +91,30 @@ a {
   }
 }
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+.animate-spin {
+  animation: spinFull 1s linear infinite;
+}
+
+@keyframes spinFull {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .fade-in {
   animation: fadeIn var(--transition-normal) forwards;
 }
