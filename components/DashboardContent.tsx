@@ -105,23 +105,31 @@ export default function DashboardContent() {
         setIsSaveModalOpen(false);
     };
 
-    const handleGenerateAI = async () => {
+    const handleGenerateAI = useCallback(async () => {
+        if (assets.length === 0) return;
+
         setIsGeneratingAI(true);
-        const totalNetWorth = calculateNetWorth(assets);
-        // Ensure at least some capital for the AI to work with
-        const capital = totalNetWorth > 0 ? totalNetWorth : 100000;
-
-        // 1. Generate Assets
-        const newAiAssets = await generateAIPortfolio(capital, assets);
-        setAiAssets(newAiAssets);
-        setIsGeneratingAI(false);
-
-        // 2. Generate Insight (independently to not block UI)
         setIsGeneratingInsight(true);
-        const insight = await getPortfolioComparisonInsight(assets, newAiAssets);
-        setComparisonInsight(insight);
-        setIsGeneratingInsight(false);
-    };
+
+        try {
+            const totalNetWorth = calculateNetWorth(assets);
+            const capital = totalNetWorth > 0 ? totalNetWorth : 100000;
+
+            // 1. Generate Assets
+            const newAiAssets = await generateAIPortfolio(capital, assets);
+            setAiAssets(newAiAssets);
+            setIsGeneratingAI(false);
+
+            // 2. Generate Insight
+            const insight = await getPortfolioComparisonInsight(assets, newAiAssets);
+            setComparisonInsight(insight);
+        } catch (error) {
+            console.error("Manual AI Generation Fail:", error);
+        } finally {
+            setIsGeneratingAI(false);
+            setIsGeneratingInsight(false);
+        }
+    }, [assets, setAiAssets, setComparisonInsight]);
 
     // Derived State
     const stats = React.useMemo(() => {
@@ -133,20 +141,50 @@ export default function DashboardContent() {
         };
     }, [assets]);
 
-    // Fetch AI Actions when assets change
+    // Unified Synchronization Effect (Auto-Refresh everything on Asset changes)
     React.useEffect(() => {
         if (!mounted) return;
 
-        const fetchActions = async () => {
+        const syncAllAI = async () => {
+            console.log("Synchronizing dashboard AI components...");
+
+            // 1. Refresh Proactive Action Center
             setIsActionsLoading(true);
-            const newActions = await getGeminiProactiveActions(assets, stats);
-            setActions(newActions);
-            setIsActionsLoading(false);
+            try {
+                const newActions = await getGeminiProactiveActions(assets, stats);
+                setActions(newActions);
+            } catch (error) {
+                console.error("Auto-sync Actions Error:", error);
+            } finally {
+                setIsActionsLoading(false);
+            }
+
+            // 2. Refresh Portfolio Comparison (if assets exist)
+            if (assets.length > 0) {
+                setIsGeneratingAI(true);
+                setIsGeneratingInsight(true);
+                try {
+                    const totalNetWorth = calculateNetWorth(assets);
+                    const capital = totalNetWorth > 0 ? totalNetWorth : 100000;
+
+                    const newAiAssets = await generateAIPortfolio(capital, assets);
+                    setAiAssets(newAiAssets);
+                    setIsGeneratingAI(false);
+
+                    const insight = await getPortfolioComparisonInsight(assets, newAiAssets);
+                    setComparisonInsight(insight);
+                } catch (error) {
+                    console.error("Auto-sync Comparison Error:", error);
+                } finally {
+                    setIsGeneratingAI(false);
+                    setIsGeneratingInsight(false);
+                }
+            }
         };
 
-        const timer = setTimeout(fetchActions, 1000); // Debounce
+        const timer = setTimeout(syncAllAI, 2000); // 2s debounce for batch stability
         return () => clearTimeout(timer);
-    }, [assets, mounted]);
+    }, [assets, mounted, stats, setAiAssets, setComparisonInsight]);
 
     // Auto-repair for comparison insight if it's in a synchronization error state
     React.useEffect(() => {
