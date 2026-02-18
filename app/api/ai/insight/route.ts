@@ -74,15 +74,35 @@ export async function GET(request: NextRequest) {
                             
                             ${newsContext ? `RECENT NEWS:\n${newsContext.slice(0, 400)}\n` : ''}
                             
-                            CRITICAL: Return ONLY a JSON object with this EXACT field order (convictionExplanation MUST be first for streaming):
+                            CRITICAL: Return ONLY a JSON object with this EXACT structure:
                             {
-                                "convictionExplanation": "2-3 sentences with SPECIFIC evidence: institutional ownership changes, analyst actions, options flow, insider trades, or price action with exact numbers/dates",
-                                "narrative": "4-5 sentences covering: current price action, news impact, support/resistance levels, upside/downside targets, and key risks. Be specific with numbers.",
+                                "convictionExplanation": "Specific institutional context...",
+                                "narrative": "Detailed market narrative...",
                                 "volatilityRegime": "Stable" | "Trending" | "Chaotic",
                                 "alphaScore": number (0-100),
                                 "institutionalConviction": "High" | "Medium" | "Low",
-                                "macroContext": "1-2 sentences on market conditions impact",
-                                "riskRewardRatio": "e.g., 1:2.4"
+                                "macroContext": "Macro impact...",
+                                "riskRewardRatio": "e.g., 1:2.4",
+                                "evidence": {
+                                    "quantitativeDrivers": ["driver1", "driver2"],
+                                    "factorExposure": {"Quality": "High", "Value": "Low"},
+                                    "historicalProbability": "Historical success rate...",
+                                    "correlationImpacts": "Correlation details..."
+                                },
+                                "riskSensitivity": {
+                                    "rateHikeImpact": "Impact of hikes",
+                                    "recessionImpact": "Impact of recession",
+                                    "worstCaseBand": "Worst case %"
+                                },
+                                "counterCase": {
+                                    "thesisInvalidation": "What makes this wrong",
+                                    "marketShiftRisks": "Market shift details"
+                                },
+                                "compliance": {
+                                    "riskMatch": "Risk profile match",
+                                    "suitabilityStatus": "Suitability status",
+                                    "regulatoryFlags": ["None" or specific flags]
+                                }
                             }
                         `;
 

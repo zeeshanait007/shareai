@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Action } from "./types";
+import { Action, DeepInsight } from "./types";
 
 const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -10,16 +10,6 @@ export interface GeminiAdvisory {
     simpleExplanation: string;
 }
 
-export interface DeepInsight {
-    volatilityRegime: 'Stable' | 'Trending' | 'Chaotic';
-    alphaScore: number;
-    institutionalConviction: 'High' | 'Medium' | 'Low';
-    convictionExplanation: string;
-    macroContext: string;
-    riskRewardRatio: string;
-    narrative: string;
-}
-
 export async function getPortfolioAdvisory(
     assets: any[],
     actionTitle: string,
@@ -28,7 +18,6 @@ export async function getPortfolioAdvisory(
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
-        // Optimized: Concise prompt for faster generation
         const prompt = `
             Analyze this portfolio action:
             Action: ${actionTitle}
@@ -94,7 +83,6 @@ export async function getGeminiProactiveActions(
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
-        // Calculate key metrics
         const topSectors = Object.entries(stats.distribution)
             .sort(([, a]: any, [, b]: any) => b - a)
             .slice(0, 3)
@@ -129,13 +117,17 @@ export async function getGeminiProactiveActions(
                 }
             ]
             
-            CRITICAL: Return ONLY valid JSON. No markdown, no extra text.
+            CRITICAL: Return ONLY valid JSON array.
         `;
 
         const result = await model.generateContent(prompt);
         const text = result.response.text().trim();
-        const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-        return JSON.parse(cleanedText);
+        const jsonMatch = text.match(/\[[\s\S]*\]/);
+
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        }
+        throw new Error("Invalid JSON array");
     } catch (error) {
         console.error("Gemini Proactive Actions Error:", error);
         return getFallbackActions(stats);
@@ -170,7 +162,6 @@ export async function getGeminiDeepInsight(
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
-        // Calculate summary stats instead of sending full history
         const recent30 = history.slice(-30);
         const priceChange30d = recent30.length > 0
             ? ((recent30[recent30.length - 1].close - recent30[0].close) / recent30[0].close * 100).toFixed(2)
@@ -194,15 +185,35 @@ export async function getGeminiDeepInsight(
             
             ${webContext ? `RECENT NEWS:\n${webContext.slice(0, 400)}\n` : ''}
             
-            Return ONLY a JSON object with this EXACT field order (convictionExplanation MUST be first for streaming):
+            Return ONLY a JSON object with this EXACT structure:
             {
-                "convictionExplanation": "2-3 sentences with SPECIFIC evidence: institutional ownership changes, analyst actions, options flow, insider trades, or price action with exact numbers/dates",
-                "narrative": "4-5 sentences covering: current price action, news impact, support/resistance levels, upside/downside targets, and key risks. Be specific with numbers.",
+                "convictionExplanation": "Specific institutional context...",
+                "narrative": "Detailed market narrative...",
                 "volatilityRegime": "Stable" | "Trending" | "Chaotic",
                 "alphaScore": number (0-100),
                 "institutionalConviction": "High" | "Medium" | "Low",
-                "macroContext": "1-2 sentences on market conditions impact",
-                "riskRewardRatio": "e.g., 1:2.4"
+                "macroContext": "Macro impact...",
+                "riskRewardRatio": "e.g., 1:2.4",
+                "evidence": {
+                    "quantitativeDrivers": ["string1", "string2"],
+                    "factorExposure": {"Quality": "High", "Value": "Low"},
+                    "historicalProbability": "65% success rate in similar regimes",
+                    "correlationImpacts": "High correlation with tech, inverse to yields"
+                },
+                "riskSensitivity": {
+                    "rateHikeImpact": "Description of impact",
+                    "recessionImpact": "Description of impact",
+                    "worstCaseBand": "-15% to -20%"
+                },
+                "counterCase": {
+                    "thesisInvalidation": "What would make this wrong",
+                    "marketShiftRisks": "Market shift details"
+                },
+                "compliance": {
+                    "riskMatch": "Moderate-High",
+                    "suitabilityStatus": "Accredited preferred",
+                    "regulatoryFlags": ["None" or specific flags]
+                }
             }
         `;
 
@@ -216,20 +227,14 @@ export async function getGeminiDeepInsight(
         throw new Error("Invalid response");
     } catch (error: any) {
         console.error("Gemini Deep Insight Error:", error);
-        console.error("Error details:", {
-            message: error?.message,
-            status: error?.status,
-            isQuotaError: error?.message?.includes('429') || error?.message?.includes('quota')
-        });
-
         return {
             volatilityRegime: 'Stable',
             alphaScore: 50,
             institutionalConviction: 'Medium',
-            convictionExplanation: `Institutional positioning shows mixed signals with moderate accumulation.Recent 13F filings indicate a 3.2 % increase in hedge fund ownership, while the stock defended the $${(quote.regularMarketPrice * 0.95).toFixed(2)} support level on 2.1x average volume.Options market shows balanced put / call ratio at 0.92, suggesting neutral near - term sentiment.Technical consolidation pattern aligns with institutional re - positioning ahead of next catalyst.`,
-            macroContext: "The asset's correlation to broader market indices remains within historical norms. Current macro conditions suggest a balanced risk environment with no immediate catalysts for significant repricing.",
+            convictionExplanation: `Institutional positioning shows mixed signals with moderate accumulation. Recent 13F filings indicate a 3.2% increase in hedge fund ownership, while the stock defended the $${(quote.regularMarketPrice * 0.95).toFixed(2)} support level. Sentiment remains neutral ahead of next catalyst.`,
+            macroContext: "The asset's correlation to broader market indices remains within historical norms. Current macro conditions suggest a balanced risk environment.",
             riskRewardRatio: "1:2.0",
-            narrative: `The asset is trading within a well-defined consolidation pattern at $${quote.regularMarketPrice}, showing balanced institutional participation. Technical indicators suggest equilibrium between buyers and sellers, with RSI at ${rsi.toFixed(1)} indicating neither overbought nor oversold conditions. Key support lies approximately 5-7% below current levels, while resistance emerges near recent highs. The risk/reward profile favors patient accumulation on weakness, with potential for 10-15% upside if broader market sentiment improves. Primary risks include sector-wide derating or unexpected company-specific headwinds that could trigger stop-loss cascades.`
+            narrative: `The asset is trading within a well-defined consolidation pattern at $${quote.regularMarketPrice}, showing balanced institutional participation. Technical indicators suggest equilibrium between buyers and sellers, with RSI at ${rsi.toFixed(1)}.`
         };
     }
 }
@@ -238,18 +243,7 @@ export async function getGeminiStockAnalysis(symbol: string): Promise<import('./
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
         const prompt = `
-            Perform a deep-dive investment analysis on ${symbol} for a sophisticated investor.
-            
-            Provide the following structured data in strict JSON format:
-            1. **Thesis**: A concise 3-line investment thesis.
-            2. **Drivers**: Brief analysis of Valuation, Momentum, Macro factors, and Earnings quality.
-            3. **Risks**: List 3 specific downside risks.
-            4. **Scenarios**: Potential price action for Bullish, Bearish, and Neutral cases.
-            5. **Confidence Score**: A number from 0-100 indicating conviction.
-            6. **Recommendation**: One of ["Buy", "Add to Watch", "Monitor", "Ignore"].
-            7. **Counter Argument**: A "Why not?" section playing devil's advocate against the recommendation.
-
-            Return ONLY valid JSON matching this interface:
+            Perform a deep-dive investment analysis on ${symbol}. Return ONLY valid JSON matching this interface:
             {
                 "symbol": "${symbol}",
                 "thesis": "string",
@@ -281,25 +275,15 @@ export async function getGeminiStockAnalysis(symbol: string): Promise<import('./
         throw new Error("Invalid response format");
     } catch (error) {
         console.error("Gemini Stock Analysis Error:", error);
-        // Fallback data
         return {
             symbol: symbol,
-            thesis: "Unable to generate real-time thesis. The stock shows standard market correlation with potential for sector-based movement.",
-            drivers: {
-                valuation: "Trading at industry average multiples.",
-                momentum: "Neutral price action over the last quarter.",
-                macro: "Subject to standard interest rate and economic cycle risks.",
-                earnings: "Stable earnings visibility."
-            },
-            risks: ["Market Volatility", "Sector Rotation", "Regulatory Changes"],
-            scenarios: {
-                bullish: "Breakout above resistance could lead to 10% upside.",
-                bearish: "Failure to hold support may test lower levels.",
-                neutral: "Range-bound trading expected in near term."
-            },
+            thesis: "Unable to generate real-time thesis.",
+            drivers: { valuation: "N/A", momentum: "N/A", macro: "N/A", earnings: "N/A" },
+            risks: ["Market Volatility"],
+            scenarios: { bullish: "N/A", bearish: "N/A", neutral: "N/A" },
             confidenceScore: 50,
             recommendation: "Monitor",
-            counterArgument: "Lack of clear catalysts suggests capital might be better deployed elsewhere for now."
+            counterArgument: "Data connectivity issues."
         };
     }
 }
@@ -309,149 +293,94 @@ export async function generateAIPortfolio(totalCapital: number, userAssets: any[
         const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
         const userPortfolioString = userAssets.length > 0
-            ? `USER'S CURRENT PORTFOLIO:\n${userAssets.map(a => `- ${a.name} (${a.symbol}): $${(a.quantity * a.currentPrice).toLocaleString()} in ${a.sector}`).join('\n')}`
+            ? `USER'S CURRENT PORTFOLIO:\n${userAssets.map(a => {
+                const value = a.quantity * a.currentPrice;
+                return `- ${a.name}${a.symbol ? ` (${a.symbol})` : ''}: $${value.toLocaleString()}`;
+            }).join('\n')}`
             : "No current assets.";
 
         const prompt = `
-            You are a World-Class Portfolio Manager and Quantitative Strategist.
-            Total Capital to distribute: $${totalCapital}.
-            
+            Analyze user's holdings and create a TARGET PROFITABLE PORTFOLIO for $${totalCapital}.
             ${userPortfolioString}
-
-            TASK:
-            Analyze the user's current holdings and create a TARGET PROFITABLE PORTFOLIO for the same $${totalCapital}.
-            The goal is to MAXIMIZE PROFITABILITY while maintaining moderate risk through optimized distribution.
-            
-            ALLOCATION STRATEGY:
-            - Growth Stocks (Tech, AI, Semiconductors): 40-50%
-            - Value/Defensive (Finance, Healthcare, Energy): 20-30%
-            - Crypto (High Conviction - BTC/ETH): 5-10%
-            - Real Estate (REITs or Physical exposure): 10-15%
-            - Cash/ETFs (Index tracking): balance
-            
-            Return a JSON array of assets representing the TARGET distribution. Each asset must have:
-            - type: "stock" | "crypto" | "etf" | "real_estate"
-            - name: Full name
-            - symbol: Ticker symbol
-            - quantity: Calculated based on price and allocation
-            - price: Current approximate market price
-            - sector: Industry sector
-            
-            Total value must be approx $${totalCapital}.
-            
-            CRITICAL: Return ONLY a valid JSON array. No markdown.
+            Return a JSON array of assets. Each asset must have [type: "stock"|"crypto"|"etf"|"real_estate", name, symbol, quantity, price, sector].
         `;
 
         const result = await model.generateContent(prompt);
-        const text = result.response.text().trim();
-        const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-        const assets = JSON.parse(cleanedText);
+        const text = result.response.text();
+        const jsonMatch = text.match(/\[[\s\S]*\]/);
 
-        // Map to internal Asset interface
-        return assets.map((a: any, index: number) => ({
-            id: `ai-${Date.now()}-${index}`,
-            type: (['crypto', 'real_estate', 'stock', 'etf'].includes(a.type) ? a.type : 'stock') as any,
-            name: a.name,
-            symbol: a.symbol,
-            quantity: a.quantity,
-            purchasePrice: a.price,
-            currentPrice: a.price,
-            sector: a.sector,
-            valuationDate: new Date().toISOString()
-        }));
-
+        if (jsonMatch) {
+            const assets = JSON.parse(jsonMatch[0]);
+            return assets.map((a: any, index: number) => ({
+                id: `ai-${Date.now()}-${index}`,
+                type: (['crypto', 'real_estate', 'stock', 'etf'].includes(a.type) ? a.type : 'stock') as any,
+                name: a.name,
+                symbol: a.symbol,
+                quantity: a.quantity,
+                purchasePrice: a.price,
+                currentPrice: a.price,
+                sector: a.sector || (a.type === 'real_estate' ? 'Real Estate' : (a.type === 'crypto' ? 'Crypto' : 'Other')),
+                valuationDate: new Date().toISOString()
+            }));
+        }
+        throw new Error("Invalid JSON array");
     } catch (error) {
         console.error("Gemini AI Portfolio Error:", error);
-        // Fallback Portfolio
-        // Fallback Portfolio with Randomization to ensure UI updates
-        const timestamp = Date.now();
-        return [
-            {
-                id: `ai-fallback-${timestamp}-1`,
-                type: 'stock',
-                name: 'Vanguard Total Stock Market ETF',
-                symbol: 'VTI',
-                quantity: Math.floor((totalCapital * 0.4) / 240) + Math.floor(Math.random() * 5),
-                purchasePrice: 240 + (Math.random() * 2 - 1),
-                currentPrice: 240 + (Math.random() * 2 - 1),
-                sector: 'Broad Market',
-                valuationDate: new Date().toISOString()
-            },
-            {
-                id: `ai-fallback-${timestamp}-2`,
-                type: 'stock',
-                name: 'Invesco QQQ Trust',
-                symbol: 'QQQ',
-                quantity: Math.floor((totalCapital * 0.3) / 430) + Math.floor(Math.random() * 3),
-                purchasePrice: 430 + (Math.random() * 4 - 2),
-                currentPrice: 430 + (Math.random() * 4 - 2),
-                sector: 'Technology',
-                valuationDate: new Date().toISOString()
-            },
-            {
-                id: `ai-fallback-${timestamp}-3`,
-                type: 'stock',
-                name: 'JPMorgan Chase & Co.',
-                symbol: 'JPM',
-                quantity: Math.floor((totalCapital * 0.2) / 180) + Math.floor(Math.random() * 2),
-                purchasePrice: 180 + (Math.random() * 2 - 1),
-                currentPrice: 180 + (Math.random() * 2 - 1),
-                sector: 'Financials',
-                valuationDate: new Date().toISOString()
-            },
-            {
-                id: `ai-fallback-${timestamp}-4`,
-                type: 'crypto',
-                name: 'Bitcoin',
-                symbol: 'BTC',
-                quantity: (totalCapital * 0.1) / 52000,
-                purchasePrice: 52000 + (Math.random() * 100 - 50),
-                currentPrice: 52000 + (Math.random() * 100 - 50),
-                sector: 'Digital Assets',
-                valuationDate: new Date().toISOString()
-            }
-        ];
+        return []; // Fallback can be added if needed, but empty array is safer than broken data
     }
 }
 
 export async function getPortfolioComparisonInsight(
     userAssets: any[],
     aiAssets: any[]
-): Promise<string> {
+): Promise<DeepInsight | string> {
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
-        // Calculate basic stats for context
-        const userSectors = [...new Set(userAssets.map(a => a.sector || 'Other'))].join(', ');
-        const aiSectors = [...new Set(aiAssets.map(a => a.sector || 'Other'))].join(', ');
-
         const prompt = `
-            You are a Ruthless Portfolio Strategist and ROI Optimizer.
-            Compare the USER'S CURRENT PORTFOLIO with the AI TARGET PROFITABLE PORTFOLIO.
-            
-            USER PORTFOLIO:
-            - Assets: ${userAssets.length}
-            - Sectors: ${userSectors}
-            - Top Holdings: ${userAssets.slice(0, 3).map(a => a.name).join(', ')}
-            
-            AI TARGET (Optimized for Profit):
-            - Assets: ${aiAssets.length}
-            - Sectors: ${aiSectors}
-            - Top Holdings: ${aiAssets.slice(0, 3).map(a => a.name).join(', ')}
-            
-            Task:
-            Write a single, high-impact paragraph (max 45 words) on how to make the portfolio more PROFITABLE.
-            Identify exactly WHERE to add or redistribute capital. 
-            Mention specific gaps in Growth, Crypto, or Real Estate.
-            Example: "Your current heavy cash position is bleeding value. Redistribute 20% into AI-driven Tech and 10% into REITs for yield. This shift from defensive to growth-oriented sectors is projected to increase your annual ROI by 5.4%."
-            
-            Tone: Professional, Direct, ROI-focused.
+            Compare USER'S CURRENT PORTFOLIO with AI TARGET PORTFOLIO.
+            Return ONLY a JSON object with this EXACT structure:
+            {
+                "convictionExplanation": "string",
+                "narrative": "string",
+                "volatilityRegime": "Stable" | "Trending" | "Chaotic",
+                "alphaScore": number,
+                "institutionalConviction": "High" | "Medium" | "Low",
+                "macroContext": "string",
+                "riskRewardRatio": "string",
+                "evidence": {
+                    "quantitativeDrivers": ["string"],
+                    "factorExposure": {"string": "string"},
+                    "historicalProbability": "string",
+                    "correlationImpacts": "string"
+                },
+                "riskSensitivity": {
+                    "rateHikeImpact": "string",
+                    "recessionImpact": "string",
+                    "worstCaseBand": "string"
+                },
+                "counterCase": {
+                    "thesisInvalidation": "string",
+                    "marketShiftRisks": "string"
+                },
+                "compliance": {
+                    "riskMatch": "string",
+                    "suitabilityStatus": "string",
+                    "regulatoryFlags": ["string"]
+                }
+            }
         `;
 
         const result = await model.generateContent(prompt);
-        return result.response.text().trim();
+        const text = result.response.text();
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        }
+        throw new Error("Invalid JSON");
     } catch (error) {
         console.error("Gemini Comparison Insight Error:", error);
-        return "The AI model has identified significant allocation differences in high-growth sectors. Consider rebalancing your portfolio to align with the model's risk-adjusted strategy for better performance.";
+        return "Comparison currently unavailable due to institutional data synchronization.";
     }
 }

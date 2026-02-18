@@ -2,8 +2,10 @@
 
 import React from 'react';
 import { Asset, calculateNetWorth, getAssetDistribution } from '@/lib/assets';
-import { Target, TrendingUp, Shield, Zap, RefreshCw, Loader2, Sparkles } from 'lucide-react';
+import { Target, TrendingUp, Shield, Zap, RefreshCw, Loader2, Sparkles, FileCheck } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import InstitutionalAnalysis from './InstitutionalAnalysis';
+import { generateAuditPDF } from '@/lib/pdf-utils';
 
 interface PortfolioComparisonProps {
     userAssets: Asset[];
@@ -27,7 +29,14 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
     const getSectorData = (assets: Asset[]) => {
         const distribution: Record<string, number> = {};
         assets.forEach(asset => {
-            const sector = asset.sector || 'Other';
+            // Fallback to type if sector is missing
+            let sector = asset.sector;
+            if (!sector) {
+                if (asset.type === 'real_estate') sector = 'Real Estate';
+                else if (asset.type === 'crypto') sector = 'Crypto';
+                else sector = 'Other';
+            }
+
             const value = asset.quantity * asset.currentPrice;
             distribution[sector] = (distribution[sector] || 0) + value;
         });
@@ -36,7 +45,10 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
 
     const getAssetDataForSector = (assets: Asset[], sector: string) => {
         return assets
-            .filter(a => (a.sector || 'Other') === sector)
+            .filter(a => {
+                const aSector = a.sector || (a.type === 'real_estate' ? 'Real Estate' : (a.type === 'crypto' ? 'Crypto' : 'Other'));
+                return aSector === sector;
+            })
             .map(a => ({
                 name: a.name,
                 value: a.quantity * a.currentPrice
@@ -77,15 +89,50 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Zap size={20} className="text-yellow-500" /> Human vs. AI
                 </h2>
-                <button
-                    onClick={onGenerateAI}
-                    className="btn btn-secondary"
-                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
-                    disabled={isGenerating}
-                >
-                    <RefreshCw size={14} className={isGenerating ? 'animate-spin' : ''} /> Regenerate
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                        onClick={onGenerateAI}
+                        className="btn btn-secondary"
+                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
+                        disabled={isGenerating}
+                    >
+                        <RefreshCw size={14} className={isGenerating ? 'animate-spin' : ''} /> Regenerate
+                    </button>
+                    {aiAssets.length > 0 && (
+                        <button
+                            onClick={() => {
+                                if (typeof insight === 'object' && insight !== null) {
+                                    generateAuditPDF('PORTFOLIO_ADVISORY', insight);
+                                } else {
+                                    alert('Please "Regenerate" the AI portfolio to enable the Institutional Audit features.');
+                                }
+                            }}
+                            className="btn btn-primary"
+                            style={{
+                                fontSize: '0.75rem',
+                                padding: '0.25rem 0.75rem',
+                                background: typeof insight === 'object' ? 'var(--success)' : 'var(--text-muted)',
+                                opacity: typeof insight === 'object' ? 1 : 0.7
+                            }}
+                        >
+                            <FileCheck size={14} /> Full Institutional Audit
+                        </button>
+                    )}
+                </div>
             </div>
+
+            {/* Global Portfolio Insight Section */}
+            {!!insight && (
+                <div style={{ marginBottom: '2rem' }}>
+                    {typeof insight === 'string' ? (
+                        <div className="card" style={{ borderLeft: '4px solid var(--primary)' }}>
+                            <p style={{ fontSize: '0.925rem', lineHeight: '1.6' }}>{insight}</p>
+                        </div>
+                    ) : (
+                        <InstitutionalAnalysis symbol="PORTFOLIO" insight={insight} />
+                    )}
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* User Side */}
@@ -239,7 +286,9 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                     </div>
                 ) : (
                     <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                        {insight || `The AI portfolio is more aggressively weighted towards ${aiSectorData.sort((a, b) => b.value - a.value)[0]?.name || 'Growth'} compared to your holdings. Consider diversifing to match the model's projected alpha.`}
+                        {typeof insight === 'object' && insight !== null
+                            ? (insight as any).narrative
+                            : (insight || `The AI portfolio is more aggressively weighted towards ${aiSectorData.sort((a, b) => b.value - a.value)[0]?.name || 'Growth'} compared to your holdings. Consider diversifing to match the model's projected alpha.`)}
                     </p>
                 )}
             </div>

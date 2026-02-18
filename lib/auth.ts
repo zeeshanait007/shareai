@@ -2,7 +2,7 @@ import { supabase, User } from './supabase';
 import { createSubscription } from './subscription';
 import bcrypt from 'bcryptjs';
 
-const SESSION_DURATION = 10 * 60 * 1000; // 10 minutes
+const SESSION_DURATION = 60 * 60 * 1000; // 1 hour
 
 export interface Session {
     userId: string;

@@ -90,7 +90,7 @@ export default function DashboardContent() {
     // Save Insight (ONLY if default dashboard)
     React.useEffect(() => {
         if (mounted && !currentDashboardId && comparisonInsight) {
-            localStorage.setItem('ai_comparison_insight', comparisonInsight);
+            localStorage.setItem('ai_comparison_insight', typeof comparisonInsight === 'object' ? JSON.stringify(comparisonInsight) : comparisonInsight);
         }
     }, [comparisonInsight, mounted, currentDashboardId]);
 

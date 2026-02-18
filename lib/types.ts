@@ -44,6 +44,36 @@ export interface PortfolioSnapshot {
     created_at: string;
 }
 
+export interface DeepInsight {
+    volatilityRegime: 'Stable' | 'Trending' | 'Chaotic';
+    alphaScore: number;
+    institutionalConviction: 'High' | 'Medium' | 'Low';
+    convictionExplanation: string;
+    macroContext: string;
+    riskRewardRatio: string;
+    narrative: string;
+    evidence?: {
+        quantitativeDrivers: string[];
+        factorExposure: Record<string, string>;
+        historicalProbability: string;
+        correlationImpacts: string;
+    };
+    riskSensitivity?: {
+        rateHikeImpact: string;
+        recessionImpact: string;
+        worstCaseBand: string;
+    };
+    counterCase?: {
+        thesisInvalidation: string;
+        marketShiftRisks: string;
+    };
+    compliance?: {
+        riskMatch: string;
+        suitabilityStatus: string;
+        regulatoryFlags: string[];
+    };
+}
+
 export interface StockAnalysis {
     symbol: string;
     thesis: string; // 3 lines summary
@@ -62,4 +92,33 @@ export interface StockAnalysis {
     confidenceScore: number; // 0-100
     recommendation: 'Buy' | 'Add to Watch' | 'Monitor' | 'Ignore';
     counterArgument: string; // "Why not?"
+}
+
+export interface InstitutionalAnalysis {
+    symbol: string;
+    recommendation: {
+        action: string;
+        conviction: number;
+        timeframe: string;
+    };
+    evidence: {
+        quantitativeDrivers: string[];
+        factorExposure: Record<string, string>;
+        historicalProbability: string;
+        correlationImpacts: string;
+    };
+    riskSensitivity: {
+        rateHikeImpact: string;
+        recessionImpact: string;
+        worstCaseBand: string;
+    };
+    counterCase: {
+        thesisInvalidation: string;
+        marketShiftRisks: string;
+    };
+    compliance: {
+        riskMatch: string;
+        suitabilityStatus: string;
+        regulatoryFlags: string[];
+    };
 }

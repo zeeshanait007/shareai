@@ -8,7 +8,7 @@ export interface SavedDashboard {
     name: string;
     assets: Asset[];
     aiAssets: Asset[];
-    insight: string;
+    insight: any;
     createdAt: number;
 }
 
@@ -17,10 +17,10 @@ export interface DashboardContextType {
     currentDashboardId: string | null;
     assets: Asset[];
     aiAssets: Asset[];
-    insight: string;
+    insight: any;
     setAssets: (assets: Asset[]) => void;
     setAiAssets: (assets: Asset[]) => void;
-    setInsight: (insight: string) => void;
+    setInsight: (insight: any) => void;
     saveDashboard: (name: string) => void;
     updateDashboard: (id: string) => void;
     loadDashboard: (id: string | null) => void;
@@ -34,7 +34,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const [currentDashboardId, setCurrentDashboardId] = useState<string | null>(null);
     const [assets, setAssets] = useState<Asset[]>([]);
     const [aiAssets, setAiAssets] = useState<Asset[]>([]);
-    const [insight, setInsight] = useState<string>("");
+    const [insight, setInsight] = useState<any>("");
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -86,10 +86,23 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
             const savedInsight = localStorage.getItem('ai_comparison_insight');
             if (savedInsight) {
-                setInsight(savedInsight);
+                try {
+                    setInsight(JSON.parse(savedInsight));
+                } catch (e) {
+                    setInsight(savedInsight); // Fallback to raw string if not JSON
+                }
             }
         }
     }, [currentDashboardId]);
+
+    // Save Default Dashboard State
+    useEffect(() => {
+        if (mounted && !currentDashboardId) {
+            localStorage.setItem('portfolio_assets', JSON.stringify(assets));
+            localStorage.setItem('ai_portfolio_assets', JSON.stringify(aiAssets));
+            localStorage.setItem('ai_comparison_insight', JSON.stringify(insight));
+        }
+    }, [assets, aiAssets, insight, mounted, currentDashboardId]);
 
     const saveDashboard = (name: string) => {
         const newDashboard: SavedDashboard = {

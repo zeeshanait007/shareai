@@ -15,11 +15,19 @@ interface DeepInsight {
 }
 
 interface DeepAIInsightCardProps {
-    deepInsight: DeepInsight;
+    symbol: string;
+    deepInsight: any;
+    isStreaming?: boolean;
 }
 
-export default function DeepAIInsightCard({ deepInsight }: DeepAIInsightCardProps) {
+export default function DeepAIInsightCard({ symbol, deepInsight, isStreaming }: DeepAIInsightCardProps) {
     const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+
+    // Helper for loading placeholder
+    const renderValue = (value: any, fallback = '---') => {
+        if (value === undefined || value === null) return <span className="animate-pulse" style={{ opacity: 0.5 }}>{fallback}</span>;
+        return value;
+    };
 
     return (
         <div className="card" style={{
@@ -51,7 +59,7 @@ export default function DeepAIInsightCard({ deepInsight }: DeepAIInsightCardProp
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <Activity size={14} /> Volatility Regime
                     </div>
-                    <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{deepInsight.volatilityRegime}</div>
+                    <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{renderValue(deepInsight.volatilityRegime)}</div>
                 </div>
 
                 <div
@@ -63,12 +71,14 @@ export default function DeepAIInsightCard({ deepInsight }: DeepAIInsightCardProp
                         <Signal size={14} /> Inst. Conviction
                     </div>
                     <div style={{ fontSize: '1.125rem', fontWeight: 800, color: deepInsight.institutionalConviction === 'High' ? 'var(--success)' : deepInsight.institutionalConviction === 'Low' ? 'var(--danger)' : 'var(--warning)' }}>
-                        {deepInsight.institutionalConviction}
+                        {renderValue(deepInsight.institutionalConviction)}
                     </div>
-                    {deepInsight.convictionExplanation && (
+                    {deepInsight.convictionExplanation ? (
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontStyle: 'italic', lineHeight: '1.4' }}>
                             {deepInsight.convictionExplanation}
                         </div>
+                    ) : (
+                        <div style={{ height: '2rem', background: 'var(--surface-hover)', borderRadius: '4px', marginTop: '0.5rem' }} className="animate-pulse" />
                     )}
                 </div>
 
@@ -80,7 +90,7 @@ export default function DeepAIInsightCard({ deepInsight }: DeepAIInsightCardProp
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <BarChart3 size={14} /> Alpha Potential
                     </div>
-                    <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{deepInsight.alphaScore}%</div>
+                    <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{deepInsight.alphaScore !== undefined ? `${deepInsight.alphaScore}%` : renderValue(undefined)}</div>
                 </div>
 
                 <div
@@ -91,7 +101,7 @@ export default function DeepAIInsightCard({ deepInsight }: DeepAIInsightCardProp
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <TrendingUp size={14} /> Risk/Reward
                     </div>
-                    <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{deepInsight.riskRewardRatio}</div>
+                    <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{renderValue(deepInsight.riskRewardRatio)}</div>
                 </div>
             </div>
 
@@ -100,10 +110,10 @@ export default function DeepAIInsightCard({ deepInsight }: DeepAIInsightCardProp
                     <Globe size={16} /> Macro & Sentiment Narrative
                 </div>
                 <p style={{ lineHeight: '1.6', fontSize: '1rem', fontWeight: 500 }}>
-                    {deepInsight.narrative}
+                    {renderValue(deepInsight.narrative, 'Generating market narrative...')}
                 </p>
                 <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                    {deepInsight.macroContext}
+                    {renderValue(deepInsight.macroContext, 'Analyzing macro factors...')}
                 </p>
             </div>
 
@@ -115,6 +125,18 @@ export default function DeepAIInsightCard({ deepInsight }: DeepAIInsightCardProp
             {selectedMetric && (
                 <MetricInsightOverlay metricId={selectedMetric} onClose={() => setSelectedMetric(null)} />
             )}
+
+            {typeof deepInsight === 'object' && deepInsight !== null ? (
+                <div style={{ marginTop: '2rem' }}>
+                    <InstitutionalAnalysis symbol={symbol} insight={deepInsight} isStreaming={isStreaming} />
+                </div>
+            ) : (
+                <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--primary)' }}>
+                    <p style={{ fontSize: '0.925rem', color: 'var(--text-secondary)' }}>{typeof deepInsight === 'string' ? deepInsight : 'Structure analysis not yet available for this asset.'}</p>
+                </div>
+            )}
         </div>
     );
 }
+
+import InstitutionalAnalysis from './InstitutionalAnalysis';

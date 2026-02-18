@@ -176,7 +176,7 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
                 </div>
             )}
 
-            {selectedAction && (
+            {!!selectedAction && (
                 <div style={{
                     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                     background: 'var(--background)', zIndex: 10, padding: 'var(--space-6)',

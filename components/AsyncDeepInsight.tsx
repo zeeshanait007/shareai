@@ -12,6 +12,67 @@ interface AsyncDeepInsightProps {
 }
 
 export default function AsyncDeepInsight({ symbol, history, quote, rsi }: AsyncDeepInsightProps) {
+    // Helper to extract whatever JSON we have so far
+    const extractPartialInsight = (text: string) => {
+        const partial: any = {};
+
+        const fields = [
+            'volatilityRegime', 'alphaScore', 'institutionalConviction',
+            'convictionExplanation', 'macroContext', 'riskRewardRatio', 'narrative'
+        ];
+
+        fields.forEach(field => {
+            // Match simple string or number fields
+            const regex = new RegExp(`"${field}"\\s*:\\s*(?:"([^"]*)"|(\\d+))`);
+            const match = text.match(regex);
+            if (match) {
+                if (match[1] !== undefined) partial[field] = match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+                else if (match[2] !== undefined) partial[field] = Number(match[2]);
+            }
+        });
+
+        // Try to match nested evidence object (partial)
+        if (text.includes('"evidence"')) {
+            partial.evidence = {};
+            const quantMatch = text.match(/"quantitativeDrivers"\s*:\s*\[([^\]]*)/);
+            if (quantMatch) {
+                partial.evidence.quantitativeDrivers = quantMatch[1]
+                    .split(',')
+                    .map(s => s.trim().replace(/^"|"$/g, '').replace(/\\"/g, '"'))
+                    .filter(s => s !== '');
+            }
+        }
+
+        // Try to match nested riskSensitivity
+        if (text.includes('"riskSensitivity"')) {
+            partial.riskSensitivity = {};
+            ['rateHikeImpact', 'recessionImpact', 'worstCaseBand'].forEach(f => {
+                const r = new RegExp(`"${f}"\\s*:\\s*"([^"]*)"`);
+                const m = text.match(r);
+                if (m) partial.riskSensitivity[f] = m[1];
+            });
+        }
+
+        // Try to match compliance
+        if (text.includes('"compliance"')) {
+            partial.compliance = {};
+            ['riskMatch', 'suitabilityStatus'].forEach(f => {
+                const r = new RegExp(`"${f}"\\s*:\\s*"([^"]*)"`);
+                const m = text.match(r);
+                if (m) partial.compliance[f] = m[1];
+            });
+            const regMatch = text.match(/"regulatoryFlags"\s*:\s*\[([^\]]*)/);
+            if (regMatch) {
+                partial.compliance.regulatoryFlags = regMatch[1]
+                    .split(',')
+                    .map(s => s.trim().replace(/^"|"$/g, '').replace(/\\"/g, '"'))
+                    .filter(s => s !== '');
+            }
+        }
+
+        return partial;
+    };
+
     const [insight, setInsight] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [streaming, setStreaming] = useState(false);
@@ -34,6 +95,13 @@ export default function AsyncDeepInsight({ symbol, history, quote, rsi }: AsyncD
                         if (data.chunk && !data.complete) {
                             accumulatedText += data.chunk;
                             setStreamingText(accumulatedText);
+
+                            // Extract what we can for live UI updates
+                            const partial = extractPartialInsight(accumulatedText);
+                            if (Object.keys(partial).length > 0) {
+                                setInsight(partial);
+                                setLoading(false); // Show the card as soon as we have something
+                            }
                         }
 
                         // Handle complete response
@@ -116,5 +184,5 @@ export default function AsyncDeepInsight({ symbol, history, quote, rsi }: AsyncD
         );
     }
 
-    return <DeepAIInsightCard deepInsight={insight} />;
+    return <DeepAIInsightCard symbol={symbol} deepInsight={insight} />;
 }
