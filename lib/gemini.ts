@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Action, DeepInsight } from "./types";
+import { Action, DeepInsight, StockAnalysis } from "./types";
+import { marketData } from './api';
 
 const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -291,9 +292,7 @@ export async function getGeminiDeepInsight(
     }
 }
 
-import { marketData } from './api';
-
-export async function getGeminiStockAnalysis(symbol: string): Promise<import('./types').StockAnalysis> {
+export async function getGeminiStockAnalysis(symbol: string): Promise<StockAnalysis> {
     try {
         const model = genAI.getGenerativeModel(fastModelConfig);
 

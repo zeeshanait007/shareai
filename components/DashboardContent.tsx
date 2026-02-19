@@ -4,7 +4,6 @@ import React, { useState, useCallback } from 'react';
 import { mockAssets, calculateNetWorth, getAssetDistribution, Asset } from '@/lib/assets';
 import { calculatePortfolioBeta } from '@/lib/analytics';
 import { calculateTaxLiability } from '@/lib/indicators';
-import { getUnifiedDashboardSync, getGeminiProactiveActions, generateAIPortfolio, getPortfolioComparisonInsight, getMarketNarrative } from '@/lib/gemini';
 import { Action, DeepInsight } from '@/lib/types';
 import { logout, getCurrentUser } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
@@ -127,6 +126,32 @@ export default function DashboardContent() {
 
     const [dailyPerformance, setDailyPerformance] = React.useState<{ dailyChangeValue: number, dailyChangePct: number, topMover: { symbol: string, changePct: number } } | null>(null);
 
+    const syncWithAI = useCallback(async (manual = false) => {
+        if (!assets || assets.length === 0) return;
+        setIsAutoSyncing(true);
+        try {
+            const totalCapital = assets.reduce((sum, a) => sum + (a.quantity * (a.currentPrice || a.purchasePrice)), 0);
+            const response = await fetch('/api/ai/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assets, stats, totalCapital })
+            });
+
+            if (!response.ok) throw new Error('Sync API failed');
+            const data = await response.json();
+
+            if (data.aiAssets) setAiAssets(data.aiAssets);
+            if (data.insight) setComparisonInsight(data.insight);
+            if (data.actions) setActions(data.actions);
+            if (data.marketNarrative) setMarketNarrative(data.marketNarrative);
+            if (data.performanceMetrics) setDailyPerformance(data.performanceMetrics);
+        } catch (error) {
+            console.error("AI Sync failed:", error);
+        } finally {
+            setIsAutoSyncing(false);
+        }
+    }, [assets, stats, setAiAssets, setComparisonInsight, setActions, setMarketNarrative, setDailyPerformance]);
+
     const isSyncing = isActionsLoading || isGeneratingAI || isGeneratingInsight || isImporting || isAutoSyncing;
 
     const handleGenerateAI = useCallback(async () => {
@@ -135,32 +160,14 @@ export default function DashboardContent() {
         setIsGeneratingInsight(true);
 
         try {
-            const assetsToAnalyze = displayAssets; // Use displayAssets (mock or real)
-            const totalNetWorth = calculateNetWorth(assetsToAnalyze);
-            const capital = totalNetWorth > 0 ? totalNetWorth : 100000;
-
-            // Use the robust unified sync even for manual triggers
-            const { actions, aiAssets: newAiAssets, insight, marketNarrative: newNarrative, performanceMetrics } = await getUnifiedDashboardSync(assetsToAnalyze, stats, capital);
-
-            if (newAiAssets && newAiAssets.length > 0) {
-                setAiAssets(newAiAssets);
-            }
-            if (insight) {
-                console.log('[UI] Setting comparison insight:', typeof insight);
-                setComparisonInsight(insight);
-            }
-            if (performanceMetrics) {
-                setDailyPerformance(performanceMetrics as any);
-            }
-            setActions(actions);
-            setMarketNarrative(newNarrative);
+            await syncWithAI(true); // Trigger manual sync
         } catch (error) {
             console.error("Manual AI Generation Fail:", error);
         } finally {
             setIsGeneratingAI(false);
             setIsGeneratingInsight(false);
         }
-    }, [displayAssets, stats, isSyncing, setAiAssets, setComparisonInsight, setActions, setMarketNarrative]);
+    }, [isSyncing, syncWithAI]);
 
 
 
@@ -216,15 +223,21 @@ export default function DashboardContent() {
         if (!mounted || isGeneratingInsight) return;
         const errorPhrase = "Comparison currently unavailable due to institutional data synchronization.";
         if (typeof comparisonInsight === 'string' && comparisonInsight === errorPhrase && aiAssets.length > 0) {
-            const repairInsight = async () => {
+            const repairNormalInsight = async () => {
                 setIsGeneratingInsight(true);
                 try {
-                    const insight = await getPortfolioComparisonInsight(assets, aiAssets);
-                    setComparisonInsight(insight);
+                    const response = await fetch('/api/ai/comparison', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ assets, aiAssets })
+                    });
+                    if (!response.ok) throw new Error('Comparison API failed');
+                    const data = await response.json();
+                    setComparisonInsight(data.insight);
                 } catch (error) { console.error("Auto-repair failed:", error); }
                 finally { setIsGeneratingInsight(false); }
             };
-            repairInsight();
+            repairNormalInsight();
         }
     }, [comparisonInsight, aiAssets, assets, mounted, isGeneratingInsight, setComparisonInsight]);
 
@@ -232,15 +245,26 @@ export default function DashboardContent() {
         if (!mounted || isActionsLoading) return;
         const isStandby = actions.length === 1 && actions[0].title === 'AI Analysis Standby';
         if (isStandby && assets.length > 0) {
-            const repairActions = async () => {
+            const refreshActions = async () => {
+                if (assets.length === 0) return;
                 setIsActionsLoading(true);
                 try {
-                    const newActions = await getGeminiProactiveActions(assets, stats);
-                    setActions(newActions);
-                } catch (error) { console.error("Proactive auto-repair failed:", error); }
-                finally { setIsActionsLoading(false); }
+                    const response = await fetch('/api/ai/actions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ assets, stats })
+                    });
+
+                    if (!response.ok) throw new Error('Actions API failed');
+                    const data = await response.json();
+                    setActions(data);
+                } catch (error) {
+                    console.error("Failed to refresh actions:", error);
+                } finally {
+                    setIsActionsLoading(false);
+                }
             };
-            repairActions();
+            refreshActions();
         }
     }, [actions.length, assets.length, mounted, isActionsLoading, stats, assets, setActions]);
 

@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { X, TrendingUp, AlertTriangle, Target, Brain, Shield, Crosshair, ThumbsUp, Eye, Clock, Ban, ChevronRight, Check } from 'lucide-react';
 import { StockAnalysis } from '@/lib/types';
-import { getGeminiStockAnalysis } from '@/lib/gemini';
 
 interface StockAnalysisPanelProps {
     symbol: string | null;
