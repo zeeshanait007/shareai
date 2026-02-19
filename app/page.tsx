@@ -33,21 +33,46 @@ export default function Home() {
 
   return (
     <main className="container" style={{ paddingTop: '4rem', paddingBottom: '4rem' }}>
-      <section style={{ textAlign: 'center', marginBottom: '4rem' }} className="fade-in">
-        <h1 style={{ fontSize: '3.5rem', fontWeight: '800', marginBottom: '1rem', background: 'linear-gradient(to right, #fff, #a1a1aa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+      <section style={{ textAlign: 'center', marginBottom: '6rem' }} className="fade-in">
+        <h1 style={{ fontSize: '4.5rem', fontWeight: '900', letterSpacing: '-0.02em', lineHeight: '1.1', marginBottom: '1.5rem', background: 'linear-gradient(to bottom, #fff 30%, #a1a1aa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Market Intelligence <br /> Redefined.
         </h1>
-        <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto 2rem' }}>
-          Advanced analytics and AI-powered insights for the modern investor. Track, analyze, and optimize your portfolio with precision.
+        <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', maxWidth: '700px', margin: '0 auto 3rem', lineHeight: '1.6' }}>
+          Advanced quantum analytics and AI-powered insights for institutional-grade portfolio management.
+          Experience a unified field theory of finance—where data meets intuition.
         </p>
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-          <Link href="/login" className="btn btn-primary">
-            <LogIn size={18} style={{ marginRight: '0.5rem' }} />
-            Sign In to Get Started
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '4rem' }}>
+          <Link href="/login" className="btn btn-primary" style={{ padding: '0.75rem 2rem', fontSize: '1.125rem' }}>
+            <LogIn size={20} style={{ marginRight: '0.5rem' }} />
+            Start Your Analysis
           </Link>
-          <a href="#features" className="btn">
-            Explore Features
+          <a href="#demo" className="btn" style={{ padding: '0.75rem 2rem', fontSize: '1.125rem', border: '1px solid var(--border)' }}>
+            Watch the Demo
           </a>
+        </div>
+
+        {/* Demo Video Container */}
+        <div id="demo" style={{
+          maxWidth: '1000px',
+          margin: '0 auto',
+          borderRadius: '1.5rem',
+          overflow: 'hidden',
+          border: '1px solid var(--border)',
+          background: '#000',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          aspectRatio: '16 / 9',
+          position: 'relative'
+        }}>
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          >
+            <source src="/market_intelligence_final_demo_1771502180969.webp" type="video/webp" />
+            Your browser does not support the video tag.
+          </video>
         </div>
       </section>
 
