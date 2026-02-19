@@ -291,33 +291,21 @@ export async function getGeminiDeepInsight(
     }
 }
 
+import { marketData } from './api';
+
 export async function getGeminiStockAnalysis(symbol: string): Promise<import('./types').StockAnalysis> {
     try {
         const model = genAI.getGenerativeModel(fastModelConfig);
 
-        // Determine base URL (SSR safe)
-        const baseUrl = typeof window !== 'undefined'
-            ? window.location.origin
-            : (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
+        // 1. Fetch Real-Time Data Directly (Parallel)
+        console.log(`[Gemini] Starting direct analysis for ${symbol}`);
 
-        // 1. Fetch Real-Time Data (Parallel)
-        console.log(`[Gemini] Starting analysis for ${symbol} with base URL: ${baseUrl}`);
-
-        const [quoteRes, newsRes] = await Promise.all([
-            fetch(`${baseUrl}/api/quote?symbol=${encodeURIComponent(symbol)}`).catch(err => {
-                console.error("[Gemini] Quote fetch failed:", err);
-                return null;
-            }),
-            fetch(`${baseUrl}/api/news?q=${encodeURIComponent(symbol)}`).catch(err => {
-                console.error("[Gemini] News fetch failed:", err);
-                return null;
-            })
+        const [quote, newsContext] = await Promise.all([
+            marketData.getQuote(symbol),
+            marketData.getNews(symbol)
         ]);
 
-        const quote = quoteRes && quoteRes.ok ? await quoteRes.json() : null;
-        const newsData = newsRes && newsRes.ok ? await newsRes.json() : null;
-
-        console.log(`[Gemini] Real-time data fetched. Quote: ${!!quote}, News: ${!!newsData}`);
+        console.log(`[Gemini] Real-time data fetched directly. Quote: ${!!quote}, News: ${!!newsContext}`);
 
         // 2. Build Context
         let marketContext = '';
@@ -326,19 +314,8 @@ export async function getGeminiStockAnalysis(symbol: string): Promise<import('./
             REAL-TIME MARKET DATA:
             Price: $${quote.regularMarketPrice}
             Change: ${quote.regularMarketChangePercent?.toFixed(2)}%
-            Volume: ${(quote.regularMarketVolume / 1e6).toFixed(1)}M
-            Market Cap: $${(quote.marketCap / 1e9).toFixed(1)}B
-            PE Ratio: ${quote.trailingPE?.toFixed(1) || 'N/A'}
-            52W High: $${quote.fiftyTwoWeekHigh}
-            52W Low: $${quote.fiftyTwoWeekLow}
-            `;
-        }
-
-        let newsContext = '';
-        if (newsData && Array.isArray(newsData.news)) {
-            newsContext = `
-            LATEST NEWS HEADLINES:
-            ${newsData.news.slice(0, 3).map((n: any) => `- ${n.title} (${n.publisher})`).join('\n')}
+            Volume: ${((quote.regularMarketVolume || 0) / 1e6).toFixed(1)}M
+            Market Cap: $${((quote.marketCap || 0) / 1e9).toFixed(1)}B
             `;
         }
 

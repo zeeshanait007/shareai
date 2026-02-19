@@ -34,8 +34,18 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
         setPrice(currentPrice > 0 ? currentPrice : 0);
 
         try {
-            console.log(`[StockAnalysisPanel] Fetching analysis for ${symbol}...`);
-            const result = await getGeminiStockAnalysis(symbol);
+            console.log(`[StockAnalysisPanel] Fetching analysis for ${symbol} via API...`);
+            const response = await fetch('/api/ai/analysis', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ symbol, currentPrice })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const result = await response.json();
 
             if (result.thesis.includes("temporarily unavailable") || result.thesis.includes("Unable to generate")) {
                 setError("Analysis temporarily unavailable. Please try again.");
