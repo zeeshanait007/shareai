@@ -63,16 +63,12 @@ export default function Home() {
           aspectRatio: '16 / 9',
           position: 'relative'
         }}>
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          >
-            <source src="/market_intelligence_final_demo_1771502180969.webp" type="video/webp" />
-            Your browser does not support the video tag.
-          </video>
+          <iframe
+            src="https://www.loom.com/embed/7b4b78fe7e52490e83e7c273846cd7e3?hide_owner=true&hide_share=true&hide_title=true&hide_embed_params=true"
+            frameBorder="0"
+            allowFullScreen={true}
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+          ></iframe>
         </div>
       </section>
 
