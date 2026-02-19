@@ -532,6 +532,7 @@ export default function DashboardContent() {
                                 isLoading={isSyncing}
                                 onRefresh={handleGenerateAI}
                                 dailyPerformance={dailyPerformance}
+                                quantifiedConsequences={comparisonInsight && typeof comparisonInsight === 'object' ? (comparisonInsight as DeepInsight).quantifiedConsequences : []}
                             />
                         </div>
                         <button

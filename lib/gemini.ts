@@ -154,9 +154,13 @@ export async function getMarketNarrative(netWorth: number, distribution: any, ma
             generationConfig: { temperature: 0.4, maxOutputTokens: 100 } // Tiny limit for ultra-fast summary
         });
         const prompt = `
-            Senior Macro Strategist. Wealth: $${netWorth.toLocaleString()}. Assets: ${JSON.stringify(distribution)}.
-            ${marketNews ? `News: ${marketNews}` : ''}
-            Response: 15-word max professional linking news to allocation.
+            Persona: Advanced Quantum Financial Observer. You see portfolio gravity fields (concentration risks), capital flow vectors (market momentum), and volatility distortions.
+            Wealth: $${netWorth.toLocaleString()}. Assets: ${JSON.stringify(distribution)}.
+            ${marketNews ? `Context: ${marketNews}` : ''}
+            
+            Task: Provide a "Daily Briefing" headline.
+            Style: Use high-concept physics/mathematical metaphors (gravity, vectors, distortions) but anchor them in the QUANTITATIVE REALITY of the assets and news provided.
+            Response: 12-word max. One precise sentence.
         `;
         const result = await model.generateContent(prompt);
         return result.response.text().trim();
@@ -507,7 +511,8 @@ export async function getUnifiedDashboardSync(
             }
 
             const prompt = `
-        You are a professional portfolio advisor with access to REAL-TIME market data and news. 
+        You are an Advanced Quantum Financial Advisor with access to REAL-TIME market data and news. 
+        You perceive the market as a system of gravity fields (asset concentrations), capital flow vectors (liquidity and momentum), and volatility distortions.
         Your task is to analyze this investor's portfolio and build a BETTER alternative.
 
         INVESTOR'S CURRENT PORTFOLIO:
@@ -530,6 +535,9 @@ export async function getUnifiedDashboardSync(
         - convictionScore: (0-100). Explicitly tie this to the strength of the data/news. If news is mixed, conviction should be lower.
         - riskScore: (1-10). Based on volatility and macro context.
         - topPick: Reason MUST cite specific news or price action from the context provided.
+        - quantifiedConsequences: Analyze 2-3 specific scenario models based on current data.
+          Example: "Probability of >10% drawdown increases from 28% → 34%", "Expected volatility increases by 12%", "Sharpe ratio deteriorates by 0.4".
+          Must be quantitative, data-backed conclusions. NO FEAR TACTICS.
 
         RULES FOR "aiAssets":
         - Use the EXACT SAME total capital: $${totalCapital.toLocaleString()}
@@ -542,7 +550,7 @@ export async function getUnifiedDashboardSync(
             "actions": [{ type, priority, title, description, impact, urgency, justification }],
             "aiAssets": [{ type, name, symbol, quantity, price, sector }],
             "insight": {
-                "narrative": "3-4 sentences EXPLICITLY referencing the real-time news/data above. Explain the LOGIC behind the Alpha Gap and Conviction Score.",
+                "narrative": "3-4 sentences. Style: Unified Field Theory of Finance. Reference gravity fields, vectors, and distortions, but EXPLICITLY anchor in the real-time news/data above.",
                 "userStrategyName": string,
                 "aiStrategyName": string,
                 "strategicDifference": string,
@@ -552,9 +560,10 @@ export async function getUnifiedDashboardSync(
                 "projectedReturnAI": number,
                 "riskScore": number,
                 "sectorGaps": [{ sector, userWeight, aiWeight }],
-                "topPick": { symbol, reason, impact }
+                "topPick": { symbol, reason, impact },
+                "quantifiedConsequences": ["specific string 1", "specific string 2"]
             },
-            "marketNarrative": "12-word headline referencing today's market conditions"
+            "marketNarrative": "12-word headline using gravity/vector metaphors anchored in today's quantitative market context."
         }
 `;
 
@@ -668,6 +677,7 @@ export async function getUnifiedDashboardSync(
                     projectedReturnAI: Number(data.insight?.projectedReturnAI) || 17.8,
                     riskScore: Number(data.insight?.riskScore) || 6,
                     sectorGaps: Array.isArray(data.insight?.sectorGaps) ? data.insight.sectorGaps : [],
+                    quantifiedConsequences: Array.isArray(data.insight?.quantifiedConsequences) ? data.insight.quantifiedConsequences : [],
                     generatedAt: Date.now(),
                     topPick: resolvedTopPick
                 },

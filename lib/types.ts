@@ -71,6 +71,7 @@ export interface DeepInsight {
         reason: string;
         impact: string;
     };
+    quantifiedConsequences?: string[];
     evidence?: {
         quantitativeDrivers: string[];
         factorExposure: Record<string, string>;

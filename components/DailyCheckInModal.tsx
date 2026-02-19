@@ -19,9 +19,10 @@ interface DailyCheckInModalProps {
         dailyChangePct: number;
         topMover: { symbol: string; changePct: number };
     } | null;
+    quantifiedConsequences?: string[];
 }
 
-export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, marketNarrative, topAction, isLoading, onRefresh, dailyPerformance }: DailyCheckInModalProps) {
+export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, marketNarrative, topAction, isLoading, onRefresh, dailyPerformance, quantifiedConsequences }: DailyCheckInModalProps) {
     if (!isOpen) return null;
 
     // Use Real-Time Data if available, otherwise 0/Loading
@@ -136,6 +137,32 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
                             </div>
                         ) : (
                             <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>No data</div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Quantified Risk Outlook */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Target size={14} /> Quantified Risk Outlook
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {isLoading ? (
+                            <div className="space-y-2">
+                                <div className="h-10 bg-gray-200 dark:bg-gray-700/50 rounded animate-pulse"></div>
+                                <div className="h-10 bg-gray-200 dark:bg-gray-700/50 rounded animate-pulse"></div>
+                            </div>
+                        ) : (quantifiedConsequences && quantifiedConsequences.length > 0) ? (
+                            quantifiedConsequences.map((consequence, idx) => (
+                                <div key={idx} style={{ padding: '0.75rem', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.1)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--danger)' }}></div>
+                                    {consequence}
+                                </div>
+                            ))
+                        ) : (
+                            <div style={{ padding: '0.75rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                                No significant risk distortions detected in current quantum field.
+                            </div>
                         )}
                     </div>
                 </div>
