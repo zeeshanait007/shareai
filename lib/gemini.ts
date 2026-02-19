@@ -324,33 +324,33 @@ export async function getGeminiStockAnalysis(symbol: string): Promise<StockAnaly
             ${marketContext}
             ${newsContext}
 
-            Task: Provide a sharp, institutional-grade investment stance.
+            CRITICAL: Provide ACTUAL analysis based on the data above. DO NOT return placeholder text like "Comment on PE" or "Analyzing...". 
+            If data is missing for a specific field, give your best estimate based on general market knowledge of ${symbol} or mark it as "Limited Data".
             
-            Return JSON: 
+            Return JSON in this EXACT structure:
             { 
                 "symbol": "${symbol}", 
-                "thesis": "2-sentence core investment thesis based on current valuation and news.",
+                "thesis": "Concise core investment thesis (2-3 sentences).",
                 "drivers": { 
-                    "valuation": "Comment on PE/Price vs history", 
-                    "momentum": "Comment on price action/volume", 
-                    "macro": "Relevant macro factor", 
-                    "earnings": "Earnings outlook" 
+                    "valuation": "Actual valuation analysis", 
+                    "momentum": "Actual momentum analysis", 
+                    "macro": "Actual macro analysis", 
+                    "earnings": "Actual earnings analysis" 
                 }, 
                 "risks": ["Specific Risk 1", "Specific Risk 2"], 
                 "scenarios": { 
-                    "bullish": "Price target & catalyst", 
-                    "bearish": "Downside risk & trigger", 
-                    "neutral": "Consolidation range" 
+                    "bullish": "Bullish target & catalyst", 
+                    "bearish": "Bearish target & trigger", 
+                    "neutral": "Neutral range" 
                 }, 
                 "confidenceScore": number (0-100), 
                 "recommendation": "Buy"|"Add to Watch"|"Monitor"|"Ignore", 
-                "counterArgument": "The strongest bear case against your thesis" 
+                "counterArgument": "The strongest bear case" 
             }
         `;
 
-        console.log("[Gemini] Generated Prompt:", prompt.substring(0, 200) + "...");
-
-        const result = await model.generateContent(prompt);
+        console.log("[Gemini] Requesting analysis via retry-utility...");
+        const result = await callGeminiWithRetry(prompt);
         const responseText = result.response.text();
         console.log("[Gemini] Raw Response:", responseText.substring(0, 200) + "...");
 
@@ -365,22 +365,22 @@ export async function getGeminiStockAnalysis(symbol: string): Promise<StockAnaly
 
         return {
             symbol: data.symbol || symbol,
-            thesis: data.thesis || `Analyzing ${symbol} market structure...`,
+            thesis: data.thesis || `Institutional analysis for ${symbol} based on current market signals.`,
             drivers: {
-                valuation: data.drivers?.valuation || "Analyzing...",
-                momentum: data.drivers?.momentum || "Analyzing...",
-                macro: data.drivers?.macro || "Analyzing...",
-                earnings: data.drivers?.earnings || "Analyzing..."
+                valuation: data.drivers?.valuation || "Data unavailable",
+                momentum: data.drivers?.momentum || "Data unavailable",
+                macro: data.drivers?.macro || "Data unavailable",
+                earnings: data.drivers?.earnings || "Data unavailable"
             },
-            risks: Array.isArray(data.risks) ? data.risks : ["Volatility"],
+            risks: Array.isArray(data.risks) && data.risks.length > 0 ? data.risks : ["Standard market volatility"],
             scenarios: {
-                bullish: data.scenarios?.bullish || "Data pending",
-                bearish: data.scenarios?.bearish || "Data pending",
-                neutral: data.scenarios?.neutral || "Data pending"
+                bullish: data.scenarios?.bullish || "N/A",
+                bearish: data.scenarios?.bearish || "N/A",
+                neutral: data.scenarios?.neutral || "N/A"
             },
             confidenceScore: typeof data.confidenceScore === 'number' ? data.confidenceScore : 50,
             recommendation: data.recommendation || "Monitor",
-            counterArgument: data.counterArgument || "Market volatility."
+            counterArgument: data.counterArgument || "Market shifts."
         };
     } catch (error) {
         console.error("Gemini Stock Analysis Error:", error);
