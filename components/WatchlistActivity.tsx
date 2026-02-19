@@ -9,9 +9,7 @@ import StockAnalysisPanel from '@/components/StockAnalysisPanel';
 export default function WatchlistActivity({ onStockClick }: { onStockClick?: (symbol: string) => void }) {
     const [items, setItems] = useState<WatchlistItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
     const [timeframe, setTimeframe] = useState<string>('1d');
-    const analysisRef = useRef<HTMLDivElement>(null);
 
     const loadData = async (range: string = '1d') => {
         setIsLoading(true);
@@ -64,13 +62,6 @@ export default function WatchlistActivity({ onStockClick }: { onStockClick?: (sy
         return () => window.removeEventListener('storage', handleStorage);
     }, [timeframe]);
 
-    useEffect(() => {
-        if (selectedSymbol && analysisRef.current) {
-            setTimeout(() => {
-                analysisRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 100);
-        }
-    }, [selectedSymbol]);
 
     const ranges = [
         { label: '1D', value: '1d' },
@@ -133,11 +124,10 @@ export default function WatchlistActivity({ onStockClick }: { onStockClick?: (sy
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {items.map((stock) => {
                     const isPositive = (stock.changePercent ?? 0) >= 0;
-                    const isSelected = selectedSymbol === stock.symbol;
                     return (
                         <div
                             key={stock.symbol}
-                            onClick={() => setSelectedSymbol(isSelected ? null : stock.symbol)}
+                            onClick={() => onStockClick && onStockClick(stock.symbol)}
                             style={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
@@ -145,8 +135,7 @@ export default function WatchlistActivity({ onStockClick }: { onStockClick?: (sy
                                 cursor: 'pointer',
                                 padding: '0.5rem',
                                 borderRadius: '8px',
-                                background: isSelected ? 'var(--surface-hover)' : 'transparent',
-                                border: isSelected ? '1px solid var(--primary-glow)' : '1px solid transparent',
+                                border: '1px solid transparent',
                                 transition: 'all 0.2s ease'
                             }}
                             className="hover-opacity"
@@ -154,9 +143,9 @@ export default function WatchlistActivity({ onStockClick }: { onStockClick?: (sy
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                 <div style={{
                                     width: '32px', height: '32px', borderRadius: '50%',
-                                    background: isSelected ? 'var(--primary)' : 'var(--surface-hover)',
+                                    background: 'var(--surface-hover)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: isSelected ? '#fff' : 'var(--text-secondary)',
+                                    color: 'var(--text-secondary)',
                                     fontWeight: 700, fontSize: '0.7rem'
                                 }}>
                                     {stock.symbol.slice(0, 2)}
@@ -182,48 +171,16 @@ export default function WatchlistActivity({ onStockClick }: { onStockClick?: (sy
                 })}
             </div>
 
-            {/* AI Analysis Panel Expansion */}
-            {selectedSymbol && (
-                <div
-                    ref={analysisRef}
-                    className="animate-in fade-in slide-in-from-top-2"
-                    style={{
-                        marginTop: '1rem',
-                        paddingTop: '1rem',
-                        borderTop: '1px solid var(--border)',
-                        background: 'linear-gradient(180deg, rgba(59,130,246,0.02) 0%, transparent 100%)',
-                        borderRadius: '0 0 12px 12px'
-                    }}
-                >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', paddingLeft: '0.5rem' }}>
-                        <Sparkles size={16} className="text-primary animate-pulse" />
-                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.05em' }}>REAL-TIME AI ANALYSIS</span>
-                    </div>
-                    <div style={{ maxHeight: '800px', overflowY: 'auto' }}>
-                        <StockAnalysisPanel
-                            symbol={selectedSymbol}
-                            currentPrice={items.find(i => i.symbol === selectedSymbol)?.price}
-                            onClose={() => setSelectedSymbol(null)}
-                            // Pass empty handlers since we focus on analysis here, or could wire up buying
-                            onBuy={() => { }}
-                            onAddToWatchlist={() => { }}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {!selectedSymbol && (
-                <div style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                        {items.some(i => (i.changePercent ?? 0) > 2)
-                            ? "Some assets in your watchlist are showing strong momentum today."
-                            : "Your watchlist is showing stable performance."}
-                    </p>
-                    <Link href="/dashboard/watchlist" style={{ display: 'block', marginTop: '1rem', fontSize: '0.875rem', color: 'var(--primary)', fontWeight: '500', textDecoration: 'none' }}>
-                        View Full Watchlist →
-                    </Link>
-                </div>
-            )}
+            <div style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                    {items.some(i => (i.changePercent ?? 0) > 2)
+                        ? "Some assets in your watchlist are showing strong momentum today."
+                        : "Your watchlist is showing stable performance."}
+                </p>
+                <Link href="/dashboard/watchlist" style={{ display: 'block', marginTop: '1rem', fontSize: '0.875rem', color: 'var(--primary)', fontWeight: '500', textDecoration: 'none' }}>
+                    View Full Watchlist →
+                </Link>
+            </div>
         </div>
     );
 }

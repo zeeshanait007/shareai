@@ -12,6 +12,7 @@ import ActionCenter from '@/components/ActionCenter';
 
 import WatchlistActivity from '@/components/WatchlistActivity';
 import StockAnalysisPanel from '@/components/StockAnalysisPanel';
+import { addToWatchlist } from '@/lib/watchlist';
 import SubscriptionBanner from '@/components/SubscriptionBanner';
 import AddAssetModal from '@/components/AddAssetModal';
 import PortfolioComparison from '@/components/PortfolioComparison';
@@ -267,6 +268,45 @@ export default function DashboardContent() {
             refreshActions();
         }
     }, [actions.length, assets.length, mounted, isActionsLoading, stats, assets, setActions]);
+
+    const handleBuyStock = useCallback((symbol: string, quantity: number, price: number) => {
+        const timestamp = new Date().toISOString();
+        const existingAssetIndex = assets.findIndex(a => a.symbol === symbol);
+
+        if (existingAssetIndex >= 0) {
+            const updatedAssets = [...assets];
+            const existing = updatedAssets[existingAssetIndex];
+            updatedAssets[existingAssetIndex] = {
+                ...existing,
+                quantity: existing.quantity + quantity,
+                purchasePrice: (existing.purchasePrice * existing.quantity + price * quantity) / (existing.quantity + quantity),
+                currentPrice: price,
+                valuationDate: timestamp
+            };
+            setAssets(updatedAssets);
+        } else {
+            const newAsset: Asset = {
+                id: `buy-${symbol}-${Date.now()}`,
+                type: 'stock',
+                name: symbol, // Fallback to symbol as name if not found
+                symbol,
+                quantity,
+                purchasePrice: price,
+                currentPrice: price,
+                sector: 'Technology', // Default sector
+                valuationDate: timestamp
+            };
+            setAssets([...assets, newAsset]);
+        }
+    }, [assets, setAssets]);
+
+    const handleAddToWatchlist = useCallback((symbol: string) => {
+        addToWatchlist({
+            symbol,
+            name: symbol,
+            price: 0 // Will be updated by WatchlistActivity
+        });
+    }, []);
 
     const handleLogout = () => {
         logout();
@@ -696,7 +736,17 @@ export default function DashboardContent() {
                                     <h2 style={{ fontSize: '1.25rem', marginBottom: 'var(--space-4)' }}>Watchlist Activity</h2>
                                     <WatchlistActivity onStockClick={(symbol) => setSelectedStock(symbol)} />
                                 </div>
-
+                                {selectedStock && (
+                                    <div id="analysis-section" className="grid grid-cols-1 gap-6">
+                                        <StockAnalysisPanel
+                                            symbol={selectedStock}
+                                            currentPrice={assets.find(a => a.symbol === selectedStock)?.currentPrice}
+                                            onClose={() => setSelectedStock(null)}
+                                            onBuy={handleBuyStock}
+                                            onAddToWatchlist={handleAddToWatchlist}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
