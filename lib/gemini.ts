@@ -486,8 +486,8 @@ export async function getUnifiedDashboardSync(
                     }).join(', ');
                 }
 
-                // Fetch news for top 3 holdings
-                const topHoldings = uniqueSymbols.slice(0, 3);
+                // Fetch news for top 6 holdings
+                const topHoldings = uniqueSymbols.slice(0, 6);
                 const newsPromises = topHoldings.map((sym: string) =>
                     fetch(`${baseUrl}/api/news?q=${encodeURIComponent(sym)}`)
                         .then(r => r.ok ? r.json() : null)
@@ -507,54 +507,56 @@ export async function getUnifiedDashboardSync(
             }
 
             const prompt = `
-            You are a professional portfolio advisor with access to REAL-TIME market data. Analyze this investor's portfolio and build a BETTER alternative.
+        You are a professional portfolio advisor with access to REAL-TIME market data and news. 
+        Your task is to analyze this investor's portfolio and build a BETTER alternative.
 
-            INVESTOR'S CURRENT PORTFOLIO:
-            - Net Worth: $${stats.netWorth.toLocaleString()}
-            - Total Capital: $${totalCapital.toLocaleString()}
-            - Portfolio Beta: ${stats.beta}
-            - Current Sector Allocation: ${topSectors}
-            - Holdings: ${assetSummary || 'None'}
+        INVESTOR'S CURRENT PORTFOLIO:
+        - Net Worth: $${stats.netWorth.toLocaleString()}
+        - Total Capital: $${totalCapital.toLocaleString()}
+        - Portfolio Beta: ${stats.beta}
+        - Current Sector Allocation: ${topSectors}
+        - Holdings: ${assetSummary || 'None'}
 
-            ${liveMarketContext ? `LIVE MARKET DATA (as of now):
-            ${liveMarketContext}` : ''}
+        ${liveMarketContext ? `LIVE MARKET DATA (as of now):
+        ${liveMarketContext}` : ''}
 
-            ${newsContext ? `BREAKING NEWS & HEADLINES:
-            ${newsContext}` : ''}
+        ${newsContext ? `YAHOO FINANCE NEWS & HEADLINES:
+        ${newsContext}` : ''}
 
-            YOUR TASK: Using the live market data and news above, create an OPTIMIZED AI portfolio that DIRECTLY IMPROVES upon the investor's current holdings.
+        YOUR TASK: Using the live market data and news above, create an OPTIMIZED AI portfolio.
 
-            RULES FOR "aiAssets":
-            - Use the EXACT SAME total capital: $${totalCapital.toLocaleString()}
-            - Keep strong existing positions but FIX weaknesses (over-concentration, missing sectors, high risk)
-            - REACT TO NEWS: If any news is bearish for a holding, reduce/remove it. If bullish, keep or increase it.
-            - Each asset MUST have a realistic current market price (use the live prices above where available)
-            - Include 5-8 assets with proper diversification across sectors
-            - The AI portfolio MUST have higher projected returns and better risk management
-            - price = current market price per share/unit, quantity = number of shares (price × quantity should sum to ~$${totalCapital.toLocaleString()})
+        CRITICAL REQUIREMENT FOR METRICS:
+        - alphaGap: Expected yearly % outperformance. Base this strictly on why the AI picks are better positioned GIVEN market conditions above.
+        - convictionScore: (0-100). Explicitly tie this to the strength of the data/news. If news is mixed, conviction should be lower.
+        - riskScore: (1-10). Based on volatility and macro context.
+        - topPick: Reason MUST cite specific news or price action from the context provided.
 
-            Return this JSON structure:
-            {
-                "actions": [2-3 specific moves referencing real news/data: { type, priority, title, description, impact, urgency, justification }],
-                "aiAssets": [{ type: "stock"|"etf"|"crypto", name: string, symbol: string, quantity: number, price: number, sector: string }],
-                "insight": {
-                    "narrative": "3 sentences referencing real market data: what's wrong with current portfolio, how AI portfolio addresses it using latest market intelligence, expected outcome",
-                    "userStrategyName": "Professional name for current strategy",
-                    "aiStrategyName": "Professional name for AI strategy",
-                    "strategicDifference": "1 sentence: the key paradigm shift from user to AI based on current market conditions",
-                    "alphaGap": number (expected yearly % AI outperforms user),
-                    "convictionScore": number (0-100),
-                    "projectedReturnUser": number (estimated 1Y return % for CURRENT portfolio based on live data),
-                    "projectedReturnAI": number (estimated 1Y return % for AI portfolio, MUST be higher),
-                    "riskScore": number (1-10 overall risk),
-                    "sectorGaps": [{ "sector": string, "userWeight": number, "aiWeight": number }] (top 4 sectors, weights as %),
-                    "topPick": { "symbol": string, "reason": "reason citing current market data/news", "impact": string }
-                },
-                "marketNarrative": "12-word headline referencing today's market conditions"
-            }
+        RULES FOR "aiAssets":
+        - Use the EXACT SAME total capital: $${totalCapital.toLocaleString()}
+        - FIX weaknesses (over-concentration, missing sectors, high risk).
+        - REACT TO NEWS: Adjust positions based on current sentiment.
+        - Each asset MUST have a realistic current market price.
 
-            Return ONLY valid JSON. No markdown, no preamble, no explanation.
-        `;
+        Return this JSON structure:
+        {
+            "actions": [{ type, priority, title, description, impact, urgency, justification }],
+            "aiAssets": [{ type, name, symbol, quantity, price, sector }],
+            "insight": {
+                "narrative": "3-4 sentences EXPLICITLY referencing the real-time news/data above. Explain the LOGIC behind the Alpha Gap and Conviction Score.",
+                "userStrategyName": string,
+                "aiStrategyName": string,
+                "strategicDifference": string,
+                "alphaGap": number,
+                "convictionScore": number,
+                "projectedReturnUser": number,
+                "projectedReturnAI": number,
+                "riskScore": number,
+                "sectorGaps": [{ sector, userWeight, aiWeight }],
+                "topPick": { symbol, reason, impact }
+            },
+            "marketNarrative": "12-word headline referencing today's market conditions"
+        }
+`;
 
             const result = await callGeminiWithRetry(prompt);
             const data = parseAIJSON(result.response.text());

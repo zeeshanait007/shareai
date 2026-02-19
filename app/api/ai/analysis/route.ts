@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getGeminiStockAnalysis } from '@/lib/gemini';
+import { marketData } from '@/lib/api';
 
 export async function POST(request: NextRequest) {
     try {
@@ -10,10 +11,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Symbol is required' }, { status: 400 });
         }
 
-        console.log(`[API-Analysis] Generating analysis for ${symbol}...`);
-        const analysis = await getGeminiStockAnalysis(symbol);
+        const [analysis, quote] = await Promise.all([
+            getGeminiStockAnalysis(symbol),
+            marketData.getQuote(symbol).catch(() => null)
+        ]);
 
-        return NextResponse.json(analysis);
+        return NextResponse.json({
+            ...analysis,
+            currentPrice: quote?.regularMarketPrice || currentPrice || 0
+        });
     } catch (error: any) {
         console.error("[API-Analysis] Error:", error);
         return NextResponse.json({

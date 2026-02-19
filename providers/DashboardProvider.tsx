@@ -139,6 +139,34 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         }));
     };
 
+    // Enhanced setters that also update the current dashboard if one is active
+    const updateAssets = React.useCallback((newAssets: Asset[]) => {
+        setAssets(newAssets);
+        if (currentDashboardId) {
+            setDashboards(prev => prev.map(d =>
+                d.id === currentDashboardId ? { ...d, assets: newAssets } : d
+            ));
+        }
+    }, [currentDashboardId]);
+
+    const updateAiAssets = React.useCallback((newAiAssets: Asset[]) => {
+        setAiAssets(newAiAssets);
+        if (currentDashboardId) {
+            setDashboards(prev => prev.map(d =>
+                d.id === currentDashboardId ? { ...d, aiAssets: newAiAssets } : d
+            ));
+        }
+    }, [currentDashboardId]);
+
+    const updateInsight = React.useCallback((newInsight: any) => {
+        setInsight(newInsight);
+        if (currentDashboardId) {
+            setDashboards(prev => prev.map(d =>
+                d.id === currentDashboardId ? { ...d, insight: newInsight } : d
+            ));
+        }
+    }, [currentDashboardId]);
+
     const loadDashboard = (id: string | null) => {
         setCurrentDashboardId(id);
         if (id) {
@@ -168,9 +196,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
             assets,
             aiAssets,
             insight,
-            setAssets,
-            setAiAssets,
-            setInsight,
+            setAssets: updateAssets,
+            setAiAssets: updateAiAssets,
+            setInsight: updateInsight,
             saveDashboard,
             updateDashboard,
             loadDashboard,

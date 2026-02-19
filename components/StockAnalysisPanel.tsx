@@ -50,6 +50,9 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
                 setError("Analysis temporarily unavailable. Please try again.");
             } else {
                 setAnalysis(result);
+                if (result.currentPrice && result.currentPrice > 0) {
+                    setPrice(result.currentPrice);
+                }
             }
         } catch (error) {
             console.error("Error fetching analysis:", error);
