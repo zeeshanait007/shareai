@@ -36,7 +36,8 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
 
     const [userDrillDownSector, setUserDrillDownSector] = React.useState<string | null>(null);
     const [aiDrillDownSector, setAiDrillDownSector] = React.useState<string | null>(null);
-    const [chartType, setChartType] = React.useState<'doughnut' | 'stacked'>('doughnut');
+    const [userChartType, setUserChartType] = React.useState<'doughnut' | 'bar'>('doughnut');
+    const [aiChartType, setAiChartType] = React.useState<'doughnut' | 'bar'>('doughnut');
     const [mounted, setMounted] = React.useState(false);
 
     React.useEffect(() => {
@@ -95,53 +96,6 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
     const topPickImpact = insightObj?.topPick?.impact || aiAssets[0]?.sector || 'Strategic Pick';
     const topPickReason = insightObj?.topPick?.reason || 'AI-optimized sector alignment for maximum alpha capture.';
     const narrativeText = insightObj?.narrative || `Your portfolio of $${userNetWorth.toLocaleString('en-US')} is being compared against an AI-optimized allocation of $${aiNetWorth.toLocaleString('en-US')} across ${aiSectorData.length} sectors. Regenerate to get fresh AI analysis.`;
-
-    // Stacked Chart Data Preparation
-    const stackedDrillDown = userDrillDownSector; // Use user sector as the driver
-
-    const getStackedData = () => {
-        if (stackedDrillDown) {
-            // Asset Level Data
-            const uAssets = getAssetDataForSector(userAssets, stackedDrillDown);
-            const aAssets = normalizeToTotal(getAssetDataForSector(aiAssets, stackedDrillDown), userNetWorth);
-
-            // Limit to top 15 assets to avoid clutter
-            const allAssetNames = Array.from(new Set([...uAssets, ...aAssets].map(d => d.name)));
-            const keys = allAssetNames.slice(0, 15);
-
-            const data = [
-                {
-                    name: 'Your Portfolio',
-                    ...uAssets.reduce((acc, curr) => ({ ...acc, [curr.name]: curr.value }), {}),
-                    total: uAssets.reduce((s, c) => s + c.value, 0)
-                },
-                {
-                    name: 'AI Optimized',
-                    ...aAssets.reduce((acc, curr) => ({ ...acc, [curr.name]: curr.value }), {}),
-                    total: aAssets.reduce((s, c) => s + c.value, 0)
-                }
-            ];
-            return { keys, data };
-        } else {
-            // Sector Level Data
-            const keys = Array.from(new Set([...userSectorData, ...aiSectorData].map(d => d.name)));
-            const data = [
-                {
-                    name: 'Your Portfolio',
-                    ...userSectorData.reduce((acc, curr) => ({ ...acc, [curr.name]: curr.value }), {}),
-                    total: userNetWorth
-                },
-                {
-                    name: 'AI Optimized',
-                    ...aiSectorData.reduce((acc, curr) => ({ ...acc, [curr.name]: curr.value }), {}),
-                    total: aiNetWorth
-                }
-            ];
-            return { keys, data };
-        }
-    };
-
-    const { keys: stackedKeys, data: stackedChartData } = getStackedData();
 
     if (!mounted) {
         return <div style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -237,36 +191,6 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignItems: 'center' }}>
-                    <div style={{ display: 'flex', background: 'var(--surface-hover)', borderRadius: '8px', padding: '2px', border: '1px solid var(--border)', marginRight: '0.5rem' }}>
-                        <button
-                            onClick={() => setChartType('doughnut')}
-                            style={{
-                                padding: '4px 8px',
-                                borderRadius: '6px',
-                                background: chartType === 'doughnut' ? 'var(--card-bg)' : 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center'
-                            }}
-                        >
-                            <PieChartIcon size={14} color={chartType === 'doughnut' ? 'var(--primary)' : 'var(--text-muted)'} />
-                        </button>
-                        <button
-                            onClick={() => setChartType('stacked')}
-                            style={{
-                                padding: '4px 8px',
-                                borderRadius: '6px',
-                                background: chartType === 'stacked' ? 'var(--card-bg)' : 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center'
-                            }}
-                        >
-                            <BarChart3 size={14} color={chartType === 'stacked' ? 'var(--primary)' : 'var(--text-muted)'} />
-                        </button>
-                    </div>
                     <button onClick={onGenerateAI} className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }} disabled={isGenerating}>
                         <RefreshCw size={14} className={isGenerating ? 'animate-spin' : ''} /> Regenerate
                     </button>
@@ -314,44 +238,43 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                 </div>
             )}
 
-            {/* ═══ CHART VISUALIZATION ═══ */}
-            {chartType === 'stacked' ? (
-                <div style={{ padding: '1.5rem', background: 'var(--surface-hover)', borderRadius: '12px', border: '1px solid var(--border)', height: '400px', position: 'relative' }}>
+            {/* ═══ CHART VISUALIZATION: Two Columns ═══ */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                {/* User Portfolio Card */}
+                <div style={{ padding: '1rem', background: 'var(--surface-hover)', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <BarChart3 size={16} style={{ color: 'var(--primary)' }} />
-                            <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>
-                                {stackedDrillDown ? `Asset Breakdown: ${stackedDrillDown}` : 'Allocation Comparison'}
-                            </span>
-                            {stackedDrillDown && (
-                                <button onClick={() => setUserDrillDownSector(null)} style={{ fontSize: '0.7rem', color: 'var(--primary)', background: 'rgba(59,130,246,0.1)', border: 'none', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer' }}>← Back</button>
-                            )}
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>YOUR ALLOCATION</div>
+                        <div style={{ display: 'flex', background: 'var(--card-bg)', borderRadius: '6px', padding: '2px', border: '1px solid var(--border)' }}>
+                            <button
+                                onClick={() => setUserChartType('doughnut')}
+                                style={{ padding: '3px 6px', borderRadius: '4px', background: userChartType === 'doughnut' ? 'var(--surface-hover)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                            >
+                                <PieChartIcon size={12} color={userChartType === 'doughnut' ? 'var(--primary)' : 'var(--text-muted)'} />
+                            </button>
+                            <button
+                                onClick={() => setUserChartType('bar')}
+                                style={{ padding: '3px 6px', borderRadius: '4px', background: userChartType === 'bar' ? 'var(--surface-hover)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                            >
+                                <BarChart3 size={12} color={userChartType === 'bar' ? 'var(--primary)' : 'var(--text-muted)'} />
+                            </button>
                         </div>
                     </div>
-                    <ResponsiveContainer width="100%" height="90%">
-                        <BarChart layout="vertical" data={stackedChartData} margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" opacity={0.5} />
-                            <XAxis type="number" hide />
-                            <YAxis type="category" dataKey="name" stroke="var(--text-muted)" fontSize={12} width={100} />
-                            <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px' }} formatter={(v: any, n: any) => [`$${Number(v).toLocaleString()}`, n]} />
-                            <Legend />
-                            {stackedKeys.map((key, i) => (
-                                <Bar key={key} dataKey={key} stackId="a" fill={COLORS[i % COLORS.length]} onClick={() => !stackedDrillDown && setUserDrillDownSector(key)} style={{ cursor: stackedDrillDown ? 'default' : 'pointer' }} />
-                            ))}
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-            ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    {/* User Portfolio */}
-                    <div style={{ padding: '1rem', background: 'var(--surface-hover)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '1rem' }}>YOUR ALLOCATION</div>
-                        <div style={{ height: '200px' }}>
-                            <ResponsiveContainer width="100%" height="100%">
+
+                    <div style={{ height: '220px', position: 'relative' }}>
+                        {userDrillDownSector && (
+                            <button
+                                onClick={() => setUserDrillDownSector(null)}
+                                style={{ position: 'absolute', top: 0, left: 0, zIndex: 5, fontSize: '0.65rem', color: 'var(--primary)', background: 'rgba(59,130,246,0.1)', border: 'none', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer' }}
+                            >
+                                ← Back to Sectors
+                            </button>
+                        )}
+                        <ResponsiveContainer width="100%" height="100%">
+                            {userChartType === 'doughnut' ? (
                                 <PieChart>
                                     <Pie
                                         data={userDrillDownSector ? getAssetDataForSector(userAssets, userDrillDownSector) : userSectorData}
-                                        cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={5} dataKey="value"
+                                        cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={5} dataKey="value"
                                         onClick={(data) => !userDrillDownSector && setUserDrillDownSector(data.name)}
                                         style={{ cursor: userDrillDownSector ? 'default' : 'pointer' }}
                                     >
@@ -359,23 +282,62 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                                             <Cell key={i} fill={COLORS[i % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip formatter={(v: any, n: any) => [`$${Number(v).toLocaleString()}`, n]} />
+                                    <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px' }} formatter={(v: any, n: any) => [`$${Number(v).toLocaleString()}`, n]} />
                                 </PieChart>
-                            </ResponsiveContainer>
+                            ) : (
+                                <BarChart layout="vertical" data={userDrillDownSector ? getAssetDataForSector(userAssets, userDrillDownSector) : userSectorData} margin={{ left: -20, right: 20 }}>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" opacity={0.3} />
+                                    <XAxis type="number" hide />
+                                    <YAxis type="category" dataKey="name" stroke="var(--text-muted)" fontSize={10} width={80} />
+                                    <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px' }} formatter={(v: any) => [`$${Number(v).toLocaleString()}`, 'Value']} />
+                                    <Bar dataKey="value" radius={[0, 4, 4, 0]} onClick={(data: any) => !userDrillDownSector && data?.name && setUserDrillDownSector(data.name)} style={{ cursor: userDrillDownSector ? 'default' : 'pointer' } as any}>
+                                        {(userDrillDownSector ? getAssetDataForSector(userAssets, userDrillDownSector) : userSectorData).map((_, i) => (
+                                            <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            )}
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* AI Optimized Portfolio Card */}
+                <div style={{ padding: '1rem', background: 'linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(139,92,246,0.05) 100%)', borderRadius: '12px', border: '1px solid rgba(59,130,246,0.2)', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <Sparkles size={14} /> AI OPTIMIZED ALLOCATION
+                        </div>
+                        <div style={{ display: 'flex', background: 'var(--card-bg)', borderRadius: '6px', padding: '2px', border: '1px solid var(--border)' }}>
+                            <button
+                                onClick={() => setAiChartType('doughnut')}
+                                style={{ padding: '3px 6px', borderRadius: '4px', background: aiChartType === 'doughnut' ? 'var(--surface-hover)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                            >
+                                <PieChartIcon size={12} color={aiChartType === 'doughnut' ? 'var(--primary)' : 'var(--text-muted)'} />
+                            </button>
+                            <button
+                                onClick={() => setAiChartType('bar')}
+                                style={{ padding: '3px 6px', borderRadius: '4px', background: aiChartType === 'bar' ? 'var(--surface-hover)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                            >
+                                <BarChart3 size={12} color={aiChartType === 'bar' ? 'var(--primary)' : 'var(--text-muted)'} />
+                            </button>
                         </div>
                     </div>
 
-                    {/* AI Portfolio */}
-                    <div style={{ padding: '1rem', background: 'linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(139,92,246,0.05) 100%)', borderRadius: '12px', border: '1px solid rgba(59,130,246,0.2)', position: 'relative' }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <Sparkles size={14} /> AI OPTIMIZED ALLOCATION
-                        </div>
-                        <div style={{ height: '200px' }}>
-                            <ResponsiveContainer width="100%" height="100%">
+                    <div style={{ height: '220px', position: 'relative' }}>
+                        {aiDrillDownSector && (
+                            <button
+                                onClick={() => setAiDrillDownSector(null)}
+                                style={{ position: 'absolute', top: 0, left: 0, zIndex: 5, fontSize: '0.65rem', color: 'var(--primary)', background: 'rgba(59,130,246,0.1)', border: 'none', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer' }}
+                            >
+                                ← Back to Sectors
+                            </button>
+                        )}
+                        <ResponsiveContainer width="100%" height="100%">
+                            {aiChartType === 'doughnut' ? (
                                 <PieChart>
                                     <Pie
                                         data={aiDrillDownSector ? getAssetDataForSector(aiAssets, aiDrillDownSector) : aiSectorData}
-                                        cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={5} dataKey="value"
+                                        cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={5} dataKey="value"
                                         onClick={(data) => !aiDrillDownSector && setAiDrillDownSector(data.name)}
                                         style={{ cursor: aiDrillDownSector ? 'default' : 'pointer' }}
                                     >
@@ -383,13 +345,25 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                                             <Cell key={i} fill={COLORS[(i + 2) % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip formatter={(v: any, n: any) => [`$${Number(v).toLocaleString()}`, n]} />
+                                    <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px' }} formatter={(v: any, n: any) => [`$${Number(v).toLocaleString()}`, n]} />
                                 </PieChart>
-                            </ResponsiveContainer>
-                        </div>
+                            ) : (
+                                <BarChart layout="vertical" data={aiDrillDownSector ? getAssetDataForSector(aiAssets, aiDrillDownSector) : aiSectorData} margin={{ left: -20, right: 20 }}>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" opacity={0.3} />
+                                    <XAxis type="number" hide />
+                                    <YAxis type="category" dataKey="name" stroke="var(--text-muted)" fontSize={10} width={80} />
+                                    <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px' }} formatter={(v: any) => [`$${Number(v).toLocaleString()}`, 'Value']} />
+                                    <Bar dataKey="value" radius={[0, 4, 4, 0]} onClick={(data: any) => !aiDrillDownSector && data?.name && setAiDrillDownSector(data.name)} style={{ cursor: aiDrillDownSector ? 'default' : 'pointer' } as any}>
+                                        {(aiDrillDownSector ? getAssetDataForSector(aiAssets, aiDrillDownSector) : aiSectorData).map((_, i) => (
+                                            <Cell key={i} fill={COLORS[(i + 2) % COLORS.length]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            )}
+                        </ResponsiveContainer>
                     </div>
                 </div>
-            )}
+            </div>
 
             {/* ═══ CSS ═══ */}
             <style jsx>{`
