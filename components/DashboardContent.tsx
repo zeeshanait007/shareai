@@ -128,14 +128,18 @@ export default function DashboardContent() {
     const [dailyPerformance, setDailyPerformance] = React.useState<{ dailyChangeValue: number, dailyChangePct: number, topMover: { symbol: string, changePct: number } } | null>(null);
 
     const syncWithAI = useCallback(async (manual = false) => {
-        if (!assets || assets.length === 0) return;
+        const currentAssets = assets.length > 0 ? assets : mockAssets;
         setIsAutoSyncing(true);
         try {
-            const totalCapital = assets.reduce((sum, a) => sum + (a.quantity * (a.currentPrice || a.purchasePrice)), 0);
+            const totalCapital = currentAssets.reduce((sum, a) => sum + (a.quantity * (a.currentPrice || a.purchasePrice)), 0);
             const response = await fetch('/api/ai/sync', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ assets, stats, totalCapital })
+                body: JSON.stringify({
+                    assets: currentAssets,
+                    stats,
+                    totalCapital
+                })
             });
 
             if (!response.ok) throw new Error('Sync API failed');
@@ -245,15 +249,15 @@ export default function DashboardContent() {
     React.useEffect(() => {
         if (!mounted || isActionsLoading) return;
         const isStandby = actions.length === 1 && actions[0].title === 'AI Analysis Standby';
-        if (isStandby && assets.length > 0) {
+        if (isStandby) {
             const refreshActions = async () => {
-                if (assets.length === 0) return;
+                const currentAssets = assets.length > 0 ? assets : mockAssets;
                 setIsActionsLoading(true);
                 try {
                     const response = await fetch('/api/ai/actions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ assets, stats })
+                        body: JSON.stringify({ assets: currentAssets, stats })
                     });
 
                     if (!response.ok) throw new Error('Actions API failed');
