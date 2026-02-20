@@ -282,14 +282,24 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                                             <Cell key={i} fill={COLORS[i % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px' }} formatter={(v: any, n: any) => [`$${Number(v).toLocaleString()}`, n]} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border)', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)', padding: '8px 12px', border: '1px solid var(--border)' }}
+                                        itemStyle={{ color: 'var(--text-primary)', fontSize: '0.8rem', fontWeight: 600 }}
+                                        labelStyle={{ color: 'var(--text-muted)', marginBottom: '4px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase' }}
+                                        formatter={(v: any, n: any) => [`$${Number(v).toLocaleString()}`, n]}
+                                    />
                                 </PieChart>
                             ) : (
                                 <BarChart layout="vertical" data={userDrillDownSector ? getAssetDataForSector(userAssets, userDrillDownSector) : userSectorData} margin={{ left: -20, right: 20 }}>
                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" opacity={0.3} />
                                     <XAxis type="number" hide />
                                     <YAxis type="category" dataKey="name" stroke="var(--text-muted)" fontSize={10} width={80} />
-                                    <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px' }} formatter={(v: any) => [`$${Number(v).toLocaleString()}`, 'Value']} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border)', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)', padding: '8px 12px', border: '1px solid var(--border)' }}
+                                        itemStyle={{ color: 'var(--text-primary)', fontSize: '0.8rem', fontWeight: 600 }}
+                                        labelStyle={{ color: 'var(--text-muted)', marginBottom: '4px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase' }}
+                                        formatter={(v: any) => [`$${Number(v).toLocaleString()}`, 'Value']}
+                                    />
                                     <Bar dataKey="value" radius={[0, 4, 4, 0]} onClick={(data: any) => !userDrillDownSector && data?.name && setUserDrillDownSector(data.name)} style={{ cursor: userDrillDownSector ? 'default' : 'pointer' } as any}>
                                         {(userDrillDownSector ? getAssetDataForSector(userAssets, userDrillDownSector) : userSectorData).map((_, i) => (
                                             <Cell key={i} fill={COLORS[i % COLORS.length]} />
@@ -345,14 +355,24 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                                             <Cell key={i} fill={COLORS[(i + 2) % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px' }} formatter={(v: any, n: any) => [`$${Number(v).toLocaleString()}`, n]} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border)', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)', padding: '8px 12px', border: '1px solid var(--border)' }}
+                                        itemStyle={{ color: 'var(--text-primary)', fontSize: '0.8rem', fontWeight: 600 }}
+                                        labelStyle={{ color: 'var(--text-muted)', marginBottom: '4px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase' }}
+                                        formatter={(v: any, n: any) => [`$${Number(v).toLocaleString()}`, n]}
+                                    />
                                 </PieChart>
                             ) : (
                                 <BarChart layout="vertical" data={aiDrillDownSector ? getAssetDataForSector(aiAssets, aiDrillDownSector) : aiSectorData} margin={{ left: -20, right: 20 }}>
                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" opacity={0.3} />
                                     <XAxis type="number" hide />
                                     <YAxis type="category" dataKey="name" stroke="var(--text-muted)" fontSize={10} width={80} />
-                                    <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', borderRadius: '8px' }} formatter={(v: any) => [`$${Number(v).toLocaleString()}`, 'Value']} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border)', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)', padding: '8px 12px', border: '1px solid var(--border)' }}
+                                        itemStyle={{ color: 'var(--text-primary)', fontSize: '0.8rem', fontWeight: 600 }}
+                                        labelStyle={{ color: 'var(--text-muted)', marginBottom: '4px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase' }}
+                                        formatter={(v: any) => [`$${Number(v).toLocaleString()}`, 'Value']}
+                                    />
                                     <Bar dataKey="value" radius={[0, 4, 4, 0]} onClick={(data: any) => !aiDrillDownSector && data?.name && setAiDrillDownSector(data.name)} style={{ cursor: aiDrillDownSector ? 'default' : 'pointer' } as any}>
                                         {(aiDrillDownSector ? getAssetDataForSector(aiAssets, aiDrillDownSector) : aiSectorData).map((_, i) => (
                                             <Cell key={i} fill={COLORS[(i + 2) % COLORS.length]} />

@@ -65,9 +65,9 @@ export default function StockChart({ data }: StockChartProps) {
                         tickFormatter={(number) => `$${number.toFixed(2)}`}
                     />
                     <Tooltip
-                        contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                        itemStyle={{ color: 'var(--text-primary)' }}
-                        labelStyle={{ color: 'var(--text-secondary)' }}
+                        contentStyle={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border)', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)', padding: '8px 12px', border: '1px solid var(--border)' }}
+                        itemStyle={{ color: 'var(--text-primary)', fontSize: '0.8rem', fontWeight: 600 }}
+                        labelStyle={{ color: 'var(--text-muted)', marginBottom: '4px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase' }}
                         formatter={(value: number | undefined) => [value ? `$${value.toFixed(2)}` : '', 'Price']}
                     />
                     <Area
