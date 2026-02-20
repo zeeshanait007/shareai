@@ -442,6 +442,41 @@ export default function DashboardContent() {
     return (
         <>
             <div className="fade-in">
+                {isDemoMode && (
+                    <div style={{
+                        background: 'rgba(245, 158, 11, 0.1)',
+                        border: '1px solid rgba(245, 158, 11, 0.2)',
+                        borderRadius: 'var(--radius-md)',
+                        padding: '0.75rem 1.25rem',
+                        marginBottom: '1.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.75rem',
+                        color: '#F59E0B',
+                        fontSize: '0.875rem',
+                        fontWeight: 500
+                    }}>
+                        <BrainCircuit size={18} />
+                        <span><strong>Demo Mode Active:</strong> You're viewing sample data. Load your own assets for personalized AI quantum analysis.</span>
+                        <button
+                            onClick={() => setIsAddAssetOpen(true)}
+                            style={{
+                                marginLeft: 'auto',
+                                background: '#F59E0B',
+                                color: 'white',
+                                border: 'none',
+                                padding: '0.25rem 0.75rem',
+                                borderRadius: '0.25rem',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Load Data
+                        </button>
+                    </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
                         <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Imagine Wealth</h1>
@@ -537,6 +572,7 @@ export default function DashboardContent() {
                                 onRefresh={handleGenerateAI}
                                 dailyPerformance={dailyPerformance}
                                 quantifiedConsequences={comparisonInsight && typeof comparisonInsight === 'object' ? (comparisonInsight as DeepInsight).quantifiedConsequences : []}
+                                isDemoMode={isDemoMode}
                             />
                         </div>
                         <button
@@ -648,6 +684,7 @@ export default function DashboardContent() {
                                             isGenerating={isGeneratingAI}
                                             insight={comparisonInsight}
                                             isGeneratingInsight={isGeneratingInsight}
+                                            isDemoMode={isDemoMode}
                                         />
                                     </div>
                                 ) : (

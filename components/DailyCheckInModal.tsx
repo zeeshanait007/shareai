@@ -20,9 +20,10 @@ interface DailyCheckInModalProps {
         topMover: { symbol: string; changePct: number };
     } | null;
     quantifiedConsequences?: string[];
+    isDemoMode?: boolean;
 }
 
-export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, marketNarrative, topAction, isLoading, onRefresh, dailyPerformance, quantifiedConsequences }: DailyCheckInModalProps) {
+export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, marketNarrative, topAction, isLoading, onRefresh, dailyPerformance, quantifiedConsequences, isDemoMode }: DailyCheckInModalProps) {
     if (!isOpen) return null;
 
     // Use Real-Time Data if available, otherwise 0/Loading
@@ -68,8 +69,19 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
                         {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                     </span>
                 </div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, lineHeight: 1.1, marginBottom: '0.25rem' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, lineHeight: 1.1, marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     Daily Briefing
+                    {isDemoMode && (
+                        <span style={{
+                            fontSize: '0.625rem',
+                            background: '#F59E0B',
+                            color: 'white',
+                            padding: '0.1rem 0.4rem',
+                            borderRadius: '0.25rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.02em'
+                        }}>DEMO DATA</span>
+                    )}
                 </h2>
             </div>
 
@@ -200,8 +212,14 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
                     className="button-primary"
                     style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', padding: '0.75rem' }}
                 >
-                    <CheckCircle2 size={16} /> Mark as Read
                 </button>
+
+                {isDemoMode && (
+                    <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'center', border: '1px dashed var(--border)' }}>
+                        Analysis is currently based on <strong>Sample Demo Data</strong>.
+                        Import your own assets to receive specialized quantum advice.
+                    </div>
+                )}
 
             </div>
         </div>
