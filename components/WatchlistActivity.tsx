@@ -83,10 +83,37 @@ export default function WatchlistActivity({ onStockClick }: { onStockClick?: (sy
     if (items.length === 0) {
         return (
             <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', height: '350px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', boxSizing: 'border-box' }}>
-                <p style={{ marginBottom: '1rem', fontSize: '0.875rem' }}>Your watchlist is empty.</p>
-                <Link href="/dashboard" className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem' }}>
-                    Add Stocks
-                </Link>
+                <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '50%',
+                    background: 'var(--surface-hover)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '1rem',
+                    color: 'var(--text-muted)',
+                    opacity: 0.5
+                }}>
+                    <Sparkles size={24} />
+                </div>
+                <p style={{ marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>Your Watchlist is Empty</p>
+                <p style={{ marginBottom: '1.25rem', fontSize: '0.75rem', maxWidth: '220px', lineHeight: '1.4' }}>
+                    Search for a symbol above (e.g., AAPL) and click "Add to Watchlist" to start tracking.
+                </p>
+                <button
+                    onClick={() => {
+                        const input = document.getElementById('global-search-input');
+                        if (input) {
+                            input.focus();
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                    }}
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.75rem', padding: '0.4rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                    Add Your First Stock
+                </button>
             </div>
         );
     }
@@ -100,16 +127,16 @@ export default function WatchlistActivity({ onStockClick }: { onStockClick?: (sy
                         key={r.value}
                         onClick={() => setTimeframe(r.value)}
                         style={{
-                            padding: '0.25rem 0.65rem',
-                            fontSize: '0.7rem',
-                            fontWeight: 600,
+                            padding: '0.35rem 0.75rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
                             borderRadius: '6px',
                             border: 'none',
                             cursor: 'pointer',
-                            background: timeframe === r.value ? 'var(--card-bg)' : 'transparent',
+                            background: timeframe === r.value ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
                             color: timeframe === r.value ? 'var(--primary)' : 'var(--text-muted)',
                             boxShadow: timeframe === r.value ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
-                            transition: 'all 0.2s ease'
+                            transition: 'all var(--transition-fast)'
                         }}
                     >
                         {r.label}
@@ -133,12 +160,13 @@ export default function WatchlistActivity({ onStockClick }: { onStockClick?: (sy
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 cursor: 'pointer',
-                                padding: '0.5rem',
-                                borderRadius: '8px',
-                                border: '1px solid transparent',
-                                transition: 'all 0.2s ease'
+                                padding: '0.75rem',
+                                borderRadius: 'var(--radius-md)',
+                                background: 'rgba(255, 255, 255, 0.02)',
+                                border: '1px solid var(--border)',
+                                transition: 'all var(--transition-fast)'
                             }}
-                            className="hover-opacity"
+                            className="interactive-card"
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                 <div style={{

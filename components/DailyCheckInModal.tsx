@@ -53,8 +53,8 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
         }}>
             {/* Header with Morning Vibe */}
             <div style={{
-                padding: '1.5rem',
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
+                padding: '1.75rem',
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.1) 100%)',
                 borderBottom: '1px solid var(--border)',
                 position: 'relative'
             }}>
@@ -109,11 +109,11 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
                                 }}
                             >
                                 <RefreshCw size={12} className={isLoading ? "animate-spin" : ""} />
-                                {isLoading ? 'Updating...' : 'Refresh'}
+                                {isLoading ? 'Updating...' : 'Refresh Cluster'}
                             </button>
                         )}
                     </div>
-                    <div style={{ fontSize: '0.875rem', lineHeight: '1.6', color: 'var(--text-primary)', padding: '1rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)', borderLeft: '3px solid var(--primary)' }}>
+                    <div style={{ fontSize: '0.875rem', lineHeight: '1.7', color: 'var(--text-primary)', padding: '1.25rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', borderLeft: '4px solid var(--primary)' }}>
                         {isLoading ? (
                             <div className="space-y-2">
                                 <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
@@ -127,7 +127,7 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
 
                 {/* Portfolio Health */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                    <div style={{ padding: '0.75rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                    <div style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>24h Change</div>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '1.125rem', fontWeight: 800, color: isPositive ? 'var(--success)' : 'var(--danger)' }}>
@@ -138,7 +138,7 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
                             </span>
                         </div>
                     </div>
-                    <div style={{ padding: '0.75rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                    <div style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Top Mover</div>
                         {topMover ? (
                             <div>
@@ -166,13 +166,13 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
                             </div>
                         ) : (quantifiedConsequences && quantifiedConsequences.length > 0) ? (
                             quantifiedConsequences.map((consequence, idx) => (
-                                <div key={idx} style={{ padding: '0.75rem', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.1)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--danger)' }}></div>
+                                <div key={idx} style={{ padding: '0.875rem 1rem', background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.15)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', color: 'rgba(255, 255, 255, 0.9)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--danger)', boxShadow: '0 0 8px var(--danger)' }}></div>
                                     {consequence}
                                 </div>
                             ))
                         ) : (
-                            <div style={{ padding: '0.75rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                            <div style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '0.8125rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
                                 No significant risk distortions detected in current quantum field.
                             </div>
                         )}
@@ -185,13 +185,13 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
                         <Target size={14} /> Today's Focus
                     </h3>
                     {isLoading ? (
-                        <div style={{ padding: '1rem', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: 'var(--radius-md)' }}>
-                            <div className="h-4 bg-blue-200 dark:bg-blue-900/30 rounded w-1/3 mb-2 animate-pulse"></div>
+                        <div style={{ padding: '1.25rem', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: 'var(--radius-md)' }}>
+                            <div className="h-4 bg-indigo-200 dark:bg-indigo-900/30 rounded w-1/3 mb-2 animate-pulse"></div>
                             <div className="h-3 bg-gray-200 dark:bg-gray-700/50 rounded w-full mb-1 animate-pulse"></div>
                             <div className="h-3 bg-gray-200 dark:bg-gray-700/50 rounded w-2/3 animate-pulse"></div>
                         </div>
                     ) : topAction ? (
-                        <div style={{ padding: '1rem', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: 'var(--radius-md)' }}>
+                        <div style={{ padding: '1.25rem', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: 'var(--radius-md)' }}>
                             <div style={{ fontWeight: 700, marginBottom: '0.25rem', color: '#3B82F6', fontSize: '0.9375rem' }}>{topAction.title}</div>
                             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.75rem', lineHeight: '1.5' }}>{topAction.description}</p>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

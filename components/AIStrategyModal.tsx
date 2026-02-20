@@ -56,17 +56,20 @@ export default function AIStrategyModal({
             padding: '2rem'
         }}>
             <div className="modal-content fade-in" style={{
-                background: 'var(--background)',
+                background: 'rgba(15, 17, 21, 0.98)',
+                backdropFilter: 'blur(32px)',
                 border: '1px solid var(--border)',
-                borderRadius: '1.25rem',
+                borderRadius: '1.5rem',
                 width: '100%',
-                maxWidth: '1200px',
-                maxHeight: '90vh',
+                maxWidth: '1280px',
+                maxHeight: '92vh',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                boxShadow: '0 40px 100px -20px rgba(0, 0, 0, 0.8)',
+                position: 'relative'
             }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--grad-primary)', opacity: 0.9 }}></div>
                 {/* Header */}
                 <div style={{
                     padding: '1.5rem 2rem',
@@ -78,19 +81,20 @@ export default function AIStrategyModal({
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '10px',
-                            background: 'var(--primary)',
+                            width: '44px',
+                            height: '44px',
+                            borderRadius: '12px',
+                            background: 'var(--grad-primary)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: 'white'
+                            color: 'white',
+                            boxShadow: 'var(--shadow-primary)'
                         }}>
-                            <BrainCircuit size={24} />
+                            <BrainCircuit size={28} />
                         </div>
                         <div>
-                            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>Institutional Intelligence</h2>
+                            <h2 style={{ fontSize: '1.75rem', fontWeight: 900, margin: 0, letterSpacing: '-0.03em', background: 'var(--grad-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Institutional Intelligence</h2>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
                                 {isSyncing ? (
                                     <>
@@ -138,19 +142,20 @@ export default function AIStrategyModal({
                     {/* Market Narrative Banner */}
                     {marketNarrative && (
                         <div style={{
-                            padding: '1.25rem',
-                            background: 'var(--surface)',
-                            borderRadius: '1rem',
-                            border: '1px solid var(--border)',
+                            padding: '1.5rem',
+                            background: 'rgba(99, 102, 241, 0.05)',
+                            borderRadius: '1.25rem',
+                            border: '1px solid rgba(99, 102, 241, 0.2)',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '1rem',
-                            animation: 'slideDown 0.4s ease-out'
+                            gap: '1.25rem',
+                            animation: 'slideDown 0.4s ease-out',
+                            boxShadow: 'var(--shadow-sm)'
                         }}>
-                            <Sparkles className="text-primary" size={24} />
+                            <Sparkles className="text-primary" size={28} />
                             <div>
-                                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Market Posture</div>
-                                <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{marketNarrative}</div>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>Global Market Posture</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: '1.4' }}>{marketNarrative}</div>
                             </div>
                         </div>
                     )}

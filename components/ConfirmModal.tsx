@@ -55,13 +55,17 @@ export default function ConfirmModal({
         }}>
             <div className="card fade-in" style={{
                 width: '100%',
-                maxWidth: '400px',
+                maxWidth: '420px',
                 margin: '1rem',
-                background: 'var(--surface)',
+                background: 'rgba(15, 17, 21, 0.95)',
+                backdropFilter: 'blur(16px)',
                 border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-lg)',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                boxShadow: '0 25px 80px -12px rgba(0, 0, 0, 0.7)',
+                position: 'relative',
+                overflow: 'hidden'
             }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'var(--grad-primary)', opacity: 0.8 }}></div>
                 <div style={{
                     padding: 'var(--space-6)',
                     display: 'flex',
@@ -93,11 +97,15 @@ export default function ConfirmModal({
                     <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
                         <button
                             onClick={onClose}
-                            className="btn"
                             style={{
-                                background: 'var(--surface-hover)',
+                                background: 'rgba(255, 255, 255, 0.03)',
                                 color: 'var(--text-primary)',
-                                border: '1px solid var(--border)'
+                                border: '1px solid var(--border)',
+                                padding: 'var(--space-2) var(--space-4)',
+                                borderRadius: 'var(--radius-md)',
+                                fontWeight: 600,
+                                fontSize: '0.8125rem',
+                                cursor: 'pointer'
                             }}
                         >
                             {cancelText}
@@ -107,11 +115,16 @@ export default function ConfirmModal({
                                 onConfirm();
                                 onClose();
                             }}
-                            className="btn"
                             style={{
                                 background: type === 'danger' ? 'var(--danger)' : type === 'warning' ? '#F59E0B' : 'var(--primary)',
                                 color: 'white',
-                                border: 'none'
+                                border: 'none',
+                                padding: 'var(--space-2) var(--space-4)',
+                                borderRadius: 'var(--radius-md)',
+                                fontWeight: 700,
+                                fontSize: '0.8125rem',
+                                cursor: 'pointer',
+                                boxShadow: 'var(--shadow-primary)'
                             }}
                         >
                             {confirmText}

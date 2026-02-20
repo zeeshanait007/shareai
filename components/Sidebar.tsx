@@ -51,20 +51,32 @@ export default function Sidebar() {
     return (
         <>
             <aside style={{
-                width: '250px',
+                width: '280px',
                 borderRight: '1px solid var(--border)',
                 height: '100vh',
                 position: 'fixed',
                 left: 0,
                 top: 0,
                 background: 'var(--background)',
-                padding: 'var(--space-6)',
+                padding: 'var(--space-8) var(--space-6)',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                boxShadow: '4px 0 24px rgba(0,0,0,0.2)'
             }}>
-                <div style={{ marginBottom: 'var(--space-8)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ width: '32px', height: '32px', background: 'var(--primary)', borderRadius: '8px' }}></div>
-                    <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>ShareAI</span>
+                <div style={{ marginBottom: 'var(--space-12)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{
+                        width: '36px',
+                        height: '36px',
+                        background: 'var(--grad-primary)',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: 'var(--shadow-primary)'
+                    }}>
+                        <Sparkles size={20} color="white" />
+                    </div>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 900, letterSpacing: '-0.03em', background: 'var(--grad-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>ShareAI</span>
                 </div>
 
                 <nav style={{ flex: 1 }}>
@@ -80,13 +92,15 @@ export default function Sidebar() {
                                             style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                padding: 'var(--space-2) var(--space-4)',
+                                                padding: 'var(--space-3) var(--space-4)',
                                                 borderRadius: 'var(--radius-md)',
                                                 color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                                background: isActive ? 'var(--surface-hover)' : 'transparent',
-                                                fontWeight: isActive ? 500 : 400,
+                                                background: isActive ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                                                border: isActive ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid transparent',
+                                                fontWeight: isActive ? 600 : 500,
                                                 transition: 'all var(--transition-fast)',
-                                                cursor: 'pointer'
+                                                cursor: 'pointer',
+                                                boxShadow: isActive ? 'var(--shadow-sm)' : 'none'
                                             }}
                                         >
                                             <item.icon size={20} style={{ marginRight: 'var(--space-3)' }} />
@@ -192,12 +206,14 @@ export default function Sidebar() {
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',
-                                            padding: 'var(--space-2) var(--space-4)',
+                                            padding: 'var(--space-3) var(--space-4)',
                                             borderRadius: 'var(--radius-md)',
                                             color: pathname === item.href ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                            background: pathname === item.href ? 'var(--surface-hover)' : 'transparent',
-                                            fontWeight: pathname === item.href ? 500 : 400,
-                                            transition: 'all var(--transition-fast)'
+                                            background: pathname === item.href ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                                            border: pathname === item.href ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid transparent',
+                                            fontWeight: pathname === item.href ? 600 : 500,
+                                            transition: 'all var(--transition-fast)',
+                                            boxShadow: pathname === item.href ? 'var(--shadow-sm)' : 'none'
                                         }}
                                     >
                                         <item.icon size={20} style={{ marginRight: 'var(--space-3)' }} />

@@ -6,17 +6,18 @@ import Search from './Search';
 export default function Header() {
     return (
         <header style={{
-            height: '64px',
+            height: '72px',
             borderBottom: '1px solid var(--border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0 var(--space-6)',
+            padding: '0 var(--space-8)',
             position: 'sticky',
             top: 0,
-            background: 'rgba(10, 10, 10, 0.8)',
-            backdropFilter: 'blur(10px)',
-            zIndex: 10
+            background: 'rgba(9, 11, 16, 0.7)',
+            backdropFilter: 'blur(12px)',
+            zIndex: 10,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
         }}>
             <Search />
 

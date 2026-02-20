@@ -241,21 +241,21 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
             {/* ═══ CHART VISUALIZATION: Two Columns ═══ */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 {/* User Portfolio Card */}
-                <div style={{ padding: '1rem', background: 'var(--surface-hover)', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '1.5rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '14px', border: '1px solid var(--border)', position: 'relative', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-md)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>YOUR ALLOCATION</div>
-                        <div style={{ display: 'flex', background: 'var(--card-bg)', borderRadius: '6px', padding: '2px', border: '1px solid var(--border)' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>YOUR ALLOCATION</div>
+                        <div style={{ display: 'flex', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', padding: '2px', border: '1px solid var(--border)' }}>
                             <button
                                 onClick={() => setUserChartType('doughnut')}
-                                style={{ padding: '3px 6px', borderRadius: '4px', background: userChartType === 'doughnut' ? 'var(--surface-hover)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                style={{ padding: '4px 8px', borderRadius: '6px', background: userChartType === 'doughnut' ? 'rgba(99, 102, 241, 0.15)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}
                             >
-                                <PieChartIcon size={12} color={userChartType === 'doughnut' ? 'var(--primary)' : 'var(--text-muted)'} />
+                                <PieChartIcon size={14} color={userChartType === 'doughnut' ? 'var(--primary)' : 'var(--text-muted)'} />
                             </button>
                             <button
                                 onClick={() => setUserChartType('bar')}
-                                style={{ padding: '3px 6px', borderRadius: '4px', background: userChartType === 'bar' ? 'var(--surface-hover)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                style={{ padding: '4px 8px', borderRadius: '6px', background: userChartType === 'bar' ? 'rgba(99, 102, 241, 0.15)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}
                             >
-                                <BarChart3 size={12} color={userChartType === 'bar' ? 'var(--primary)' : 'var(--text-muted)'} />
+                                <BarChart3 size={14} color={userChartType === 'bar' ? 'var(--primary)' : 'var(--text-muted)'} />
                             </button>
                         </div>
                     </div>
@@ -312,23 +312,23 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                 </div>
 
                 {/* AI Optimized Portfolio Card */}
-                <div style={{ padding: '1rem', background: 'linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(139,92,246,0.05) 100%)', borderRadius: '12px', border: '1px solid rgba(59,130,246,0.2)', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.03) 100%)', borderRadius: '14px', border: '1px solid rgba(99, 102, 241, 0.3)', position: 'relative', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-md)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <Sparkles size={14} /> AI OPTIMIZED ALLOCATION
+                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Sparkles size={16} /> AI RECOMMENDED ALLOCATION
                         </div>
-                        <div style={{ display: 'flex', background: 'var(--card-bg)', borderRadius: '6px', padding: '2px', border: '1px solid var(--border)' }}>
+                        <div style={{ display: 'flex', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', padding: '2px', border: '1px solid var(--border)' }}>
                             <button
                                 onClick={() => setAiChartType('doughnut')}
-                                style={{ padding: '3px 6px', borderRadius: '4px', background: aiChartType === 'doughnut' ? 'var(--surface-hover)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                style={{ padding: '4px 8px', borderRadius: '6px', background: aiChartType === 'doughnut' ? 'rgba(99, 102, 241, 0.2)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}
                             >
-                                <PieChartIcon size={12} color={aiChartType === 'doughnut' ? 'var(--primary)' : 'var(--text-muted)'} />
+                                <PieChartIcon size={14} color={aiChartType === 'doughnut' ? 'var(--primary)' : 'var(--text-muted)'} />
                             </button>
                             <button
                                 onClick={() => setAiChartType('bar')}
-                                style={{ padding: '3px 6px', borderRadius: '4px', background: aiChartType === 'bar' ? 'var(--surface-hover)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                style={{ padding: '4px 8px', borderRadius: '6px', background: aiChartType === 'bar' ? 'rgba(99, 102, 241, 0.2)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}
                             >
-                                <BarChart3 size={12} color={aiChartType === 'bar' ? 'var(--primary)' : 'var(--text-muted)'} />
+                                <BarChart3 size={14} color={aiChartType === 'bar' ? 'var(--primary)' : 'var(--text-muted)'} />
                             </button>
                         </div>
                     </div>

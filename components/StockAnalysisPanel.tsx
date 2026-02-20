@@ -176,13 +176,14 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
 
                         {/* Action Card */}
                         <div style={{
-                            padding: 'var(--space-4)',
+                            padding: '1.25rem',
                             borderRadius: 'var(--radius-md)',
-                            background: `linear-gradient(135deg, ${getRecommendationColor(analysis.recommendation)}20 0%, transparent 100%)`,
-                            border: `1px solid ${getRecommendationColor(analysis.recommendation)}40`,
+                            background: `linear-gradient(135deg, ${getRecommendationColor(analysis.recommendation)}15 0%, rgba(255, 255, 255, 0.02) 100%)`,
+                            border: `1px solid ${getRecommendationColor(analysis.recommendation)}30`,
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'space-between'
+                            justifyContent: 'space-between',
+                            boxShadow: 'var(--shadow-sm)'
                         }}>
                             <div>
                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Recommended Action</div>
@@ -206,9 +207,9 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
                             </h3>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
                                 {analysis.drivers && Object.entries(analysis.drivers).map(([key, value]) => (
-                                    <div key={key} style={{ padding: 'var(--space-3)', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)' }}>
-                                        <div style={{ textTransform: 'capitalize', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>{key}</div>
-                                        <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{value}</div>
+                                    <div key={key} style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.03)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                                        <div style={{ textTransform: 'uppercase', fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>{key}</div>
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>{value}</div>
                                     </div>
                                 ))}
                             </div>
@@ -268,10 +269,10 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
             <div style={{
                 padding: 'var(--space-6)',
                 borderTop: '1px solid var(--border)',
-                background: 'var(--surface)',
+                background: 'rgba(255, 255, 255, 0.01)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1rem'
+                gap: '1.25rem'
             }}>
                 {showBuyInput ? (
                     <div className="animate-in fade-in slide-in-from-bottom-2" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

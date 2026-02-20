@@ -34,7 +34,12 @@ export default function WealthOverview({ assets, netWorth, distribution, taxEffi
     return (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-6)', marginBottom: 'var(--space-6)' }}>
             {/* Net Worth Card */}
-            <div className="card" style={{ padding: 'var(--space-6)', border: '1px solid var(--primary)', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.1) 100%)' }}>
+            <div className="card" style={{
+                padding: 'var(--space-8)',
+                border: '1px solid rgba(99, 102, 241, 0.2)',
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.05) 100%)',
+                boxShadow: 'var(--shadow-lg)'
+            }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)', marginBottom: '1rem' }}>
                     <Wallet size={24} />
                     <span style={{ fontWeight: 600, fontSize: '1rem' }}>Total Managed Wealth</span>

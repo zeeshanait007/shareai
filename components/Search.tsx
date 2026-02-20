@@ -70,10 +70,11 @@ export default function Search() {
                 <SearchIcon size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             )}
             <input
+                id="global-search-input"
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search stocks, ETFs..."
+                placeholder="Search symbol to analyze or watch..."
                 onFocus={() => query.length > 1 && setIsOpen(true)}
                 style={{
                     width: '100%',

@@ -480,20 +480,6 @@ export default function DashboardContent() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
                         <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold' }}>Imagine Wealth</h1>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            {isSyncing && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontSize: '0.8125rem', fontWeight: 600 }}>
-                                    <Loader2 className="animate-spin" size={14} />
-                                    {isImporting ? 'Importing Portfolio Data...' : 'Synchronizing Institutional Intelligence...'}
-                                </div>
-                            )}
-                            {marketNarrative && !isSyncing && (
-                                <div className="fade-in" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem', fontStyle: 'italic' }}>
-                                    <Sparkles size={14} className="text-primary" />
-                                    {marketNarrative}
-                                </div>
-                            )}
-                        </div>
                     </div>
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
 
@@ -512,8 +498,14 @@ export default function DashboardContent() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '0.5rem',
-                                width: '115px',
-                                flexShrink: 0
+                                width: '120px',
+                                flexShrink: 0,
+                                padding: 'var(--space-2) var(--space-4)',
+                                borderRadius: 'var(--radius-md)',
+                                fontWeight: 600,
+                                fontSize: '0.8125rem',
+                                border: '1px solid var(--border)',
+                                background: 'rgba(255, 255, 255, 0.02)'
                             }}
                             title="Save Dashboard As..."
                         >
@@ -530,12 +522,10 @@ export default function DashboardContent() {
                             <button
                                 onClick={() => {
                                     setIsDailyCheckInOpen(!isDailyCheckInOpen);
-                                    // Auto-refresh if data is stale or missing
                                     if (!isDailyCheckInOpen && actions.length === 0) {
                                         handleGenerateAI();
                                     }
                                 }}
-                                className="btn"
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -544,9 +534,14 @@ export default function DashboardContent() {
                                     background: isDailyCheckInOpen ? 'rgba(245, 158, 11, 0.2)' : 'rgba(245, 158, 11, 0.1)',
                                     color: '#F59E0B',
                                     border: '1px solid rgba(245, 158, 11, 0.2)',
-                                    width: '140px',
+                                    width: '150px',
                                     flexShrink: 0,
-                                    fontWeight: 600
+                                    fontWeight: 700,
+                                    fontSize: '0.8125rem',
+                                    padding: 'var(--space-2) var(--space-4)',
+                                    borderRadius: 'var(--radius-md)',
+                                    cursor: 'pointer',
+                                    transition: 'all var(--transition-fast)'
                                 }}
                             >
                                 <Sun size={16} /> Daily Briefing
@@ -577,7 +572,7 @@ export default function DashboardContent() {
                         </div>
                         <button
                             onClick={() => setIsAddAssetOpen(true)}
-                            className="btn btn-primary"
+                            className="btn-primary"
                             disabled={isSyncing}
                             style={{
                                 display: 'flex',
@@ -585,8 +580,14 @@ export default function DashboardContent() {
                                 justifyContent: 'center',
                                 gap: '0.5rem',
                                 opacity: isSyncing ? 0.7 : 1,
-                                width: '130px',
-                                flexShrink: 0
+                                width: '140px',
+                                flexShrink: 0,
+                                padding: 'var(--space-2) var(--space-4)',
+                                borderRadius: 'var(--radius-md)',
+                                fontWeight: 700,
+                                fontSize: '0.8125rem',
+                                boxShadow: 'var(--shadow-primary)',
+                                cursor: isSyncing ? 'not-allowed' : 'pointer'
                             }}
                         >
                             {isSyncing ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}

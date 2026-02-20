@@ -182,13 +182,25 @@ export default function WatchlistPage() {
                     </tbody>
                 </table>
                 {watchlist.length === 0 && !isLoading && (
-                    <div style={{ padding: '5rem 2rem', textAlign: 'center' }}>
-                        <div style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '1.125rem' }}>
-                            Your watchlist is empty.
+                    <div style={{ padding: '5rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1.25rem', fontWeight: 600 }}>
+                            Your Watchlist is Empty
                         </div>
-                        <Link href="/dashboard" className="btn btn-primary">
-                            Explore Assets
-                        </Link>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.875rem', maxWidth: '300px', lineHeight: '1.5' }}>
+                            Search for any stock or ETF in the search bar above and click "Add to Watchlist" to start tracking your favorites.
+                        </p>
+                        <button
+                            onClick={() => {
+                                const input = document.getElementById('global-search-input');
+                                if (input) {
+                                    input.focus();
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }
+                            }}
+                            className="btn btn-primary"
+                        >
+                            Add Your First Stock
+                        </button>
                     </div>
                 )}
             </div>

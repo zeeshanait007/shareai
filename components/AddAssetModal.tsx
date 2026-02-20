@@ -104,16 +104,20 @@ export default function AddAssetModal({ isOpen, onClose, onAdd }: AddAssetModalP
         }}>
             <div ref={modalRef} className="card" style={{
                 width: '100%',
-                maxWidth: '500px',
-                background: 'var(--surface)',
+                maxWidth: '520px',
+                background: 'rgba(15, 17, 21, 0.95)',
+                backdropFilter: 'blur(16px)',
                 border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-lg)',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                boxShadow: '0 25px 80px -12px rgba(0, 0, 0, 0.7)',
                 animation: 'fadeIn 0.2s ease-out',
                 display: 'flex',
                 flexDirection: 'column',
-                maxHeight: '90vh'
+                maxHeight: '85vh',
+                position: 'relative',
+                overflow: 'hidden'
             }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'var(--grad-primary)', opacity: 0.8 }}></div>
                 {/* Header */}
                 <div style={{
                     padding: 'var(--space-4) var(--space-6)',
@@ -143,13 +147,15 @@ export default function AddAssetModal({ isOpen, onClose, onAdd }: AddAssetModalP
                                     autoFocus
                                     style={{
                                         width: '100%',
-                                        padding: '0.75rem 1rem 0.75rem 2.5rem',
-                                        background: 'var(--background)',
+                                        padding: '0.875rem 1rem 0.875rem 2.75rem',
+                                        background: 'rgba(255, 255, 255, 0.02)',
                                         border: '1px solid var(--border)',
                                         borderRadius: 'var(--radius-md)',
                                         color: 'var(--text-primary)',
-                                        fontSize: '1rem',
-                                        outline: 'none'
+                                        fontSize: '0.9375rem',
+                                        outline: 'none',
+                                        transition: 'all 0.2s',
+                                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
                                     }}
                                 />
                                 {isLoading && (
@@ -166,13 +172,14 @@ export default function AddAssetModal({ isOpen, onClose, onAdd }: AddAssetModalP
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'space-between',
-                                            padding: '0.75rem',
-                                            background: 'var(--surface-hover)',
+                                            padding: '1rem',
+                                            background: 'rgba(255, 255, 255, 0.02)',
                                             border: '1px solid var(--border)',
                                             borderRadius: 'var(--radius-md)',
                                             cursor: 'pointer',
                                             textAlign: 'left',
-                                            transition: 'all 0.2s'
+                                            transition: 'all 0.2s',
+                                            marginBottom: '0.25rem'
                                         }}
                                     >
                                         <div>
@@ -206,7 +213,7 @@ export default function AddAssetModal({ isOpen, onClose, onAdd }: AddAssetModalP
                                 </div>
                                 <button
                                     onClick={() => setStep('search')}
-                                    style={{ fontSize: '0.875rem', color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                                    style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.2)', padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em' }}
                                 >
                                     Change
                                 </button>
