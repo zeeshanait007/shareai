@@ -14,14 +14,16 @@ export interface SavedDashboard {
 }
 
 export interface DashboardContextType {
+    theme: 'dark' | 'light';
+    toggleTheme: () => void;
     dashboards: SavedDashboard[];
     currentDashboardId: string | null;
     assets: Asset[];
     aiAssets: Asset[];
     insight: any;
-    setAssets: (assets: Asset[]) => void;
-    setAiAssets: (assets: Asset[]) => void;
-    setInsight: (insight: any) => void;
+    setAssets: (assets: Asset[] | ((prev: Asset[]) => Asset[])) => void;
+    setAiAssets: (assets: Asset[] | ((prev: Asset[]) => Asset[])) => void;
+    setInsight: (insight: any | ((prev: any) => any)) => void;
     saveDashboard: (name: string) => void;
     updateDashboard: (id: string) => void;
     loadDashboard: (id: string | null) => void;
@@ -37,6 +39,7 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const [dashboards, setDashboards] = useState<SavedDashboard[]>([]);
     const [currentDashboardId, setCurrentDashboardId] = useState<string | null>(null);
+    const [theme, setTheme] = useState<'dark' | 'light'>('dark');
     const [assets, setAssets] = useState<Asset[]>([]);
     const [aiAssets, setAiAssets] = useState<Asset[]>([]);
     const [insight, setInsight] = useState<any>("");
@@ -52,6 +55,12 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
             } catch (e) {
                 console.error("Failed to parse saved dashboards", e);
             }
+        }
+
+        const savedTheme = localStorage.getItem('theme_preference') as 'dark' | 'light';
+        if (savedTheme) {
+            setTheme(savedTheme);
+            document.documentElement.classList.toggle('light', savedTheme === 'light');
         }
 
         const savedNotifications = localStorage.getItem('notifications');
@@ -91,7 +100,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         }
     }, [dashboards, notifications, mounted]);
 
-    // Load Default Dashboard State on Mount or when switching to null
+    const toggleTheme = () => {
+        const next = theme === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+        localStorage.setItem('theme_preference', next);
+        document.documentElement.classList.toggle('light', next === 'light');
+    };
+
+    // Save Default Dashboard State on Mount or when switching to null
     useEffect(() => {
         if (!currentDashboardId) {
             // Load Default User Assets (from localStorage or mock)
@@ -176,31 +192,40 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     };
 
     // Enhanced setters that also update the current dashboard if one is active
-    const updateAssets = React.useCallback((newAssets: Asset[]) => {
-        setAssets(newAssets);
-        if (currentDashboardId) {
-            setDashboards(prev => prev.map(d =>
-                d.id === currentDashboardId ? { ...d, assets: newAssets } : d
-            ));
-        }
+    const updateAssets = React.useCallback((val: Asset[] | ((prev: Asset[]) => Asset[])) => {
+        setAssets(prev => {
+            const next = typeof val === 'function' ? (val as any)(prev) : val;
+            if (currentDashboardId) {
+                setDashboards(dashboards => dashboards.map(d =>
+                    d.id === currentDashboardId ? { ...d, assets: next } : d
+                ));
+            }
+            return next;
+        });
     }, [currentDashboardId]);
 
-    const updateAiAssets = React.useCallback((newAiAssets: Asset[]) => {
-        setAiAssets(newAiAssets);
-        if (currentDashboardId) {
-            setDashboards(prev => prev.map(d =>
-                d.id === currentDashboardId ? { ...d, aiAssets: newAiAssets } : d
-            ));
-        }
+    const updateAiAssets = React.useCallback((val: Asset[] | ((prev: Asset[]) => Asset[])) => {
+        setAiAssets(prev => {
+            const next = typeof val === 'function' ? (val as any)(prev) : val;
+            if (currentDashboardId) {
+                setDashboards(dashboards => dashboards.map(d =>
+                    d.id === currentDashboardId ? { ...d, aiAssets: next } : d
+                ));
+            }
+            return next;
+        });
     }, [currentDashboardId]);
 
-    const updateInsight = React.useCallback((newInsight: any) => {
-        setInsight(newInsight);
-        if (currentDashboardId) {
-            setDashboards(prev => prev.map(d =>
-                d.id === currentDashboardId ? { ...d, insight: newInsight } : d
-            ));
-        }
+    const updateInsight = React.useCallback((val: any | ((prev: any) => any)) => {
+        setInsight((prev: any) => {
+            const next = typeof val === 'function' ? (val as any)(prev) : val;
+            if (currentDashboardId) {
+                setDashboards(dashboards => dashboards.map(d =>
+                    d.id === currentDashboardId ? { ...d, insight: next } : d
+                ));
+            }
+            return next;
+        });
     }, [currentDashboardId]);
 
     const loadDashboard = (id: string | null) => {
@@ -245,6 +270,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
     return (
         <DashboardContext.Provider value={{
+            theme,
+            toggleTheme,
             dashboards,
             currentDashboardId,
             assets,

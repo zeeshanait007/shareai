@@ -106,16 +106,16 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
     };
 
     return (
-        <div className="glass-hull neon-strike fade-in" style={{
+        <div className="glass-hull fade-in" style={{
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
             position: 'relative',
             overflow: 'hidden',
-            background: 'rgba(18, 21, 28, 0.9)',
-            border: '1px solid rgba(99, 102, 241, 0.3)',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
             borderRadius: 'var(--radius-lg)',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+            boxShadow: 'var(--shadow-lg)'
         }}>
             {/* HUD Scanline Overlay */}
             <div className="scan-effect" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1, opacity: 0.1 }} />
@@ -139,9 +139,9 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
                         <ChevronRight size={18} style={{ transform: 'rotate(180deg)' }} />
                     </button>
                     <div>
-                        <h2 className="precision-data" style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem', letterSpacing: '-0.04em', margin: 0 }}>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.6rem', letterSpacing: '-0.02em', margin: 0 }}>
                             {symbol}
-                            <div className="status-indicator pulse" />
+                            <div className="status-indicator" style={{ width: 8, height: 8 }} />
                         </h2>
                         <div className="precision-data" style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: '0.2rem' }}>
                             AI ANALYSIS // {symbol} DATA NODE
@@ -149,11 +149,11 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
                     </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                    <div className="precision-data" style={{ fontSize: '1.5rem', fontWeight: 900, color: 'white' }}>
+                    <div className="precision-data" style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-primary)' }}>
                         ${price.toLocaleString()}
                     </div>
-                    <div className="precision-data" style={{ fontSize: '0.55rem', color: 'var(--success)', fontWeight: 900 }}>
-                        +LIVE DATA SYNC ACTIVE
+                    <div style={{ fontSize: '0.6rem', color: 'var(--success)', fontWeight: 800, letterSpacing: '0.05em' }}>
+                        LIVE DATA SYNC ACTIVE
                     </div>
                 </div>
             </div>
@@ -206,9 +206,9 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
                                 </div>
                             </div>
                             <div style={{ textAlign: 'right', position: 'relative', zIndex: 1 }}>
-                                <div className="precision-data" style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '0.5rem' }}>Conviction Level</div>
-                                <div className="precision-data" style={{ fontSize: '2.5rem', fontWeight: 900, color: 'white', lineHeight: 1 }}>
-                                    {analysis?.confidenceScore}<span style={{ fontSize: '1.25rem', color: 'var(--primary)', opacity: 0.8 }}>%</span>
+                                <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>Conviction Level</div>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>
+                                    {analysis?.confidenceScore}<span style={{ fontSize: '1.1rem', color: 'var(--primary)', opacity: 0.7 }}>%</span>
                                 </div>
                             </div>
                         </div>
@@ -232,7 +232,7 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
                                 {analysis?.drivers && Object.entries(analysis.drivers).map(([key, value]) => (
                                     <div key={key} className="hud-data-node">
                                         <div className="precision-data" style={{ textTransform: 'uppercase', fontSize: '0.55rem', fontWeight: 900, color: 'var(--text-muted)', marginBottom: '0.75rem', letterSpacing: '0.15em' }}>{key.replace('_', ' ')}</div>
-                                        <div className="precision-data" style={{ fontSize: '0.9rem', fontWeight: 700, color: 'white' }}>{value}</div>
+                                        <div className="precision-data" style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>{value}</div>
                                     </div>
                                 ))}
                             </div>
@@ -263,7 +263,7 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
                                 <div className="hud-data-node" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.5rem' }}>
                                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'baseline' }}>
                                         <span className="precision-data" style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--success)', minWidth: '60px', letterSpacing: '0.15rem' }}>BULL</span>
-                                        <span className="precision-data" style={{ fontSize: '0.8rem', color: 'white' }}>{analysis?.scenarios.bullish}</span>
+                                        <span className="precision-data" style={{ fontSize: '0.75rem', color: 'var(--text-primary)' }}>{analysis?.scenarios.bullish}</span>
                                     </div>
                                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'baseline' }}>
                                         <span className="precision-data" style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--text-muted)', minWidth: '60px', letterSpacing: '0.15rem' }}>BASE</span>
@@ -294,9 +294,9 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
 
             {/* Footer Actions */}
             <div style={{
-                padding: '1.5rem',
+                padding: 'var(--space-4)',
                 borderTop: '1px solid var(--border)',
-                background: 'rgba(9, 11, 16, 0.9)',
+                background: 'var(--surface)',
                 position: 'relative',
                 zIndex: 2
             }}>
@@ -310,7 +310,7 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
                                 value={quantity}
                                 onChange={(e) => setQuantity(Number(e.target.value))}
                                 className="input"
-                                style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '10px', color: 'white', fontWeight: 700 }}
+                                style={{ width: '100%', padding: '0.75rem', background: 'var(--background)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-primary)', fontWeight: 700 }}
                                 autoFocus
                             />
                         </div>
@@ -322,7 +322,7 @@ export default function StockAnalysisPanel({ symbol, currentPrice = 0, onClose, 
                                 value={price}
                                 onChange={(e) => setPrice(Number(e.target.value))}
                                 className="input"
-                                style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '10px', color: 'white', fontWeight: 700 }}
+                                style={{ width: '100%', padding: '0.75rem', background: 'var(--background)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-primary)', fontWeight: 700 }}
                             />
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>

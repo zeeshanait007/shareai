@@ -35,7 +35,7 @@ const mockClusters: Cluster[] = [
                 label: 'Relationship Score',
                 value: '0.82',
                 subtext: 'High Sync',
-                color: '#EF4444',
+                color: 'var(--danger)',
                 details: 'These stocks usually move together. If one drops, the others likely will too.'
             },
             {
@@ -43,7 +43,7 @@ const mockClusters: Cluster[] = [
                 label: 'Market Volatility',
                 value: '1.45',
                 subtext: 'High Energy',
-                color: '#F59E0B',
+                color: 'var(--warning)',
                 details: 'This group moves 45% more than the overall market. Expect bigger swings.'
             },
             {
@@ -51,7 +51,7 @@ const mockClusters: Cluster[] = [
                 label: 'Big Investor Stake',
                 value: '74%',
                 subtext: 'Professional Heavy',
-                color: '#3B82F6',
+                color: 'var(--primary)',
                 details: 'Most of these shares are owned by big banks and hedge funds.'
             },
             {
@@ -59,7 +59,7 @@ const mockClusters: Cluster[] = [
                 label: 'Investor Mood',
                 value: '+62',
                 subtext: 'Very Positive',
-                color: '#10B981',
+                color: 'var(--success)',
                 details: 'Most people and news reports are feeling very optimistic about these stocks right now.'
             }
         ]
@@ -114,13 +114,7 @@ export default function ClusterIntelligence() {
     };
 
     React.useEffect(() => {
-        if (assets.length > 0) {
-            fetchClusters();
-        } else {
-            setClusters(mockClusters);
-            setIsLoading(false);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        setIsLoading(false);
     }, []);
 
     const displayClusters = clusters.length > 0 ? clusters : mockClusters;
@@ -128,24 +122,22 @@ export default function ClusterIntelligence() {
 
     return (
         <div className="glass-hull scan-effect stagger-entry" style={{
-            padding: 'var(--space-8)',
+            padding: 'var(--space-4)',
             display: 'flex',
             flexDirection: 'column',
-            gap: 'var(--space-8)',
-            borderRadius: '32px',
+            gap: 'var(--space-6)',
             position: 'relative',
             overflow: 'hidden'
         }}>
-            <div className="hud-mesh" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.2, pointerEvents: 'none' }} />
 
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                        <div className="neon-strike" style={{ padding: '0.4rem', borderRadius: '6px', background: 'rgba(99, 102, 241, 0.1)' }}>
-                            <Layers size={16} style={{ color: 'var(--primary)' }} />
+                        <div style={{ padding: '0.35rem', borderRadius: 'var(--radius-md)', background: 'var(--primary-glow)', border: '1px solid var(--border)' }}>
+                            <Layers size={14} style={{ color: 'var(--primary)' }} />
                         </div>
-                        <h3 className="precision-data" style={{ fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>Cluster Insights</h3>
+                        <h3 className="precision-data" style={{ fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>Cluster Insights</h3>
                     </div>
                     <button
                         onClick={fetchClusters}
@@ -154,9 +146,9 @@ export default function ClusterIntelligence() {
                         style={{
                             fontSize: '0.6rem',
                             cursor: 'pointer',
-                            background: 'rgba(99, 102, 241, 0.05)',
+                            background: 'var(--primary-glow)',
                             padding: '2px 8px',
-                            border: '1px solid rgba(99, 102, 241, 0.2)',
+                            border: '1px solid var(--border)',
                             opacity: isLoading ? 0.5 : 1,
                             transition: 'all 0.2s',
                             display: 'flex',
@@ -189,7 +181,7 @@ export default function ClusterIntelligence() {
                                 fontWeight: 800,
                                 borderRadius: '4px',
                                 border: '1px solid var(--border)',
-                                background: selectedClusterIndex === i ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+                                background: selectedClusterIndex === i ? 'var(--primary-glow)' : 'transparent',
                                 color: selectedClusterIndex === i ? 'var(--primary)' : 'var(--text-muted)',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
@@ -216,8 +208,8 @@ export default function ClusterIntelligence() {
                 <>
                     <div style={{ marginBottom: '1.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 900, letterSpacing: '-0.02em', margin: 0 }}>{activeCluster.name}</h2>
-                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>{activeCluster.type}</span>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: 900, letterSpacing: '-0.02em', margin: 0, color: 'var(--text-primary)' }}>{activeCluster.name}</h2>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted)', background: 'var(--surface-hover)', padding: '2px 6px', borderRadius: '4px' }}>{activeCluster.type}</span>
                         </div>
                     </div>
 
@@ -227,8 +219,8 @@ export default function ClusterIntelligence() {
                             const IconComponent = metric.id === 'correlation' ? Layers : (metric.id === 'beta' ? Activity : (metric.id === 'concentration' ? Users : Zap));
                             return (
                                 <div key={metric.id} className="interactive-card" style={{
-                                    padding: '1.25rem',
-                                    background: 'rgba(255, 255, 255, 0.02)',
+                                    padding: '1rem',
+                                    background: 'var(--surface-hover)',
                                     borderRadius: '12px',
                                     border: '1px solid var(--border)',
                                     position: 'relative',
@@ -270,9 +262,9 @@ export default function ClusterIntelligence() {
                     <div style={{
                         marginTop: '1.5rem',
                         padding: '1rem',
-                        background: 'rgba(99, 102, 241, 0.05)',
+                        background: 'var(--primary-glow)',
                         borderRadius: '10px',
-                        border: '1px solid rgba(99, 102, 241, 0.2)',
+                        border: '1px solid var(--border)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between'
@@ -289,7 +281,7 @@ export default function ClusterIntelligence() {
                         <div style={{
                             fontSize: '0.875rem',
                             fontWeight: 900,
-                            color: activeCluster.macroImpact?.startsWith('-') ? '#EF4444' : '#10B981',
+                            color: activeCluster.macroImpact?.startsWith('-') ? 'var(--danger)' : 'var(--success)',
                             fontFamily: 'monospace'
                         }}>
                             {activeCluster.macroImpact}

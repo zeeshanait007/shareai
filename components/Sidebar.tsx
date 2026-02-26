@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, LineChart, PieChart, Settings, Search, Sparkles, TrendingUp, Users, Trash2, Save } from 'lucide-react';
+import { LayoutDashboard, LineChart, PieChart, Settings, Search, Sparkles, TrendingUp, Users, Trash2, Save, RefreshCw, Shield, Info } from 'lucide-react';
 import { useDashboard } from '@/providers/DashboardProvider';
 import ConfirmModal from '@/components/ConfirmModal';
 
@@ -19,6 +19,9 @@ export default function Sidebar() {
     const router = useRouter();
     const { dashboards, currentDashboardId, loadDashboard, deleteDashboard, updateDashboard } = useDashboard();
     const [mounted, setMounted] = React.useState(false);
+    const [showHealthReport, setShowHealthReport] = React.useState(false);
+    const [isRefreshingHealth, setIsRefreshingHealth] = React.useState(false);
+
     const [healthData, setHealthData] = React.useState<{
         status: string;
         report: string;
@@ -27,15 +30,16 @@ export default function Sidebar() {
         latency: number;
         uptime: string;
     }>({
-        status: 'Optimizing...',
-        report: '',
+        status: 'NEURAL STANDBY',
+        report: 'Awaiting manual intelligence synchronization.',
         healthScore: 100,
-        bars: [1, 1, 1, 1, 1, 1, 1, 1],
+        bars: [0, 0, 0, 0, 0, 0, 0, 0],
         latency: 0,
         uptime: '0h 0m'
     });
 
     const fetchHealth = async () => {
+        setIsRefreshingHealth(true);
         try {
             const response = await fetch('/api/ai/system-health');
             if (response.ok) {
@@ -44,14 +48,13 @@ export default function Sidebar() {
             }
         } catch (error) {
             console.error('Health check failed:', error);
+        } finally {
+            setIsRefreshingHealth(false);
         }
     };
 
     React.useEffect(() => {
         setMounted(true);
-        fetchHealth();
-        const interval = setInterval(fetchHealth, 60000); // Check every minute
-        return () => clearInterval(interval);
     }, []);
 
     const handleDashboardClick = (id: string | null) => {
@@ -86,228 +89,202 @@ export default function Sidebar() {
                 position: 'fixed',
                 left: 0,
                 top: 0,
-                padding: '2.5rem 1.5rem',
+                padding: 'var(--space-8) var(--space-6)',
                 display: 'flex',
                 flexDirection: 'column',
-                zIndex: 30,
-                background: 'rgba(9, 11, 16, 0.85)'
+                background: 'var(--sidebar-bg)',
+                borderRight: '1px solid var(--border)',
+                zIndex: 30
             }}>
                 <div style={{ marginBottom: '3.5rem', display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-                    <div className="neon-strike" style={{
+                    <div style={{
                         width: '40px',
                         height: '40px',
                         background: 'var(--grad-primary)',
-                        borderRadius: '12px',
+                        borderRadius: 'var(--radius-md)',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        boxShadow: 'var(--shadow-primary)'
                     }}>
                         <Sparkles size={22} color="white" />
                     </div>
                     <div>
                         <span style={{ fontSize: '1.625rem', fontWeight: 900, letterSpacing: '-0.04em', background: 'var(--grad-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'block' }}>ShareAI</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.15rem' }}>
-                            <div className="live-pulse" style={{ width: 6, height: 6, background: 'var(--success)', borderRadius: '50%' }} />
-                            <span style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Institutional Node</span>
+                            <div className="status-indicator" />
+                            <span style={{ fontSize: '0.625rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '0.05em' }}>QUANTUM NODE</span>
                         </div>
                     </div>
                 </div>
 
-                <nav style={{ flex: 1 }}>
+                <nav style={{ flex: 1, overflowY: 'auto', marginBottom: '1.5rem', paddingRight: '0.5rem' }}>
                     <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1.25rem', paddingLeft: '1rem', opacity: 0.6 }}>Navigation Matrix</div>
                     <ul style={{ listStyle: 'none', padding: 0 }}>
                         {navItems.map((item) => {
                             const isActive = pathname === item.href && currentDashboardId === null;
 
-                            if (item.name === 'Dashboard') {
-                                return (
-                                    <li key={item.href} style={{ marginBottom: '0.5rem' }}>
-                                        <div
-                                            onClick={() => handleDashboardClick(null)}
-                                            className={isActive ? 'glass-hull neon-strike' : ''}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                padding: '0.85rem 1rem',
-                                                borderRadius: 'var(--radius-md)',
-                                                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                                background: isActive ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                                                fontWeight: isActive ? 800 : 500,
-                                                transition: 'all var(--transition-normal)',
-                                                cursor: 'pointer',
-                                                fontSize: '0.9375rem'
-                                            }}
-                                        >
-                                            <item.icon size={18} style={{ marginRight: '0.875rem', color: isActive ? 'var(--primary)' : 'inherit' }} />
-                                            {item.name}
-                                            {isActive && (
-                                                <div style={{
-                                                    marginLeft: 'auto',
-                                                    width: '6px',
-                                                    height: '6px',
-                                                    borderRadius: '50%',
-                                                    background: 'var(--primary)',
-                                                    boxShadow: '0 0 8px var(--primary)'
-                                                }} />
-                                            )}
-                                        </div>
-
-                                        {/* Saved Dashboards Sub-list */}
-                                        {mounted && dashboards.length > 0 && (
-                                            <ul style={{ listStyle: 'none', marginLeft: '2.25rem', marginTop: '0.75rem', borderLeft: '1px solid var(--border)', paddingLeft: '0.5rem', paddingRight: 0 }}>
-                                                {dashboards.map(dash => (
-                                                    <li key={dash.id} style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '0.15rem' }}>
-                                                        <div
-                                                            onClick={() => handleDashboardClick(dash.id)}
-                                                            style={{
-                                                                flex: 1,
-                                                                padding: '0.5rem 0.75rem',
-                                                                fontSize: '0.8125rem',
-                                                                color: currentDashboardId === dash.id ? 'var(--primary)' : 'var(--text-muted)',
-                                                                cursor: 'pointer',
-                                                                fontWeight: currentDashboardId === dash.id ? 800 : 500,
-                                                                display: 'flex',
-                                                                justifyContent: 'space-between',
-                                                                alignItems: 'center',
-                                                                borderRadius: '4px',
-                                                                transition: 'all 0.2s'
-                                                            }}
-                                                            className="sidebar-item"
-                                                        >
-                                                            {dash.name}
-                                                        </div>
-                                                        <div style={{ display: 'flex', gap: '0.15rem', opacity: 0.4 }}>
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    if (currentDashboardId === dash.id) {
-                                                                        updateDashboard(dash.id);
-                                                                    } else {
-                                                                        setConfirmModal({
-                                                                            isOpen: true,
-                                                                            title: 'Overwrite Dataset?',
-                                                                            message: `Sync current live state to "${dash.name}" baseline?`,
-                                                                            type: 'warning',
-                                                                            confirmText: 'Sync',
-                                                                            onConfirm: () => updateDashboard(dash.id)
-                                                                        });
-                                                                    }
-                                                                }}
-                                                                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0 0.35rem' }}
-                                                                title="Sync State"
-                                                            >
-                                                                <Save size={12} />
-                                                            </button>
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setConfirmModal({
-                                                                        isOpen: true,
-                                                                        title: 'Purge Dataset?',
-                                                                        message: `Decommission current data cluster "${dash.name}"?`,
-                                                                        type: 'danger',
-                                                                        confirmText: 'Purge',
-                                                                        onConfirm: () => deleteDashboard(dash.id)
-                                                                    });
-                                                                }}
-                                                                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0 0.35rem' }}
-                                                                title="Delete Cluster"
-                                                            >
-                                                                <Trash2 size={12} />
-                                                            </button>
-                                                        </div>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
-                                    </li>
-                                );
-                            }
-
                             return (
-                                <li key={item.href} style={{ marginBottom: '0.5rem' }}>
-                                    <Link
-                                        href={item.href}
-                                        className={pathname === item.href ? 'glass-hull neon-strike' : ''}
+                                <li key={item.href} style={{ marginBottom: 'var(--space-2)' }}>
+                                    <div
+                                        onClick={() => handleDashboardClick(item.href === '/dashboard' ? null : null)} /* Simplified for layout fix */
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',
-                                            padding: '0.85rem 1rem',
+                                            padding: '0.75rem 1rem',
                                             borderRadius: 'var(--radius-md)',
-                                            color: pathname === item.href ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                            background: pathname === item.href ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                                            fontWeight: pathname === item.href ? 800 : 500,
-                                            transition: 'all var(--transition-normal)',
-                                            fontSize: '0.9375rem'
+                                            color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                            background: isActive ? 'var(--surface-hover)' : 'transparent',
+                                            border: isActive ? '1px solid var(--border)' : '1px solid transparent',
+                                            fontWeight: isActive ? 700 : 500,
+                                            transition: 'all 0.2s',
+                                            cursor: 'pointer',
+                                            fontSize: '0.875rem'
                                         }}
+                                        className={!isActive ? "interactive-card" : ""}
                                     >
-                                        <item.icon size={18} style={{ marginRight: '0.875rem', color: pathname === item.href ? 'var(--primary)' : 'inherit' }} />
-                                        {item.name}
-                                        {pathname === item.href && (
+                                        {item.name === 'Dashboard' ? (
+                                            <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none', width: '100%' }}>
+                                                <item.icon size={18} style={{ marginRight: '0.875rem', color: isActive ? 'var(--primary)' : 'inherit' }} />
+                                                {item.name}
+                                            </Link>
+                                        ) : (
+                                            <Link href={item.href} style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none', width: '100%' }}>
+                                                <item.icon size={18} style={{ marginRight: '0.875rem', color: isActive ? 'var(--primary)' : 'inherit' }} />
+                                                {item.name}
+                                            </Link>
+                                        )}
+                                        {isActive && (
                                             <div style={{
                                                 marginLeft: 'auto',
                                                 width: '6px',
                                                 height: '6px',
                                                 borderRadius: '50%',
                                                 background: 'var(--primary)',
-                                                boxShadow: '0 0 8px var(--primary)'
+                                                boxShadow: '0 0 4px var(--primary)'
                                             }} />
                                         )}
-                                    </Link>
+                                    </div>
+
+                                    {/* Saved Dashboards Sub-list */}
+                                    {item.name === 'Dashboard' && mounted && dashboards.length > 0 && (
+                                        <ul style={{ listStyle: 'none', marginLeft: '2.25rem', marginTop: '0.5rem', borderLeft: '1px solid var(--border)', paddingLeft: '0.5rem' }}>
+                                            {dashboards.map(dash => (
+                                                <li key={dash.id} style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '2px' }}>
+                                                    <div
+                                                        onClick={() => handleDashboardClick(dash.id)}
+                                                        style={{
+                                                            flex: 1,
+                                                            padding: '0.35rem 0.75rem',
+                                                            fontSize: '0.8125rem',
+                                                            color: currentDashboardId === dash.id ? 'var(--primary)' : 'var(--text-muted)',
+                                                            cursor: 'pointer',
+                                                            fontWeight: currentDashboardId === dash.id ? 800 : 500,
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center',
+                                                            borderRadius: '4px',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                        className="sidebar-item"
+                                                    >
+                                                        {dash.name}
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </li>
                             );
                         })}
                     </ul>
                 </nav>
 
-                {/* Footer HUD info */}
-                {mounted && (
-                    <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-                        <div style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                                <span style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>System Health</span>
-                                <span style={{
-                                    fontSize: '0.6rem',
-                                    fontWeight: 900,
-                                    color: healthData.status === 'Nominal' || healthData.status === 'Optimized' ? 'var(--success)' : (healthData.status === 'Degraded' ? 'var(--warning)' : 'var(--danger)'),
-                                    textTransform: 'uppercase'
-                                }}>{healthData.status}</span>
-                            </div>
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                                {healthData.bars.map((val, i) => (
-                                    <div key={i} style={{
-                                        flex: 1,
-                                        height: '3px',
-                                        background: val === 1 ? 'var(--success)' : 'var(--surface-hover)',
-                                        borderRadius: '1px',
-                                        opacity: 0.8,
-                                        animation: val === 1 ? 'dataPulse 2s infinite' : 'none',
-                                        animationDelay: `${i * 0.1}s`
-                                    }} />
-                                ))}
-                            </div>
-                            <div style={{ marginTop: '0.75rem', fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'monospace', display: 'flex', justifyContent: 'space-between' }}>
-                                <span>LAT: {healthData.latency}ms</span>
-                                <span>UP: {healthData.uptime}</span>
-                            </div>
-                            {healthData.report && (
-                                <div style={{
-                                    marginTop: '0.75rem',
-                                    padding: '0.5rem',
-                                    background: 'rgba(255,255,255,0.03)',
-                                    borderRadius: '4px',
-                                    fontSize: '0.55rem',
-                                    color: 'var(--text-secondary)',
-                                    lineHeight: '1.4',
-                                    borderLeft: '2px solid var(--primary)'
-                                }}>
-                                    {healthData.report}
-                                </div>
-                            )}
+                {/* System Health Monitor */}
+                <div style={{
+                    marginTop: 'auto',
+                    padding: '1rem',
+                    background: 'var(--grad-surface)',
+                    borderRadius: '16px',
+                    border: '1px solid var(--border)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                }} className="data-glimmer">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Shield size={12} className="text-secondary" />
+                            <span style={{ fontSize: '0.625rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Health</span>
                         </div>
+                        <button
+                            onClick={fetchHealth}
+                            disabled={isRefreshingHealth}
+                            style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                            title="Refresh Health Status"
+                        >
+                            <RefreshCw size={10} className={isRefreshingHealth ? "animate-spin" : ""} />
+                        </button>
                     </div>
-                )}
 
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                        <span style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+                            {healthData.status === 'nominal' ? 'NOMINAL' : healthData.status.toUpperCase()}
+                        </span>
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }} />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ flex: 1, height: '4px', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
+                            <div style={{ width: `${healthData.latency}%`, height: '100%', background: 'var(--grad-primary)' }} />
+                        </div>
+                        <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', fontWeight: 700 }}>{healthData.latency}ms</span>
+                    </div>
+
+                    <div style={{ marginTop: '0.75rem', position: 'relative' }}>
+                        <button
+                            onMouseEnter={() => setShowHealthReport(true)}
+                            onMouseLeave={() => setShowHealthReport(false)}
+                            style={{
+                                width: '100%',
+                                padding: '0.5rem',
+                                background: 'transparent',
+                                border: '1px solid var(--border)',
+                                borderRadius: '8px',
+                                color: 'var(--text-secondary)',
+                                fontSize: '0.65rem',
+                                fontWeight: 700,
+                                cursor: 'help',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.4rem'
+                            }}
+                        >
+                            <Info size={12} /> STATUS REPORT
+                        </button>
+
+                        {showHealthReport && (
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '100%',
+                                left: 0,
+                                width: '220px',
+                                marginBottom: '0.75rem',
+                                padding: '1rem',
+                                background: 'var(--surface)',
+                                border: '1px solid var(--border)',
+                                borderRadius: '12px',
+                                boxShadow: 'var(--shadow-lg)',
+                                zIndex: 100,
+                                fontSize: '0.7rem',
+                                color: 'var(--text-secondary)',
+                                lineHeight: '1.4',
+                                borderLeft: '2px solid var(--primary)'
+                            }}>
+                                {healthData.report}
+                            </div>
+                        )}
+                    </div>
+                </div>
             </aside>
 
             <ConfirmModal
@@ -316,7 +293,7 @@ export default function Sidebar() {
                 onConfirm={confirmModal.onConfirm}
                 title={confirmModal.title}
                 message={confirmModal.message}
-                type={confirmModal.type}
+                type={confirmModal.type as any}
                 confirmText={confirmModal.confirmText}
             />
         </>

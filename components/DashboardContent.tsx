@@ -17,7 +17,7 @@ import { addToWatchlist } from '@/lib/watchlist';
 import SubscriptionBanner from '@/components/SubscriptionBanner';
 import AddAssetModal from '@/components/AddAssetModal';
 import PortfolioComparison from '@/components/PortfolioComparison';
-import { Undo2, FileUp, Loader2, LogOut, User, Check, Menu, Plus, Sparkles, BrainCircuit, Zap, Sun, Activity, Eye, EyeOff, LayoutTemplate, Layers, ShieldAlert } from 'lucide-react';
+import { Undo2, FileUp, Loader2, LogOut, User, Check, Menu, Plus, Sparkles, BrainCircuit, Zap, Sun, Activity, Eye, EyeOff, LayoutTemplate, Layers, ShieldAlert, Wallet, Banknote } from 'lucide-react';
 import { savePortfolioSnapshot } from '@/lib/portfolio-service';
 import { read, utils } from 'xlsx';
 import { useDashboard } from '@/providers/DashboardProvider';
@@ -360,30 +360,6 @@ export default function DashboardContent() {
     }, [assets.length, mounted, isImporting, isDemoMode, syncWithAI]);
     */
 
-    // Auto-repair for comparison insight ... [Omitted for brevity, kept same] ...
-    // Auto-repair for proactive actions ... [Omitted for brevity, kept same] ...
-    // Auto-repair for comparison insight ... [Omitted for brevity, kept same] ...
-    React.useEffect(() => {
-        if (!mounted || isGeneratingInsight) return;
-        const errorPhrase = "Comparison currently unavailable due to institutional data synchronization.";
-        if (typeof comparisonInsight === 'string' && comparisonInsight === errorPhrase && aiAssets.length > 0) {
-            const repairNormalInsight = async () => {
-                setIsGeneratingInsight(true);
-                try {
-                    const response = await fetch('/api/ai/comparison', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ assets, aiAssets })
-                    });
-                    if (!response.ok) throw new Error('Comparison API failed');
-                    const data = await response.json();
-                    setComparisonInsight(data.insight);
-                } catch (error) { console.error("Auto-repair failed:", error); }
-                finally { setIsGeneratingInsight(false); }
-            };
-            repairNormalInsight();
-        }
-    }, [comparisonInsight, aiAssets, assets, mounted, isGeneratingInsight, setComparisonInsight]);
 
     const handleBuyStock = useCallback((symbol: string, quantity: number, price: number) => {
         const timestamp = new Date().toISOString();
@@ -425,9 +401,31 @@ export default function DashboardContent() {
     }, []);
 
     const handleAddAsset = (newAsset: Asset) => {
-        setAssets([...assets, newAsset]);
+        setAssets(prev => [...prev, newAsset]);
         // Trigger AI refresh but DO NOT auto-open panel
         setActions([]);
+    };
+
+    const handleDeleteAsset = (id: string) => {
+        const asset = assets.find(a => a.id === id);
+        if (!asset) return;
+
+        setConfirmOptions({
+            title: 'Delete Asset',
+            message: `Are you sure you want to remove ${asset.name} from your portfolio? This action cannot be undone.`
+        });
+
+        setOnConfirm(() => () => {
+            setAssets(prev => prev.filter(a => a.id !== id));
+            addNotification({
+                type: 'ai',
+                urgency: 'low',
+                title: 'Asset Removed',
+                message: `${asset.name} has been removed from your portfolio.`
+            });
+        });
+
+        setIsConfirmOpen(true);
     };
 
     const getSelectedStockPrice = () => {
@@ -572,67 +570,36 @@ export default function DashboardContent() {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                background: 'radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.03) 0%, transparent 80%)',
+                background: 'radial-gradient(circle at 50% 10%, rgba(79, 70, 229, 0.04) 0%, transparent 60%)',
                 pointerEvents: 'none',
                 zIndex: 0
-            }} />
-            <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3%3Ffilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-                opacity: 0.015,
-                pointerEvents: 'none',
-                zIndex: 1
             }} />
 
             <div className="fade-in hud-mesh scan-line" style={{
                 position: 'relative',
                 zIndex: 2,
-                padding: 'var(--space-8)',
+                padding: 'var(--space-6) var(--space-8)',
                 minHeight: '100vh',
-                maxWidth: '1600px',
+                maxWidth: '1800px', /* Increased from 1600 */
                 margin: '0 auto'
             }}>
 
 
-                {/* Dynamic Data Cables - HUD Innovation */}
-                <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1, opacity: 0.2 }}>
-                    <defs>
-                        <linearGradient id="cableGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0" />
-                            <stop offset="50%" stopColor="var(--primary)" stopOpacity="1" />
-                            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
-                        </linearGradient>
-                    </defs>
-                    {/* Animated path simulating data flow from Header to Workspace */}
-                    <path
-                        d="M 50% 120 L 50% 160 Q 50% 200 40% 200 L 10% 200"
-                        fill="none"
-                        stroke="url(#cableGrad)"
-                        strokeWidth="1"
-                        strokeDasharray="4 4"
-                    >
-                        <animate attributeName="stroke-dashoffset" from="100" to="0" dur="3s" repeatCount="indefinite" />
-                    </path>
-                </svg>
 
                 {isDemoMode && (
 
                     <div style={{
-                        background: 'rgba(245, 158, 11, 0.05)',
-                        border: '1px solid rgba(245, 158, 11, 0.2)',
+                        background: 'var(--primary-glow)',
+                        border: '1px solid var(--border)',
                         borderRadius: 'var(--radius-md)',
-                        padding: '0.75rem 1.25rem',
-                        marginBottom: 'var(--space-8)',
+                        padding: '0.5rem 1rem',
+                        marginBottom: 'var(--space-6)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '0.75rem',
-                        color: '#F59E0B',
-                        fontSize: '0.8125rem',
+                        color: 'var(--warning)',
+                        fontSize: '0.75rem',
                         fontWeight: 600,
                         backdropFilter: 'blur(8px)'
                     }}>
@@ -648,15 +615,16 @@ export default function DashboardContent() {
                     </div>
                 )}
 
-                {/* Dashboard Header - Innovative HUD Style */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-12)', position: 'relative' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <h1 className="precision-data" style={{ fontSize: '3.5rem', fontWeight: 900, letterSpacing: '-0.06em', background: 'linear-gradient(to bottom, #fff 20%, rgba(255,255,255,0.4) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>DASHBOARD</h1>
-                            <div className="hud-status-tag">
-                                <div className="status-indicator" />
-                                <span>CONNECTION: ONLINE</span>
-                            </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)', position: 'relative' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        <Banknote size={48} style={{
+                            color: 'var(--primary)',
+                            filter: 'drop-shadow(0 0 12px var(--primary)) drop-shadow(0 0 30px rgba(79, 70, 229, 0.5))',
+                            animation: 'pulse-glow 2s infinite ease-in-out'
+                        }} />
+                        <div>
+                            <span className="precision-data" style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2rem', display: 'block' }}>QUANT ANALYTICS</span>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>SHARE AI</h2>
                         </div>
                     </div>
 
@@ -727,7 +695,7 @@ export default function DashboardContent() {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 'var(--space-8)',
-                    marginTop: 'var(--space-6)',
+                    marginTop: 'var(--space-4)',
                     padding: 0
                 }}>
 
@@ -746,7 +714,7 @@ export default function DashboardContent() {
                             narrative={marketNarrative}
                             isDemo={isDemoMode}
                             aiAssets={aiAssets}
-                            onStockClick={(symbol) => setSelectedStock(symbol)}
+                            onStockClick={(symbol: string) => setSelectedStock(symbol)}
                             dailyChangePct={dailyChangePct}
                             insight={comparisonInsight as DeepInsight}
                             actions={actions}
@@ -757,12 +725,12 @@ export default function DashboardContent() {
                     {/* STEP 2: Portfolio Matrix (Current State & Holdings) */}
                     <div style={{ animationDelay: '0.2s' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                            <div className="neon-strike" style={{ padding: '0.5rem', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)' }}>
-                                <LayoutTemplate size={18} style={{ color: '#10B981' }} />
+                            <div style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--primary-glow)', border: '1px solid var(--border)' }}>
+                                <LayoutTemplate size={18} style={{ color: 'var(--primary)' }} />
                             </div>
                             <div>
-                                <h3 style={{ fontSize: '1rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>Portfolio Matrix</h3>
-                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '2px' }}>LIVE ASSET REPOSITORY • THE WHAT</div>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Portfolio Matrix</h3>
+                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>LIVE ASSET REPOSITORY • THE WHAT</div>
                             </div>
                         </div>
                         <AllocationCluster
@@ -770,6 +738,7 @@ export default function DashboardContent() {
                             netWorth={stats.netWorth}
                             aiAssets={aiAssets}
                             onStockClick={setSelectedStock}
+                            onDeleteAsset={handleDeleteAsset}
                             searchTerm={searchTerm}
                             onSearchChange={setSearchTerm}
                             expandedCategory={expandedCategory}
@@ -784,12 +753,12 @@ export default function DashboardContent() {
                     {/* STEP 3: Cluster Insights (Deep Analysis & Divergence) */}
                     <div style={{ animationDelay: '0.3s' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                            <div className="neon-strike" style={{ padding: '0.5rem', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.1)' }}>
-                                <Layers size={18} style={{ color: '#F59E0B' }} />
+                            <div style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--primary-glow)', border: '1px solid var(--border)' }}>
+                                <Layers size={18} style={{ color: 'var(--warning)' }} />
                             </div>
                             <div>
-                                <h3 style={{ fontSize: '1rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>Cluster Intelligence</h3>
-                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '2px' }}>AI SECTOR & METRIC ANALYSIS • THE WHY</div>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Cluster Intelligence</h3>
+                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>AI SECTOR & METRIC ANALYSIS • THE WHY</div>
                             </div>
                         </div>
                         <ClusterIntelligence />
@@ -802,14 +771,14 @@ export default function DashboardContent() {
                         gap: 'var(--space-8)',
                         animationDelay: '0.4s'
                     }}>
-                        <div className="card glass-hull scan-effect" style={{
-                            padding: 'var(--space-6)',
-                            borderRadius: '24px',
+                        <div className="card glass-hull" style={{
+                            padding: 'var(--space-4)',
+                            borderRadius: '16px',
                             border: '1px solid var(--border)',
-                            background: 'rgba(255, 255, 255, 0.02)'
+                            background: 'var(--grad-surface)'
                         }}>
-                            <h3 style={{ fontSize: '0.8125rem', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Activity size={16} className="text-primary" /> Intelligence Pulse • THE WHY
+                            <h3 style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Activity size={14} className="text-primary" /> Intelligence Pulse
                             </h3>
                             <WatchlistActivity onStockClick={setSelectedStock} />
                         </div>
@@ -823,12 +792,12 @@ export default function DashboardContent() {
                     {/* STEP 5: Proactive Action Center (Tactical Execution) */}
                     <div style={{ animationDelay: '0.5s' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                            <div className="neon-strike" style={{ padding: '0.5rem', borderRadius: '8px', background: 'rgba(99, 102, 241, 0.1)' }}>
-                                <Sparkles size={18} className="text-primary" />
+                            <div style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--primary-glow)', border: '1px solid var(--border)' }}>
+                                <Sparkles size={18} style={{ color: 'var(--primary)' }} />
                             </div>
                             <div>
-                                <h3 style={{ fontSize: '1rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>Proactive Action Center</h3>
-                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '2px' }}>TACTICAL ADVISORY • REQUIRES MANUAL AUTHORIZATION</div>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Proactive Action Center</h3>
+                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>TACTICAL ADVISORY • REQUIRES MANUAL AUTHORIZATION</div>
                             </div>
                         </div>
                         <ActionCenter
@@ -843,15 +812,15 @@ export default function DashboardContent() {
                     {/* STEP 6: Strategy Overview (AI Optimization & Alpha Lab) */}
                     <div style={{ animationDelay: '0.6s' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                            <div className="neon-strike" style={{ padding: '0.5rem', borderRadius: '8px', background: 'rgba(99, 102, 241, 0.1)' }}>
-                                <BrainCircuit size={18} className="text-primary" />
+                            <div style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--primary-glow)', border: '1px solid var(--border)' }}>
+                                <BrainCircuit size={18} style={{ color: 'var(--primary)' }} />
                             </div>
                             <div>
-                                <h3 style={{ fontSize: '1rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>Strategy Overview</h3>
-                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '2px' }}>AI-DRIVEN ALPHA CAPTURE • THE HOW</div>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Strategy Overview</h3>
+                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>AI-DRIVEN ALPHA CAPTURE • THE HOW</div>
                             </div>
                         </div>
-                        <div className="card glass-hull scan-effect" style={{ padding: 'var(--space-6)', borderRadius: '24px', border: '1px solid var(--border)', background: 'rgba(255, 255, 255, 0.02)' }}>
+                        <div className="card glass-hull scan-effect" style={{ padding: 'var(--space-6)', borderRadius: '24px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }}>
                             <PortfolioComparison
                                 userAssets={displayAssets}
                                 aiAssets={aiAssets}
@@ -867,12 +836,12 @@ export default function DashboardContent() {
                     {/* STEP 7: Risk Stress Lab (Pressure Testing) */}
                     <div style={{ animationDelay: '0.7s' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                            <div className="neon-strike" style={{ padding: '0.5rem', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)' }}>
-                                <ShieldAlert size={18} className="text-danger" />
+                            <div style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--primary-glow)', border: '1px solid var(--border)' }}>
+                                <ShieldAlert size={18} style={{ color: 'var(--danger)' }} />
                             </div>
                             <div>
-                                <h3 style={{ fontSize: '1rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>Risk Stress Lab</h3>
-                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '2px' }}>VOLATILITY & BLACK SWAN SIMULATION • THE HOW</div>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Risk Stress Lab</h3>
+                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>VOLATILITY & BLACK SWAN SIMULATION • THE HOW</div>
                             </div>
                         </div>
                         <StressTester assets={displayAssets} />

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { PieChart, Zap } from 'lucide-react';
+import { PieChart, Zap, X } from 'lucide-react';
 import { Asset } from '@/lib/assets';
 
 interface AllocationClusterProps {
@@ -9,6 +9,7 @@ interface AllocationClusterProps {
     netWorth: number;
     aiAssets?: Asset[];
     onStockClick?: (symbol: string) => void;
+    onDeleteAsset?: (id: string) => void;
     searchTerm: string;
     onSearchChange: (val: string) => void;
     expandedCategory: string | null;
@@ -20,6 +21,7 @@ export default function AllocationCluster({
     netWorth,
     aiAssets,
     onStockClick,
+    onDeleteAsset,
     searchTerm,
     onSearchChange,
     expandedCategory,
@@ -34,19 +36,18 @@ export default function AllocationCluster({
 
     return (
         <div className="glass-hull data-glimmer" style={{
-            padding: 'var(--space-8)',
+            padding: 'var(--space-4)',
             position: 'relative',
             overflow: 'hidden',
-            borderRadius: '32px'
+            borderRadius: 'var(--radius-lg)'
         }}>
-            <div className="hud-mesh" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.1, pointerEvents: 'none' }} />
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem', position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--text-secondary)' }}>
-                    <div className="neon-strike" style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)' }}>
-                        <PieChart size={18} />
+                    <div style={{ padding: '0.35rem', borderRadius: 'var(--radius-md)', background: 'var(--surface-hover)', border: '1px solid var(--border)' }}>
+                        <PieChart size={16} />
                     </div>
-                    <span className="precision-data" style={{ fontWeight: 900, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.2rem' }}>Allocation Cluster</span>
+                    <span className="precision-data" style={{ fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.15rem' }}>Allocation Cluster</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <div className="live-pulse" />
@@ -63,11 +64,11 @@ export default function AllocationCluster({
                         style={{
                             width: '100%',
                             padding: '0.4rem 0.8rem',
-                            background: 'rgba(255, 255, 255, 0.03)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            background: 'var(--surface-hover)',
+                            border: '1px solid var(--border)',
                             borderRadius: '8px',
-                            fontSize: '0.7rem',
-                            color: 'white',
+                            fontSize: '0.65rem',
+                            color: 'var(--text-primary)',
                             outline: 'none',
                             textTransform: 'uppercase',
                             letterSpacing: '0.1em'
@@ -109,22 +110,23 @@ export default function AllocationCluster({
                                 onClick={() => setExpandedCategory(isExpanded ? null : type)}
                                 className="interactive-card glass-hull"
                                 style={{
-                                    padding: '1.5rem',
-                                    borderRadius: '20px',
+                                    padding: '1.25rem',
+                                    borderRadius: '16px',
                                     cursor: 'pointer',
-                                    background: isExpanded ? 'rgba(99, 102, 241, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                    background: isExpanded ? 'var(--primary-glow)' : 'var(--surface-hover)',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    border: isExpanded ? '1px solid var(--primary)' : '1px solid var(--border)'
                                 }}
                             >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
                                     <div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
-                                            <span className="precision-data" style={{ textTransform: 'uppercase', fontWeight: 900, fontSize: '0.85rem', color: 'white', letterSpacing: '0.15rem' }}>{type.replace('_', ' ')}</span>
+                                            <span className="precision-data" style={{ textTransform: 'uppercase', fontWeight: 900, fontSize: '0.85rem', color: 'var(--text-primary)', letterSpacing: '0.1rem' }}>{type.replace('_', ' ')}</span>
                                             <span className="precision-data" style={{
-                                                fontSize: '0.7rem',
+                                                fontSize: '0.65rem',
                                                 fontWeight: 900,
                                                 color: returnPct >= 0 ? 'var(--success)' : 'var(--danger)',
-                                                background: returnPct >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                                background: 'var(--surface-hover)',
                                                 padding: '2px 8px',
                                                 borderRadius: '6px'
                                             }}>
@@ -152,7 +154,7 @@ export default function AllocationCluster({
                                                     {Math.abs(deviance) < 5 ? 'Aligned' : deviance > 0 ? 'Overweight' : 'Underweight'}
                                                 </div>
                                             )}
-                                            <div className="precision-data" style={{ fontWeight: 900, fontSize: '1.5rem', color: 'white' }}>
+                                            <div className="precision-data" style={{ fontWeight: 900, fontSize: '1.25rem', color: 'var(--text-primary)' }}>
                                                 {currentPct.toFixed(1)}%
                                             </div>
                                         </div>
@@ -167,14 +169,15 @@ export default function AllocationCluster({
                                     </div>
                                 </div>
 
-                                <div style={{ height: '8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', overflow: 'hidden', display: 'flex' }}>
+                                <div style={{ height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden', display: 'flex' }}>
                                     {Object.entries(sectorMap).map(([sector, val], idx) => (
                                         <div
                                             key={sector}
                                             style={{
                                                 width: `${(val / currentVal) * 100}%`,
                                                 height: '100%',
-                                                background: type === 'stock' ? `rgba(99, 102, 241, ${1 - idx * 0.2})` : `rgba(245, 158, 11, ${1 - idx * 0.2})`,
+                                                background: type === 'stock' ? `var(--primary)` : `var(--warning)`,
+                                                opacity: 1 - idx * 0.2,
                                                 transition: 'width 1s ease-out'
                                             }}
                                         />
@@ -185,8 +188,8 @@ export default function AllocationCluster({
                             {isExpanded && (
                                 <div className="custom-scrollbar" style={{
                                     margin: '0.5rem 0.5rem 0 0.5rem',
-                                    padding: '1.25rem',
-                                    background: 'rgba(255,255,255,0.01)',
+                                    padding: '1rem',
+                                    background: 'var(--background)',
                                     borderLeft: '2px solid var(--primary)',
                                     display: 'grid',
                                     gridTemplateColumns: categoryAssets.length > 12 ? 'repeat(auto-fill, minmax(280px, 1fr))' : '1fr',
@@ -211,15 +214,33 @@ export default function AllocationCluster({
                                                             onStockClick(asset.symbol || asset.name);
                                                         }
                                                     }}
-                                                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-                                                    className="group"
+                                                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '0.4rem', borderRadius: '8px' }}
+                                                    className="group hover:bg-[var(--surface-hover)] transition-all"
                                                 >
-                                                    <div>
-                                                        <div className="precision-data group-hover:text-primary transition-colors" style={{ fontSize: '0.85rem', fontWeight: 900, color: 'white' }}>{asset.name}</div>
-                                                        <div className="precision-data" style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700 }}>{asset.symbol || 'N/A'} • {asset.quantity.toFixed(0)} UNITS</div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onDeleteAsset?.(asset.id);
+                                                            }}
+                                                            className="opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-lg hover:bg-danger/10 hover:text-danger border border-white/10 hover:border-danger/40 glass-hull"
+                                                            style={{
+                                                                background: 'rgba(255, 255, 255, 0.05)',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center'
+                                                            }}
+                                                            title="Remove Asset"
+                                                        >
+                                                            <X size={12} strokeWidth={3} />
+                                                        </button>
+                                                        <div>
+                                                            <div className="precision-data group-hover:text-primary transition-colors" style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--text-primary)' }}>{asset.name}</div>
+                                                            <div className="precision-data" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700 }}>{asset.symbol || 'N/A'} • {asset.quantity.toFixed(0)} UNITS</div>
+                                                        </div>
                                                     </div>
                                                     <div style={{ textAlign: 'right' }}>
-                                                        <div className="precision-data" style={{ fontSize: '0.9rem', fontWeight: 900, color: 'white' }}>
+                                                        <div className="precision-data" style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--text-primary)' }}>
                                                             {`$${(asset.quantity * asset.currentPrice).toLocaleString('en-US', { maximumFractionDigits: 0 })}`}
                                                         </div>
                                                         <div className="precision-data" style={{ fontSize: '0.7rem', fontWeight: 900, color: assetPerf >= 0 ? 'var(--success)' : 'var(--danger)' }}>

@@ -32,10 +32,10 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
 
     const getIcon = (type: string) => {
         switch (type) {
-            case 'rebalance': return <AlertTriangle size={18} color="#F59E0B" />;
-            case 'tax': return <Lightbulb size={18} color="#10B981" />;
-            case 'governance': return <ShieldCheck size={18} color="#3B82F6" />;
-            default: return <Sparkles size={18} color="var(--primary)" />;
+            case 'rebalance': return <AlertTriangle size={18} style={{ color: 'var(--warning)' }} />;
+            case 'tax': return <Lightbulb size={18} style={{ color: 'var(--success)' }} />;
+            case 'governance': return <ShieldCheck size={18} style={{ color: 'var(--primary)' }} />;
+            default: return <Sparkles size={18} style={{ color: 'var(--primary)' }} />;
         }
     };
 
@@ -110,11 +110,11 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
     const [isConfirmed, setIsConfirmed] = useState(false);
 
     return (
-        <div className="glass-hull scan-effect" style={{ padding: 'var(--space-6)', position: 'relative', overflow: 'hidden', minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div className="glass-hull" style={{ padding: 'var(--space-4)', position: 'relative', overflow: 'hidden', minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <Sparkles size={24} style={{ color: 'var(--primary)' }} />
-                    <h2 className="precision-data" style={{ fontSize: '1.25rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1rem' }}>Proactive Action Center</h2>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Proactive Action Center</h2>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     {isLoading ? (
@@ -123,7 +123,7 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
                         actions.length > 0 && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                 <InfoTooltip content="AI has generated tactical recommendations. Review and authorize to execute.">
-                                    <span className="hud-status-tag" style={{ color: 'var(--warning)', borderColor: 'var(--warning)', background: 'rgba(245, 158, 11, 0.05)' }}>AWAITING AUTHORIZATION</span>
+                                    <span className="hud-status-tag" style={{ color: 'var(--warning)', borderColor: 'var(--warning)', background: 'var(--primary-glow)', opacity: 0.8 }}>AWAITING AUTHORIZATION</span>
                                 </InfoTooltip>
                             </div>
                         )
@@ -134,10 +134,10 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
             <div style={{ flex: 1, minHeight: '276px', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column' }}>
                 {isLoading && actions.length === 0 ? (
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', opacity: 0.8 }}>
-                        <Loader2 size={40} className="animate-spin" style={{ color: 'var(--primary)' }} />
+                        <Loader2 size={32} className="animate-spin" style={{ color: 'var(--primary)' }} />
                         <div style={{ textAlign: 'center' }}>
-                            <div className="precision-data" style={{ fontSize: '1rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1rem', marginBottom: '0.4rem' }}>Synchronizing Alpha Engine</div>
-                            <div className="precision-data" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ANALYZING 12,500+ MACRO VECTORS...</div>
+                            <div style={{ fontSize: '0.875rem', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: '0.4rem', color: 'var(--text-primary)' }}>Synchronizing Intelligence Node</div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Analyzing Global Macro Factors</div>
                         </div>
                     </div>
                 ) : actions.length === 0 ? (
@@ -149,52 +149,32 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
                         justifyContent: 'center',
                         textAlign: 'center',
                         gap: '2rem',
-                        border: '1px solid rgba(99, 102, 241, 0.1)',
-                        borderRadius: '24px',
+                        borderRadius: 'var(--radius-lg)',
                         margin: '1rem 0',
-                        background: 'radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 70%)',
+                        background: 'var(--surface-hover)',
                         position: 'relative',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        border: '1px solid var(--border)'
                     }}>
-                        {/* Pulse Radar Animation */}
-                        <div style={{ position: 'relative', width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', border: '1px solid var(--primary)', opacity: 0.2, animation: 'radarExpand 3s infinite linear' }} />
-                            <div style={{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', border: '1px solid var(--primary)', opacity: 0.2, animation: 'radarExpand 3s infinite linear', animationDelay: '1.5s' }} />
-                            <div style={{
-                                width: '60px',
-                                height: '60px',
-                                borderRadius: '50%',
-                                background: 'var(--primary)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                boxShadow: '0 0 30px var(--primary-glow)',
-                                animation: 'neuralPulse 4s infinite ease-in-out',
-                                zIndex: 2
-                            }}>
-                                <BrainCircuit size={32} color="white" />
-                            </div>
+                        {/* Statistical Standby Placeholder */}
+                        <div style={{ width: '80px', height: '80px', borderRadius: 'var(--radius-lg)', background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                            <BarChart3 size={32} style={{ color: 'var(--primary)', opacity: 0.4 }} />
+                            <div style={{ position: 'absolute', top: '-5px', right: '-5px', width: '12px', height: '12px', borderRadius: '50%', background: 'var(--warning)', border: '2px solid var(--background)' }} />
                         </div>
 
-                        <div style={{ zIndex: 2 }}>
-                            <h3 className="precision-data" style={{ fontSize: '1.25rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2rem', marginBottom: '0.75rem', color: 'white' }}>Neural Advisory Standby</h3>
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                                <span className="hud-status-tag" style={{ fontSize: '0.6rem', opacity: 0.7 }}>CORE_STABLE</span>
-                                <span className="hud-status-tag" style={{ fontSize: '0.6rem', opacity: 0.7 }}>ALPHA_READY</span>
-                            </div>
-                            <p className="precision-data" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '340px', margin: '0 auto', lineHeight: '1.6', letterSpacing: '0.05rem' }}>
-                                Advanced intelligence engine in hibernation. Request high-precision scan to identify tactical alpha opportunities.
+                        <div>
+                            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Statistical Standby</h3>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '340px', margin: '0 auto', lineHeight: '1.5' }}>
+                                Advanced analytical engine in hibernation. Request high-precision scan to identify tactical rebalancing opportunities.
                             </p>
                         </div>
 
                         <button
-                            className="btn-hud btn-hud-primary neon-strike"
+                            className="btn-hud btn-hud-primary"
                             style={{
-                                padding: '1rem 3rem',
+                                padding: '0.875rem 2.5rem',
                                 height: 'auto',
-                                fontSize: '0.8rem',
-                                letterSpacing: '0.2rem',
-                                background: 'rgba(99, 102, 241, 0.15)',
+                                fontSize: '0.85rem',
                                 zIndex: 2
                             }}
                             onClick={() => onGenerate?.()}
@@ -273,11 +253,11 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
                             </p>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                                <div className="hud-data-node" style={{ background: 'rgba(59, 102, 241, 0.03)', borderColor: 'rgba(59, 102, 241, 0.2)' }}>
+                                <div className="hud-data-node" style={{ background: 'var(--surface-hover)', borderColor: 'var(--border)' }}>
                                     <div className="precision-data" style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.1rem' }}>RETAIL ANALYSIS</div>
                                     <div className="precision-data" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{selectedAction.simpleExplanation || 'Safe rebalancing for long-term growth.'}</div>
                                 </div>
-                                <div className="hud-data-node" style={{ background: 'rgba(168, 85, 247, 0.03)', borderColor: 'rgba(168, 85, 247, 0.2)' }}>
+                                <div className="hud-data-node" style={{ background: 'var(--surface-hover)', borderColor: 'var(--border)' }}>
                                     <div className="precision-data" style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.1rem' }}>EXPERT ALPHA</div>
                                     <div className="precision-data" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{selectedAction.expertInsight || 'Portfolio beta optimization via risk-parity adjustment.'}</div>
                                 </div>
@@ -320,7 +300,7 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
                                 ) : (
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                         <div className="precision-data" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                                            <Zap size={14} color="#F59E0B" /> <span>0.4s EXECUTION DELAY</span>
+                                            <Zap size={14} style={{ color: 'var(--warning)' }} /> <span>0.4s EXECUTION DELAY</span>
                                         </div>
                                         <div className="precision-data" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
                                             <Target size={14} color="#3B82F6" /> <span>99.9%_PRECISION</span>
@@ -376,12 +356,12 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
 
                     {executionState === 'success' && (
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', animation: 'fadeIn 0.5s ease' }}>
-                            <CheckCircle2 size={64} color="#10B981" style={{ marginBottom: '1.5rem' }} />
+                            <CheckCircle2 size={64} style={{ color: 'var(--success)', marginBottom: '1.5rem' }} />
                             <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--success)' }}>Plan Executed!</h3>
                             <p style={{ margin: '1rem 0 2rem', color: 'var(--text-secondary)' }}>AI has successfully rebalanced and optimized your portfolio.</p>
 
                             <div style={{ width: '100%', background: 'rgba(16, 185, 129, 0.1)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#059669', marginBottom: '0.5rem' }}>TOTAL IMPACT REPORT</div>
+                                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--success)', marginBottom: '0.5rem' }}>TOTAL IMPACT REPORT</div>
                                 <div style={{ fontSize: '1.5rem', fontWeight: 900 }}>{selectedAction.impact}</div>
                             </div>
 
@@ -392,7 +372,7 @@ export default function ActionCenter({ actions: initialActions, assets, onExecut
             )}
 
             {actions.length > 0 && !selectedAction && (
-                <button className="btn-hud btn-hud-primary neon-strike" style={{ width: '100%', height: '50px' }} onClick={handleExecuteAll}>
+                <button className="btn-hud btn-hud-primary" style={{ width: '100%', height: '50px' }} onClick={handleExecuteAll}>
                     <Zap size={16} /> AUTHORIZE FULL REBALANCING
                 </button>
             )}
