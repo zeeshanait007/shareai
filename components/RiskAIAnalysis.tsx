@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Info } from 'lucide-react';
 import MetricInsightOverlay from './MetricInsightOverlay';
+import InfoTooltip from './InfoTooltip';
 
 interface RiskScoreProps {
     id: string;
@@ -27,7 +28,9 @@ const RiskScoreBar = ({ id, label, score, icon, color, onSelect }: RiskScoreProp
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
                 <div style={{ color }}>{icon}</div>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{label}</span>
+                <InfoTooltip content={`Detailed AI breakdown of your ${label.toLowerCase()} risks.`}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{label}</span>
+                </InfoTooltip>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontWeight: 800, fontSize: '1rem' }}>{score.toFixed(0)}%</span>
@@ -115,9 +118,11 @@ export default function RiskAIAnalysis({ scores }: RiskAIAnalysisProps) {
                 <MetricInsightOverlay metricId={selectedMetric} onClose={() => setSelectedMetric(null)} />
             )}
 
-            <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem' }}>
-                <Info size={16} />
-                <span>Click any metric above for a deep dive into the underlying data logic.</span>
+            <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <InfoTooltip content="Our proprietary risk model evaluates hundreds of real-time signals including correlation clusters and liquidity depth.">
+                    <span>Our proprietary risk model evaluates hundreds of real-time signals...</span>
+                </InfoTooltip>
+                <div style={{ marginLeft: 'auto', fontSize: '0.7rem' }}>Click metrics for deep dive</div>
             </div>
         </div>
     );

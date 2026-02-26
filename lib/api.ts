@@ -47,6 +47,36 @@ class MarketDataService {
     }
 
     /**
+     * Fetches real-time quotes for multiple symbols.
+     */
+    async getQuotes(symbols: string[]): Promise<Record<string, StockData>> {
+        if (symbols.length === 0) return {};
+        try {
+            // yahoo-finance2.quote can take an array of symbols
+            const results: any[] = await yahooFinance.quote(symbols);
+            const quotes: Record<string, StockData> = {};
+
+            results.forEach(quote => {
+                if (quote) {
+                    quotes[quote.symbol] = {
+                        symbol: quote.symbol,
+                        regularMarketPrice: quote.regularMarketPrice || 0,
+                        regularMarketChange: quote.regularMarketChange || 0,
+                        regularMarketChangePercent: quote.regularMarketChangePercent || 0,
+                        marketCap: quote.marketCap || 0,
+                        shortName: quote.shortName || quote.symbol,
+                        regularMarketVolume: quote.regularMarketVolume || 0,
+                    };
+                }
+            });
+            return quotes;
+        } catch (error) {
+            console.error(`Error fetching bulk quotes:`, error);
+            return {};
+        }
+    }
+
+    /**
      * Fetches historical data for charts.
      */
     async getHistoricalData(symbol: string, periodOrDate: string | Date): Promise<HistoricalData[]> {

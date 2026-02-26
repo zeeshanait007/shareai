@@ -55,47 +55,44 @@ export default function SubscriptionBanner() {
     const isTrial = hoursRemaining > 0;
 
     return (
-        <div style={{
-            padding: '0.875rem 1.25rem',
-            background: isExpired ? 'rgba(239, 68, 68, 0.1)' :
-                isWarning ? 'rgba(251, 191, 36, 0.1)' :
-                    'rgba(59, 130, 246, 0.1)',
-            border: `1px solid ${isExpired ? 'rgba(239, 68, 68, 0.3)' :
-                isWarning ? 'rgba(251, 191, 36, 0.3)' :
-                    'rgba(59, 130, 246, 0.3)'}`,
-            borderRadius: '0.5rem',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '1rem'
-        }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                {isExpired ? (
-                    <AlertTriangle size={20} style={{ color: '#ef4444' }} />
-                ) : isTrial ? (
-                    <Clock size={20} style={{ color: isWarning ? '#f59e0b' : '#3b82f6' }} />
-                ) : (
-                    <CheckCircle size={20} style={{ color: '#10b981' }} />
-                )}
+        <div className={`hud-alert ${isExpired ? 'hud-alert-danger' : isWarning ? 'hud-alert-warning' : ''}`} style={{ marginBottom: 'var(--space-8)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    background: isExpired ? 'rgba(239, 68, 68, 0.1)' : isWarning ? 'rgba(245, 158, 11, 0.1)' : 'rgba(99, 102, 241, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid rgba(255, 255, 255, 0.05)'
+                }}>
+                    {isExpired ? (
+                        <AlertTriangle size={20} style={{ color: 'var(--danger)' }} />
+                    ) : (
+                        <Clock size={20} style={{ color: isWarning ? 'var(--warning)' : 'var(--primary)' }} />
+                    )}
+                </div>
                 <div>
-                    <p style={{
+                    <p className="precision-data" style={{
                         margin: 0,
-                        fontSize: '0.875rem',
-                        fontWeight: '500',
-                        color: isExpired ? '#ef4444' :
-                            isWarning ? '#f59e0b' :
-                                'var(--text)'
+                        fontSize: '0.75rem',
+                        fontWeight: 900,
+                        color: 'white',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em'
                     }}>
                         {message}
                     </p>
                     {isTrial && !isExpired && (
-                        <p style={{
-                            margin: '0.125rem 0 0 0',
-                            fontSize: '0.75rem',
-                            color: 'var(--text-muted)'
+                        <p className="precision-data" style={{
+                            margin: '0.2rem 0 0 0',
+                            fontSize: '0.65rem',
+                            color: 'var(--text-muted)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em'
                         }}>
-                            Upgrade to continue using ShareAI after your trial ends
+                            Trial period ends in {hoursRemaining}h • Upgrade to retain AI Alpha access
                         </p>
                     )}
                 </div>
@@ -103,15 +100,10 @@ export default function SubscriptionBanner() {
 
             {(isTrial || isExpired) && (
                 <button
-                    className="btn btn-primary"
-                    style={{
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.875rem',
-                        whiteSpace: 'nowrap'
-                    }}
+                    className={`btn-hud ${isExpired ? 'btn-hud-primary neon-strike' : isWarning ? 'btn-hud-warning' : 'btn-hud-primary'}`}
                     onClick={() => setShowUpgradeModal(true)}
                 >
-                    {isExpired ? 'Renew Now' : 'Upgrade'}
+                    {isExpired ? 'REBOOT ACCESS' : 'UPGRADE SYSTEM'}
                 </button>
             )}
 

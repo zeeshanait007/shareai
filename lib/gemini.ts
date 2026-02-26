@@ -12,8 +12,8 @@ export interface GeminiAdvisory {
 }
 
 // Model configs with fallback chain
-const PRIMARY_MODEL = "gemini-2.0-flash-lite";
-const FALLBACK_MODEL = "gemini-2.0-flash";
+const PRIMARY_MODEL = "gemini-2.0-flash";
+const FALLBACK_MODEL = "gemini-2.0-flash-lite";
 
 const fastModelConfig = {
     model: PRIMARY_MODEL,
@@ -24,15 +24,97 @@ const fastModelConfig = {
     }
 };
 
-// Retry helper with exponential backoff + fallback model
-async function callGeminiWithRetry(prompt: string, maxRetries = 3): Promise<any> {
+/**
+ * Global Request Queue to prevent 429 Too Many Requests
+ * Serializes Gemini API calls to stay within rate limits.
+ */
+class GeminiRequestQueue {
+    private queue: (() => Promise<void>)[] = [];
+    private processing = false;
+    private lastRequestTime = 0;
+    private readonly minInterval = 250; // Increased to 250ms
+    private pausedUntil = 0;
+
+    async add<T>(requestFn: () => Promise<T>): Promise<T> {
+        return new Promise((resolve, reject) => {
+            this.queue.push(async () => {
+                try {
+                    // Check if queue is paused (Circuit Breaker)
+                    const now = Date.now();
+                    if (now < this.pausedUntil) {
+                        const waitTime = this.pausedUntil - now;
+                        await new Promise(r => setTimeout(r, waitTime));
+                    }
+
+                    // Standard interval between requests
+                    const timeSinceLast = Date.now() - this.lastRequestTime;
+                    if (timeSinceLast < this.minInterval) {
+                        await new Promise(r => setTimeout(r, this.minInterval - timeSinceLast));
+                    }
+
+                    this.lastRequestTime = Date.now();
+                    const result = await requestFn();
+                    resolve(result);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+            this.process();
+        });
+    }
+
+    /**
+     * Pauses all outgoing requests for a specified duration.
+     * Used when a 429/503 error is detected.
+     */
+    pause(durationMs: number) {
+        console.log(`[GeminiQueue] Circuit breaker activated. Pausing for ${durationMs}ms...`);
+        this.pausedUntil = Date.now() + durationMs;
+    }
+
+    private async process() {
+        if (this.processing) return;
+        this.processing = true;
+
+        while (this.queue.length > 0) {
+            const request = this.queue.shift();
+            if (request) {
+                await request();
+            }
+        }
+
+        this.processing = false;
+    }
+
+    getHealthMetrics() {
+        return {
+            queueLength: this.queue.length,
+            isPaused: Date.now() < this.pausedUntil,
+            pausedUntil: this.pausedUntil,
+            processing: this.processing
+        };
+    }
+}
+
+const geminiQueue = new GeminiRequestQueue();
+
+// Retry helper with exponential backoff + fallback model + queueing
+async function callGeminiWithRetry(prompt: string, maxRetries = 5, options: { responseMimeType?: string } = {}): Promise<any> {
     let lastError: any;
 
     // Try primary model with retries
     for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
-            const model = genAI.getGenerativeModel(fastModelConfig);
-            const result = await model.generateContent(prompt);
+            const result = await geminiQueue.add(async () => {
+                const model = genAI.getGenerativeModel({
+                    ...fastModelConfig,
+                    generationConfig: {
+                        ...fastModelConfig.generationConfig,
+                        responseMimeType: options.responseMimeType || fastModelConfig.generationConfig.responseMimeType
+                    }
+                });
+                return await model.generateContent(prompt);
+            });
             return result;
         } catch (err: any) {
             lastError = err;
@@ -41,10 +123,25 @@ async function callGeminiWithRetry(prompt: string, maxRetries = 3): Promise<any>
 
             // Only retry on 503 (overloaded) or 429 (rate limit)
             if (status === 503 || status === 429 || msg.includes('503') || msg.includes('429') || msg.includes('high demand') || msg.includes('RESOURCE_EXHAUSTED')) {
-                // Aggressive backoff for rate limits: 2s, 4s, 8s
-                const backoffBase = status === 429 ? 2000 : 1000;
-                const waitMs = Math.pow(2, attempt) * backoffBase;
-                console.log(`[Gemini] ${PRIMARY_MODEL} attempt ${attempt + 1} failed (${status}), retrying in ${waitMs}ms...`);
+                const isRateLimit = status === 429 || msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED');
+
+                // If rate limited, trigger global queue pause
+                if (isRateLimit) {
+                    geminiQueue.pause(attempt === 0 ? 5000 : 10000); // 5s then 10s pause
+                }
+
+                // Aggressive fallback: If rate limited, don't try primary model more than 2 times
+                if (isRateLimit && attempt >= 1) {
+                    console.log(`[Gemini] ${PRIMARY_MODEL} rate limited, skipping further retries to use fallback.`);
+                    break;
+                }
+
+                // Jittered exponential backoff: 2s-4s, 4s-6s, etc.
+                const backoffBase = isRateLimit ? 3000 : 1500;
+                const jitter = Math.random() * 1000;
+                const waitMs = (Math.pow(2, attempt) * backoffBase) + jitter;
+
+                console.log(`[Gemini] ${PRIMARY_MODEL} attempt ${attempt + 1} failed (${status || 'RESOURCE_EXHAUSTED'}), retrying in ${Math.round(waitMs)}ms...`);
                 await new Promise(r => setTimeout(r, waitMs));
                 continue;
             }
@@ -53,13 +150,19 @@ async function callGeminiWithRetry(prompt: string, maxRetries = 3): Promise<any>
     }
 
     // Try fallback model
-    console.log(`[Gemini] Primary model failed, trying fallback: ${FALLBACK_MODEL}`);
+    console.log(`[Gemini] Primary model ${PRIMARY_MODEL} exhausted or throttled, trying fallback: ${FALLBACK_MODEL}`);
     try {
-        const fallbackModel = genAI.getGenerativeModel({
-            ...fastModelConfig,
-            model: FALLBACK_MODEL,
+        return await geminiQueue.add(async () => {
+            const fallbackModel = genAI.getGenerativeModel({
+                ...fastModelConfig,
+                model: FALLBACK_MODEL,
+                generationConfig: {
+                    ...fastModelConfig.generationConfig,
+                    responseMimeType: options.responseMimeType || fastModelConfig.generationConfig.responseMimeType
+                }
+            });
+            return await fallbackModel.generateContent(prompt);
         });
-        return await fallbackModel.generateContent(prompt);
     } catch (fallbackErr: any) {
         console.error('[Gemini] Fallback model also failed:', fallbackErr?.message);
         throw lastError || fallbackErr;
@@ -75,7 +178,7 @@ function getAssetHash(assets: any[]): string {
     return assets.map(a => `${a.symbol}:${a.quantity}`).sort().join('|');
 }
 
-console.log("🚀 [AI-CORE-V5] Gemini Initialized. Active Model: gemini-flash-latest");
+console.log(`🚀 [AI-CORE-V6] Gemini Initialized. Primary Model: ${PRIMARY_MODEL}`);
 
 /**
  * Robustly parse JSON from AI responses, handling markdown and truncated outputs
@@ -149,20 +252,16 @@ function parseAIJSON(text: string) {
 
 export async function getMarketNarrative(netWorth: number, distribution: any, marketNews?: string): Promise<string> {
     try {
-        const model = genAI.getGenerativeModel({
-            model: "gemini-flash-latest",
-            generationConfig: { temperature: 0.4, maxOutputTokens: 100 } // Tiny limit for ultra-fast summary
-        });
         const prompt = `
-            Persona: Advanced Quantum Financial Observer. You see portfolio gravity fields (concentration risks), capital flow vectors (market momentum), and volatility distortions.
+            Persona: Friendly but expert Financial Guide. Your goal is to explain market movements in plain English that a beginner can understand, while still being accurate.
             Wealth: $${netWorth.toLocaleString()}. Assets: ${JSON.stringify(distribution)}.
             ${marketNews ? `Context: ${marketNews}` : ''}
             
             Task: Provide a "Daily Briefing" headline.
-            Style: Use high-concept physics/mathematical metaphors (gravity, vectors, distortions) but anchor them in the QUANTITATIVE REALITY of the assets and news provided.
+            Style: Avoid heavy technical jargon (like "volatility distortions" or "vectors"). Use clear, everyday language but keep it professional. Focus on what this means for the user's money.
             Response: 12-word max. One precise sentence.
         `;
-        const result = await model.generateContent(prompt);
+        const result = await callGeminiWithRetry(prompt);
         return result.response.text().trim();
     } catch (error) {
         return "Defensive posture recommended while awaiting institutional volume signals.";
@@ -174,8 +273,6 @@ export async function getGeminiProactiveActions(
     stats: { netWorth: number; distribution: any; taxStats: any; beta: number }
 ): Promise<Action[]> {
     try {
-        const model = genAI.getGenerativeModel(fastModelConfig);
-
         const assetString = assets.map(a => `${a.name}: $${(a.quantity * (a.currentPrice || a.purchasePrice)).toLocaleString()} [${a.type}]`).join('\n');
         const topSectors = Object.entries(stats.distribution).sort(([, a]: any, [, b]: any) => b - a).slice(0, 3).map(([s, p]) => `${s}: ${p}%`).join(', ');
 
@@ -184,10 +281,10 @@ export async function getGeminiProactiveActions(
             Top Sectors: ${topSectors}.
             Assets: ${assetString}
             
-            Return JSON array of 2-3 specific actions: [{ type: "rebalance"|"tax"|"governance", priority: "high"|"medium"|"low", title: string, description: string, impact: string, evidence: { label, value, benchmark, status: "critical"|"warning"|"good" }, justification, expertInsight, simpleExplanation }]
+            Return JSON array of 2-3 specific actions: [{ type: "rebalance"|"tax"|"governance", priority: "high"|"medium"|"low", title: string, description: string, impact: string, evidence: { label, value, benchmark, status: "critical"|"warning"|"good" }, justification, expertInsight, simpleExplanation: "A 1-sentence explanation of what this means for a beginner in plain English" }]
         `;
 
-        const result = await model.generateContent(prompt);
+        const result = await callGeminiWithRetry(prompt);
         const actions = parseAIJSON(result.response.text());
         return actions.map((a: any) => ({
             ...a,
@@ -222,8 +319,6 @@ export async function getGeminiDeepInsight(
     webContext?: string
 ): Promise<DeepInsight> {
     try {
-        const model = genAI.getGenerativeModel(fastModelConfig);
-
         // Calculate summary stats for the prompt
         const recent30 = history.slice(-30);
         const priceChange30d = recent30.length > 0
@@ -234,8 +329,8 @@ export async function getGeminiDeepInsight(
         const avgVolume = recent30.reduce((sum, d) => sum + d.volume, 0) / (recent30.length || 1);
 
         const prompt = `
-            You are a Lead Equity Analyst at a Global Hedge Fund with 15+ years of experience.
-            Provide an institutional-grade deep analysis of ${symbol}.
+            You are a helpful and clear Senior Equity Analyst who can explain complex stock data to both experts and beginners.
+            Provide a deep analysis of ${symbol}.
             
             ASSET DATA:
             - Symbol: ${symbol}
@@ -280,7 +375,7 @@ export async function getGeminiDeepInsight(
             }
         `;
 
-        const result = await model.generateContent(prompt);
+        const result = await callGeminiWithRetry(prompt);
         return parseAIJSON(result.response.text());
     } catch (error: any) {
         console.error("Gemini Deep Insight Error:", error);
@@ -298,8 +393,6 @@ export async function getGeminiDeepInsight(
 
 export async function getGeminiStockAnalysis(symbol: string): Promise<StockAnalysis> {
     try {
-        const model = genAI.getGenerativeModel(fastModelConfig);
-
         // 1. Fetch Real-Time Data Directly (Parallel)
         console.log(`[Gemini] Starting direct analysis for ${symbol}`);
 
@@ -349,7 +442,8 @@ export async function getGeminiStockAnalysis(symbol: string): Promise<StockAnaly
                 }, 
                 "confidenceScore": number (0-100), 
                 "recommendation": "Buy"|"Add to Watch"|"Monitor"|"Ignore", 
-                "counterArgument": "The strongest bear case" 
+                "counterArgument": "The strongest bear case in simple terms",
+                "simpleSummary": "A 1-sentence summary of the recommendation for a beginner"
             }
         `;
 
@@ -403,7 +497,6 @@ export async function getGeminiStockAnalysis(symbol: string): Promise<StockAnaly
 
 export async function generateAIPortfolio(totalCapital: number, userAssets: any[] = []): Promise<any[]> {
     try {
-        const model = genAI.getGenerativeModel(fastModelConfig);
         const userPortfolio = userAssets.map(a => `${a.name}: $${(a.quantity * (a.currentPrice || a.purchasePrice)).toLocaleString()} [${a.type}]`).join(',');
 
         const prompt = `
@@ -412,7 +505,7 @@ export async function generateAIPortfolio(totalCapital: number, userAssets: any[
             Strict: Return ONLY the JSON array. Do not truncate.
         `;
 
-        const result = await model.generateContent(prompt);
+        const result = await callGeminiWithRetry(prompt);
         const assets = parseAIJSON(result.response.text());
         return assets.map((a: any, index: number) => ({
             id: `ai-${Date.now()}-${index}`,
@@ -450,8 +543,6 @@ export async function getUnifiedDashboardSync(
         console.log("🔄 [AI-SYNC] Attaching to in-flight request for same assets.");
         return pendingRequests.get(cacheKey);
     }
-
-    const model = genAI.getGenerativeModel(fastModelConfig);
 
     const syncPromise = (async () => {
         try {
@@ -547,23 +638,23 @@ export async function getUnifiedDashboardSync(
 
         Return this JSON structure:
         {
-            "actions": [{ type, priority, title, description, impact, urgency, justification }],
+            "actions": [{ type, priority, title, description, impact, urgency, justification, simpleExplanation: "What this means for a beginner in 1 sentence" }],
             "aiAssets": [{ type, name, symbol, quantity, price, sector }],
             "insight": {
-                "narrative": "3-4 sentences. Style: Unified Field Theory of Finance. Reference gravity fields, vectors, and distortions, but EXPLICITLY anchor in the real-time news/data above.",
+                "narrative": "3-4 sentences. Style: Clear, professional, and accessible. Avoid heavy metaphors (atoms, gravity, etc.). Focus on real-world impact and trends using plain English.",
                 "userStrategyName": string,
                 "aiStrategyName": string,
-                "strategicDifference": string,
-                "alphaGap": number,
+                "strategicDifference": "Explain the difference in simple terms",
+                "alphaScore": number,
                 "convictionScore": number,
                 "projectedReturnUser": number,
                 "projectedReturnAI": number,
                 "riskScore": number,
                 "sectorGaps": [{ sector, userWeight, aiWeight }],
-                "topPick": { symbol, reason, impact },
-                "quantifiedConsequences": ["specific string 1", "specific string 2"]
+                "topPick": { symbol, reason: "Reason in simple English", impact },
+                "quantifiedConsequences": ["Clear statement 1", "Clear statement 2"]
             },
-            "marketNarrative": "12-word headline using gravity/vector metaphors anchored in today's quantitative market context."
+            "marketNarrative": "12-word headline using simple, powerful language anchored in today's market reality."
         }
 `;
 
@@ -733,22 +824,254 @@ export async function getUnifiedDashboardSync(
     }
 }
 
+export async function getChatResponse(
+    message: string,
+    history: { role: 'user' | 'model', content: string }[],
+    assets: any[],
+    stats: { netWorth: number; distribution: any; beta: number },
+    marketContext: string = ""
+): Promise<string> {
+    try {
+        const assetSummary = assets.map(a => `${a.symbol}: $${(a.quantity * (a.currentPrice || a.purchasePrice)).toLocaleString()}`).join(', ');
+
+        const prompt = `
+            You are a helpful, professional, and friendly AI Financial Assistant. You have real-time access to the user's portfolio and market data.
+            
+            USER PORTFOLIO:
+            - Net Worth: $${stats.netWorth.toLocaleString()}
+            - Beta: ${stats.beta}
+            - Assets: ${assetSummary || 'None'}
+            
+            MARKET CONTEXT:
+            ${marketContext}
+            
+            CHAT HISTORY:
+            ${history.map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`).join('\n')}
+            
+            USER MESSAGE: ${message}
+            
+            TASK: Respond to the user's message. 
+            - If they ask about their portfolio, use the data provided.
+            - If they ask about the market, use the context provided.
+            - Keep responses clear, helpful, and concise. 
+            - Use a friendly but professional tone.
+            - If you don't have enough data to answer a specific market question, say so and provide a general expert perspective.
+            - Avoid over-promising or giving direct financial "Buy/Sell" advice; instead, offer analysis and insights.
+            - IMPORTANT: Respond with PLAIN TEXT. Do NOT use JSON format.
+        `;
+
+        const result = await callGeminiWithRetry(prompt, 5, { responseMimeType: 'text/plain' });
+        return result.response.text().trim();
+    } catch (error) {
+        console.error("Gemini Chat Error:", error);
+        return "I'm having a bit of trouble connecting to my brain right now. Please try again in a moment.";
+    }
+}
+
 export async function getPortfolioComparisonInsight(
     userAssets: any[],
     aiAssets: any[]
 ): Promise<DeepInsight | string> {
     try {
-        const model = genAI.getGenerativeModel(fastModelConfig);
         const prompt = `
             Compare CurrentvsTarget. 
             Current: ${userAssets.length} assets. Target: ${aiAssets.length}.
             Return JSON structure: { convictionExplanation, narrative, volatilityRegime, alphaScore, institutionalConviction, macroContext, riskRewardRatio, evidence, riskSensitivity, counterCase, compliance }
         `;
 
-        const result = await model.generateContent(prompt);
+        const result = await callGeminiWithRetry(prompt);
         return parseAIJSON(result.response.text());
     } catch (error) {
         console.error("Gemini Comparison Insight Error:", error);
         return "Comparison unavailable due to sync error.";
     }
 }
+export async function getGeminiMarketContext(
+    marketData: { name: string; value: string; change: string }[],
+    news: string
+): Promise<{ indicators: any[]; aiInsight: string }> {
+    try {
+        const prompt = `
+            YOU ARE A TOP-TIER MACRO STRATEGIST.
+            Analyze the following market signals and news to provide a concise "Market Context".
+            
+            SIGNALS:
+            ${marketData.map(d => `${d.name}: ${d.value} (${d.change})`).join('\n')}
+            
+            RECENT NEWS:
+            ${news}
+            
+            TASK:
+            1. Provide a status for each signal (e.g., "Nominal", "Elevated", "Stable", "Neutral", "Risk-On", "Risk-Off").
+            2. Generate a single "AI Key Insight" (1 sentence) summarizing the current market regime.
+            
+            RETURN JSON:
+            {
+                "indicators": [
+                    { "name": "Market Fear (VIX)", "status": "Nominal", "color": "var(--success)" },
+                    ... (matching incoming names)
+                ],
+                "aiInsight": "Your summarized insight here."
+            }
+        `;
+
+        const result = await callGeminiWithRetry(prompt);
+        return parseAIJSON(result.response.text());
+    } catch (error) {
+        console.error("Gemini Market Context Error:", error);
+        return {
+            indicators: marketData.map(d => ({ name: d.name, status: "Unknown", color: "var(--text-muted)" })),
+            aiInsight: "Market context temporarily unavailable. Proceed with caution."
+        };
+    }
+}
+
+export async function getGeminiRiskSimulation(
+    assets: any[],
+    scenarioId: string,
+    scenarioName: string
+): Promise<{ impact: string; report: string; details: any }> {
+    try {
+        const assetSummary = assets.map(a => `${a.symbol} (${a.type}): $${(a.quantity * (a.currentPrice || a.purchasePrice)).toLocaleString()}`).join(', ');
+
+        const prompt = `
+            YOU ARE A SENIOR RISK ANALYST.
+            Analyze the impact of a "${scenarioName}" scenario on the following portfolio.
+            
+            PORTFOLIO:
+            ${assetSummary || 'No assets'}
+            
+            SCENARIO: ${scenarioName}
+            
+            TASK: 
+            1. Calculate the TOTAL expected % impact on the net worth of this specific portfolio.
+            2. Provide a 2-sentence expert report explaining WHY this impact occurs based on the asset types and symbols.
+            3. Use simple, direct language for a beginner but maintain analytical depth.
+            
+            RETURN JSON:
+            {
+                "impact": "-12.5%" or "+4.2%" (be specific and data-driven),
+                "report": "Your 2-sentence report here.",
+                "details": {
+                    "vulnerableAssets": ["symbol1", "symbol2"],
+                    "resilientAssets": ["symbol3"],
+                    "primaryRiskFactor": "Why it hurts/helps"
+                }
+            }
+        `;
+
+        const result = await callGeminiWithRetry(prompt);
+        return parseAIJSON(result.response.text());
+    } catch (error) {
+        console.error("Gemini Risk Simulation Error:", error);
+        return {
+            impact: "ERR",
+            report: "AI analysis failed. Please try again.",
+            details: {}
+        };
+    }
+}
+export async function getGeminiSystemHealth(metrics: {
+    latency: number;
+    queueDepth: number;
+    isPaused: boolean;
+    uptime: string;
+}): Promise<{ status: string; report: string; healthScore: number; bars: number[] }> {
+    try {
+        const prompt = `
+            YOU ARE A SYSTEM RELIABILITY ENGINEER (SRE).
+            Analyze these system health metrics for the ShareAI platform.
+            
+            METRICS:
+            - API Latency: ${metrics.latency}ms
+            - Queue Depth: ${metrics.queueDepth} pending requests
+            - Circuit Breaker: ${metrics.isPaused ? 'TERMINATED/PAUSED' : 'ACTIVE/NOMINAL'}
+            - Platform Uptime: ${metrics.uptime}
+            
+            TASK:
+            1. Determine a status: "Nominal", "Optimized", "Degraded", or "Critical".
+            2. Provide a 1-sentence analytical report.
+            3. Calculate a health score (0-100).
+            4. Generate an array of 8 integers (1 or 0) for a health status bar where 1 is active/healthy.
+            
+            RETURN JSON:
+            {
+                "status": "Nominal",
+                "report": "System is operating within target latency parameters with zero queue pressure.",
+                "healthScore": 98,
+                "bars": [1, 1, 1, 1, 1, 1, 1, 1]
+            }
+        `;
+
+        const result = await callGeminiWithRetry(prompt);
+        return parseAIJSON(result.response.text());
+    } catch (error) {
+        console.error("Gemini System Health Error:", error);
+        return {
+            status: "Unknown",
+            report: "Health check sequence failed. Manual override recommended.",
+            healthScore: 50,
+            bars: [1, 0, 1, 0, 1, 0, 1, 0]
+        };
+    }
+}
+
+export async function getGeminiClusterAnalysis(
+    assets: any[],
+    stats: { netWorth: number; distribution: any; beta: number }
+): Promise<any[]> {
+    try {
+        const assetSummary = assets.map(a => `${a.symbol} (${a.type}, ${a.sector}): $${(a.quantity * (a.currentPrice || a.purchasePrice)).toLocaleString()}`).join(', ');
+
+        const prompt = `
+            YOU ARE AN INSTITUTIONAL PORTFOLIO ARCHITECT.
+            Analyze the following portfolio and group assets into 2-3 logical "Investment Clusters" (e.g., "Growth Alpha", "Defensive Moat", "Speculative Risk").
+            
+            PORTFOLIO:
+            ${assetSummary || 'No assets'}
+            
+            TASK: 
+            For each cluster, calculate/estimate these metrics using SIMPLE, PLAIN ENGLISH labels:
+            1. Relationship Score (previously Intra-Cluster Correlation) (0.00 to 1.00)
+            2. Market Volatility (previously Cluster Beta)
+            3. Big Investor Stake (previously Institutional Concentration)
+            4. User Sentiment (previously AI Sentiment Skew) (-100 to +100)
+            5. Rate Hike Impact (previously Macro Sensitivity)
+
+            RULES FOR TEXT:
+            - Use clear, non-technical labels.
+            - Descriptions MUST be in plain English that a beginner can understand.
+            - Avoid jargon like "alpha", "correlation", "systemic", "vectors".
+
+            RETURN JSON ARRAY OF CLUSTERS:
+            [
+                {
+                    "name": "Cluster Name",
+                    "type": "STRATEGIC_TYPE",
+                    "metrics": [
+                        {
+                            "id": "correlation",
+                            "label": "Relationship Score",
+                            "value": "0.XX",
+                            "subtext": "Brief status (e.g., Stable, High, Risk)",
+                            "color": "HEX_OR_VAR",
+                            "details": "1-sentence plain English explanation"
+                        },
+                        ... 
+                    ],
+                    "macroImpact": "+X.X%" or "-X.X%"
+                }
+            ]
+        `;
+
+
+        const result = await callGeminiWithRetry(prompt);
+        return parseAIJSON(result.response.text());
+    } catch (error) {
+        console.error("Gemini Cluster Analysis Error:", error);
+        return [];
+    }
+}
+
+export const getGeminiQueueMetrics = () => geminiQueue.getHealthMetrics();
+

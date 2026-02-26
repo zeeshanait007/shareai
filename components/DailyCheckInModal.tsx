@@ -24,6 +24,12 @@ interface DailyCheckInModalProps {
 }
 
 export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, marketNarrative, topAction, isLoading, onRefresh, dailyPerformance, quantifiedConsequences, isDemoMode }: DailyCheckInModalProps) {
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
     if (!isOpen) return null;
 
     // Use Real-Time Data if available, otherwise 0/Loading
@@ -66,7 +72,7 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
                         <Sun size={20} className="text-primary" />
                     </div>
                     <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                        {mounted ? new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'Loading briefing...'}
                     </span>
                 </div>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800, lineHeight: 1.1, marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -109,7 +115,7 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
                                 }}
                             >
                                 <RefreshCw size={12} className={isLoading ? "animate-spin" : ""} />
-                                {isLoading ? 'Updating...' : 'Refresh Cluster'}
+                                {isLoading ? 'Updating...' : 'Refresh AI'}
                             </button>
                         )}
                     </div>
@@ -156,7 +162,7 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
                 {/* Quantified Risk Outlook */}
                 <div style={{ marginBottom: '1.5rem' }}>
                     <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Target size={14} /> Quantified Risk Outlook
+                        <Target size={14} /> Market Risks to Watch
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {isLoading ? (
@@ -173,7 +179,7 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
                             ))
                         ) : (
                             <div style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '0.8125rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                                No significant risk distortions detected in current quantum field.
+                                No significant risks detected in current market trends.
                             </div>
                         )}
                     </div>
@@ -216,8 +222,7 @@ export default function DailyCheckInModal({ isOpen, onClose, assets, netWorth, m
 
                 {isDemoMode && (
                     <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--surface-hover)', borderRadius: 'var(--radius-md)', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'center', border: '1px dashed var(--border)' }}>
-                        Analysis is currently based on <strong>Sample Demo Data</strong>.
-                        Import your own assets to receive specialized quantum advice.
+                        Import your own assets to receive personalized AI advice.
                     </div>
                 )}
 

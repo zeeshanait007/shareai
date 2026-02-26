@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Asset } from '@/lib/assets';
+import { Notification } from '@/components/NotificationCenter';
 
 export interface SavedDashboard {
     id: string;
@@ -25,6 +26,10 @@ export interface DashboardContextType {
     updateDashboard: (id: string) => void;
     loadDashboard: (id: string | null) => void;
     deleteDashboard: (id: string) => void;
+    notifications: Notification[];
+    markNotificationRead: (id: string) => void;
+    clearNotifications: () => void;
+    addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -35,6 +40,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const [assets, setAssets] = useState<Asset[]>([]);
     const [aiAssets, setAiAssets] = useState<Asset[]>([]);
     const [insight, setInsight] = useState<any>("");
+    const [notifications, setNotifications] = useState<Notification[]>([]);
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -47,13 +53,43 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
                 console.error("Failed to parse saved dashboards", e);
             }
         }
+
+        const savedNotifications = localStorage.getItem('notifications');
+        if (savedNotifications) {
+            try {
+                setNotifications(JSON.parse(savedNotifications));
+            } catch (e) { }
+        } else {
+            // Initial mock notifications for a "WOW" effect on first load
+            setNotifications([
+                {
+                    id: '1',
+                    type: 'market',
+                    title: 'Market Signal Detected',
+                    message: 'AI tracking increased institutional volume in Tech sectors.',
+                    timestamp: Date.now() - 1000 * 60 * 15,
+                    read: false,
+                    urgency: 'medium'
+                },
+                {
+                    id: '2',
+                    type: 'portfolio',
+                    title: 'Risk Profile Shift',
+                    message: 'Portfolio beta has deviated 5% from target. Optimization recommended.',
+                    timestamp: Date.now() - 1000 * 60 * 60 * 2,
+                    read: false,
+                    urgency: 'high'
+                }
+            ]);
+        }
     }, []);
 
     useEffect(() => {
         if (mounted) {
             localStorage.setItem('saved_dashboards', JSON.stringify(dashboards));
+            localStorage.setItem('notifications', JSON.stringify(notifications));
         }
-    }, [dashboards, mounted]);
+    }, [dashboards, notifications, mounted]);
 
     // Load Default Dashboard State on Mount or when switching to null
     useEffect(() => {
@@ -189,6 +225,24 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const markNotificationRead = (id: string) => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    };
+
+    const clearNotifications = () => {
+        setNotifications([]);
+    };
+
+    const addNotification = (n: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+        const newNotification: Notification = {
+            ...n,
+            id: `notif-${Date.now()}`,
+            timestamp: Date.now(),
+            read: false
+        };
+        setNotifications(prev => [newNotification, ...prev].slice(0, 50)); // Keep last 50
+    };
+
     return (
         <DashboardContext.Provider value={{
             dashboards,
@@ -202,7 +256,11 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
             saveDashboard,
             updateDashboard,
             loadDashboard,
-            deleteDashboard
+            deleteDashboard,
+            notifications,
+            markNotificationRead,
+            clearNotifications,
+            addNotification
         }}>
             {children}
         </DashboardContext.Provider>

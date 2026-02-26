@@ -12,6 +12,7 @@ export interface Asset {
     sector?: string;
     location?: string; // For real estate
     vestingSchedule?: any; // For ESOPs
+    dailyChangePercent?: number;
 }
 
 export interface WealthSummary {

@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Wallet, TrendingUp, PieChart, ShieldAlert, BadgePercent, ChevronDown, ChevronRight, Info, Sparkles } from 'lucide-react';
-import { Asset, AssetType } from '@/lib/assets';
-import MetricInsightOverlay from './MetricInsightOverlay';
+import { Wallet, TrendingUp, ShieldAlert, BadgePercent, Sparkles, Activity, Target, Shield, Zap, Info } from 'lucide-react';
+import { Asset } from '@/lib/assets';
+import { DeepInsight, Action } from '@/lib/types';
+import GlossaryTooltip from './GlossaryTooltip';
+import InfoTooltip from './InfoTooltip';
 
 interface WealthOverviewProps {
     assets: Asset[];
@@ -11,169 +13,193 @@ interface WealthOverviewProps {
     distribution: Record<string, number>;
     taxEfficiency: number;
     riskScore: number;
+    insight?: DeepInsight;
+    actions?: Action[];
     narrative?: string;
     isDemo?: boolean;
+    aiAssets?: Asset[];
     onStockClick?: (symbol: string) => void;
+    dailyChangePct?: number;
+    isLoadingAI?: boolean;
 }
 
-import { getMarketNarrative } from '@/lib/gemini';
-
-export default function WealthOverview({ assets, netWorth, distribution, taxEfficiency, riskScore, narrative: externalNarrative, isDemo, onStockClick }: WealthOverviewProps) {
-    const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
-    const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+export default function WealthOverview({
+    assets,
+    netWorth,
+    taxEfficiency,
+    riskScore,
+    insight,
+    actions,
+    narrative: externalNarrative,
+    isDemo,
+    dailyChangePct = 2.41,
+    isLoadingAI
+}: WealthOverviewProps) {
     const [mounted, setMounted] = useState(false);
-
     const narrative = externalNarrative || "";
 
     React.useEffect(() => {
         setMounted(true);
     }, []);
 
-    const assetEntries = Object.entries(distribution).filter(([_, val]) => val > 0);
+    const topAction = actions?.find(a => a.priority === 'high') || actions?.[0];
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-6)', marginBottom: 'var(--space-6)' }}>
-            {/* Net Worth Card */}
-            <div className="card" style={{
-                padding: 'var(--space-8)',
-                border: '1px solid rgba(99, 102, 241, 0.2)',
-                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.05) 100%)',
-                boxShadow: 'var(--shadow-lg)'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)', marginBottom: '1rem' }}>
-                    <Wallet size={24} />
-                    <span style={{ fontWeight: 600, fontSize: '1rem' }}>Total Managed Wealth</span>
-                    {isDemo && (
-                        <span style={{
-                            fontSize: '0.65rem',
-                            padding: '0.1rem 0.4rem',
-                            borderRadius: '4px',
-                            background: 'var(--warning)',
-                            color: 'black',
-                            fontWeight: 800,
-                            marginLeft: 'auto'
-                        }}>
-                            DEMO DATA
-                        </span>
-                    )}
-                </div>
-                <div style={{ fontSize: '2.5rem', fontWeight: 800 }}>
-                    {mounted ? `$${netWorth.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${netWorth.toFixed(2)}`}
-                </div>
+        <div className="glass-hull scan-effect" style={{
+            padding: 'var(--space-8)',
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.05) 100%)',
+            borderRadius: '24px',
+            position: 'relative',
+            overflow: 'hidden',
+        }}>
+            <div className="hud-mesh" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.2, pointerEvents: 'none' }} />
 
-                {narrative && (
-                    <div style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: 'var(--text-secondary)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.9 }}>
-                        <Sparkles size={14} style={{ color: 'var(--primary)' }} />
-                        {narrative}
+            {/* Top Layout: Narrative + Valuation */}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 340px',
+                gap: 'var(--space-10)',
+                position: 'relative',
+                zIndex: 1,
+                alignItems: 'center',
+                marginBottom: 'var(--space-8)'
+            }}>
+                {/* AI Intelligence Sector */}
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--primary)', marginBottom: '1rem' }}>
+                        <Sparkles size={14} className="neon-strike" />
+                        <GlossaryTooltip term="NEURAL ADVISORY">
+                            <span style={{ fontWeight: 900, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.15rem' }}>Neural Advisory</span>
+                        </GlossaryTooltip>
                     </div>
-                )}
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                    <div style={{ flex: 1, padding: '0.75rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Tax Efficiency</div>
-                        <div style={{ fontWeight: 700, color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <BadgePercent size={14} /> {taxEfficiency}%
+
+                    <div className="precision-data" style={{
+                        fontSize: '1.25rem',
+                        fontWeight: 600,
+                        lineHeight: 1.5,
+                        color: 'white',
+                        marginBottom: '1.5rem',
+                        maxWidth: '95%'
+                    }}>
+                        {narrative || "System analyzing liquidity nodes and market volatility signatures..."}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '2.5rem' }}>
+                        <div>
+                            <GlossaryTooltip term="TAX ALPHA">
+                                <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '0.4rem' }}>Tax Efficiency</div>
+                            </GlossaryTooltip>
+                            <div className="precision-data" style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <BadgePercent size={14} /> {taxEfficiency}%
+                            </div>
+                        </div>
+                        <div style={{ width: '1px', background: 'var(--border)', height: '30px' }} />
+                        <div>
+                            <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '0.4rem' }}>Risk Horizon</div>
+                            <div className="precision-data" style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <ShieldAlert size={14} /> MODERATE
+                            </div>
                         </div>
                     </div>
-                    <div style={{ flex: 1, padding: '0.75rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Risk Posture</div>
-                        <div style={{ fontWeight: 700, color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <ShieldAlert size={14} /> Low-Med
+                </div>
+
+                {/* Core Stats Box */}
+                <div style={{
+                    padding: '1.5rem',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    textAlign: 'right'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                        <Wallet size={14} />
+                        <span style={{ fontWeight: 900, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.15rem' }}>Valuation</span>
+                    </div>
+
+                    <div className="precision-data" style={{ fontSize: '2.5rem', fontWeight: 900, color: 'white', marginBottom: '0.75rem' }}>
+                        {mounted ? `$${netWorth.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : `$${Math.floor(netWorth)}`}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: dailyChangePct >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', padding: '0.25rem 0.6rem', borderRadius: '6px' }}>
+                            <TrendingUp size={14} className={dailyChangePct >= 0 ? "text-success" : "text-danger"} style={{ transform: dailyChangePct >= 0 ? 'none' : 'rotate(180deg)' }} />
+                            <GlossaryTooltip term="SIGMA">
+                                <span className="precision-data" style={{ fontSize: '0.75rem', fontWeight: 900, color: dailyChangePct >= 0 ? 'var(--success)' : 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                    {dailyChangePct >= 0 ? '+' : ''}{dailyChangePct.toFixed(2)}% SIGMA
+                                </span>
+                            </GlossaryTooltip>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Asset Allocation Card */}
-            <div className="card" style={{ padding: 'var(--space-6)', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
-                        <PieChart size={20} />
-                        <span style={{ fontWeight: 600 }}>Asset Allocation</span>
-                    </div>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Click for Deep Insight</span>
+            {/* Condensed Signal Belt */}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '1px',
+                background: 'rgba(255,255,255,0.05)',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                border: '1px solid rgba(255,255,255,0.05)',
+                position: 'relative',
+                zIndex: 1
+            }}>
+                {/* OPPORTUNITY */}
+                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)' }}>
+                    <GlossaryTooltip term="ALPHA OPPORTUNITY">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', opacity: 0.6 }}>
+                            <Target size={12} className="text-primary" />
+                            <span style={{ fontSize: '0.55rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                Alpha Opportunity
+                            </span>
+                        </div>
+                        <div className="precision-data" style={{ fontSize: '0.85rem', fontWeight: 900, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {isLoadingAI ? 'ANALYZING...' : (topAction ? topAction.title : 'NOMINAL')}
+                        </div>
+                    </GlossaryTooltip>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {assetEntries.map(([type, value]) => {
-                        const isExpanded = expandedCategory === type;
-                        const categoryAssets = assets.filter(a => a.type === type);
-
-                        return (
-                            <div key={type} style={{ width: '100%' }}>
-                                <div
-                                    onClick={() => setSelectedMetric(type)}
-                                    className="interactive-card"
-                                    style={{
-                                        padding: '0.75rem',
-                                        borderRadius: 'var(--radius-md)',
-                                        cursor: 'pointer',
-                                        background: isExpanded ? 'var(--surface-hover)' : 'transparent'
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <span style={{ textTransform: 'capitalize', fontWeight: 600, color: 'var(--text-primary)' }}>{type.replace('_', ' ')}</span>
-                                            <Info size={12} style={{ color: 'var(--primary)', opacity: 0.6 }} />
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                            <span style={{ fontWeight: 700 }}>{((value / netWorth) * 100).toFixed(1)}%</span>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setExpandedCategory(isExpanded ? null : type);
-                                                }}
-                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}
-                                            >
-                                                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div style={{ height: '6px', background: 'var(--background)', borderRadius: '3px', overflow: 'hidden' }}>
-                                        <div
-                                            style={{
-                                                width: `${(value / netWorth) * 100}%`,
-                                                height: '100%',
-                                                background: type === 'stock' ? '#3B82F6' : type === 'crypto' ? '#F59E0B' : type === 'real_estate' ? '#10B981' : '#8B5CF6',
-                                                borderRadius: '3px'
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Granular Breakdown */}
-                                {isExpanded && (
-                                    <div style={{ margin: '0 0.75rem 0.5rem 0.75rem', padding: '0.75rem', borderLeft: '2px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.5rem', animation: 'fadeIn 0.2s ease' }}>
-                                        {categoryAssets.map(asset => (
-                                            <div
-                                                key={asset.id}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (asset.type === 'stock' && onStockClick) {
-                                                        onStockClick(asset.symbol || asset.name);
-                                                    }
-                                                }}
-                                                style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', cursor: 'pointer', padding: '2px 0' }}
-                                                className="hover:text-blue-400"
-                                            >
-                                                <span style={{ color: 'var(--text-secondary)' }}>{asset.name}</span>
-                                                <span style={{ fontWeight: 500 }}>
-                                                    {mounted ? `$${(asset.quantity * asset.currentPrice).toLocaleString('en-US')}` : `$${(asset.quantity * asset.currentPrice).toFixed(0)}`}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+                {/* RISK */}
+                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)' }}>
+                    <GlossaryTooltip term="RISK LEVEL">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', opacity: 0.6 }}>
+                            <Shield size={12} className="text-warning" />
+                            <span style={{ fontSize: '0.55rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1rem' }}>Risk Level</span>
+                        </div>
+                        <div className="precision-data" style={{ fontSize: '0.85rem', fontWeight: 900, color: 'white' }}>
+                            {isLoadingAI ? 'CALCULATING...' : (insight?.volatilityRegime || 'STABLE')}
+                        </div>
+                    </GlossaryTooltip>
                 </div>
 
-                {selectedMetric && (
-                    <MetricInsightOverlay
-                        metricId={selectedMetric}
-                        onClose={() => setSelectedMetric(null)}
-                    />
-                )}
+                {/* MOOD */}
+                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)' }}>
+                    <GlossaryTooltip term="MARKET SENTIMENT">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', opacity: 0.6 }}>
+                            <Activity size={12} className="text-accent" />
+                            <span style={{ fontSize: '0.55rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1rem' }}>Market Sentiment</span>
+                        </div>
+                        <div className="precision-data" style={{ fontSize: '0.85rem', fontWeight: 900, color: 'white' }}>
+                            {isLoadingAI ? 'SYNCING...' : 'BULLISH SYNC'}
+                        </div>
+                    </GlossaryTooltip>
+                </div>
+
+                {/* GAP */}
+                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)' }}>
+                    <GlossaryTooltip term="ALPHA VARIANCE">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', opacity: 0.6 }}>
+                            <Zap size={12} className="text-success" />
+                            <span style={{ fontSize: '0.55rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                Alpha Variance
+                            </span>
+                        </div>
+                        <div className="precision-data" style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--success)' }}>
+                            {isLoadingAI ? '...' : `+${insight?.alphaGap || '3.4'}%`}
+                        </div>
+                    </GlossaryTooltip>
+                </div>
             </div>
         </div>
     );

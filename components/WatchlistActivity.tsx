@@ -119,24 +119,25 @@ export default function WatchlistActivity({ onStockClick }: { onStockClick?: (sy
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', minHeight: '350px', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', minHeight: '350px', boxSizing: 'border-box' }}>
             {/* Timeframe Toggles */}
-            <div style={{ display: 'flex', gap: '0.25rem', padding: '0.25rem', background: 'var(--surface-hover)', borderRadius: '8px', width: 'fit-content', marginBottom: '0.5rem' }}>
+            <div className="glass-hull" style={{ display: 'flex', gap: '0.2rem', padding: '0.25rem', background: 'rgba(255, 255, 255, 0.05)', borderRadius: 'var(--radius-md)', width: 'fit-content', marginBottom: '1rem', border: '1px solid var(--border)' }}>
                 {ranges.map(r => (
                     <button
                         key={r.value}
                         onClick={() => setTimeframe(r.value)}
                         style={{
-                            padding: '0.35rem 0.75rem',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            borderRadius: '6px',
+                            padding: '0.4rem 0.8rem',
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            borderRadius: 'var(--radius-sm)',
                             border: 'none',
                             cursor: 'pointer',
-                            background: timeframe === r.value ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-                            color: timeframe === r.value ? 'var(--primary)' : 'var(--text-muted)',
-                            boxShadow: timeframe === r.value ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
-                            transition: 'all var(--transition-fast)'
+                            background: timeframe === r.value ? 'var(--primary)' : 'transparent',
+                            color: timeframe === r.value ? 'white' : 'var(--text-muted)',
+                            transition: 'all var(--transition-fast)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em'
                         }}
                     >
                         {r.label}
@@ -145,54 +146,68 @@ export default function WatchlistActivity({ onStockClick }: { onStockClick?: (sy
             </div>
 
             {isLoading && items.length > 0 && (
-                <div style={{ height: 2, width: '100%', background: 'linear-gradient(90deg, transparent, var(--primary), transparent)', opacity: 0.5, animation: 'shimmer 1s infinite' }} />
+                <div style={{ height: 1, width: '100%', background: 'var(--primary)', boxShadow: '0 0 8px var(--primary)', opacity: 0.6, animation: 'shimmer 1s infinite' }} />
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                 {items.map((stock) => {
                     const isPositive = (stock.changePercent ?? 0) >= 0;
                     return (
                         <div
                             key={stock.symbol}
                             onClick={() => onStockClick && onStockClick(stock.symbol)}
+                            className="interactive-card glass-hull data-glimmer"
                             style={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 cursor: 'pointer',
-                                padding: '0.75rem',
+                                padding: '1rem',
                                 borderRadius: 'var(--radius-md)',
                                 background: 'rgba(255, 255, 255, 0.02)',
-                                border: '1px solid var(--border)',
-                                transition: 'all var(--transition-fast)'
+                                border: '1px solid transparent',
+                                transition: 'all var(--transition-normal)',
+                                position: 'relative',
+                                overflow: 'hidden'
                             }}
-                            className="interactive-card"
                         >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
                                 <div style={{
-                                    width: '32px', height: '32px', borderRadius: '50%',
-                                    background: 'var(--surface-hover)',
+                                    width: '36px', height: '36px', borderRadius: '4px',
+                                    background: 'rgba(255, 255, 255, 0.03)',
+                                    border: '1px solid var(--border)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     color: 'var(--text-secondary)',
-                                    fontWeight: 700, fontSize: '0.7rem'
+                                    fontWeight: 900, fontSize: '0.75rem',
+                                    fontFamily: 'monospace'
                                 }}>
                                     {stock.symbol.slice(0, 2)}
                                 </div>
                                 <div>
-                                    <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{stock.symbol}</span>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{stock.name}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span style={{ fontWeight: 800, fontSize: '0.9375rem', color: 'var(--text-primary)', letterSpacing: '-0.025em' }}>{stock.symbol}</span>
+                                        <div className="live-pulse" style={{ backgroundColor: isPositive ? 'var(--success)' : 'var(--danger)' }} />
+                                    </div>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stock.name}</div>
                                 </div>
                             </div>
-                            <div style={{
-                                color: isPositive ? 'var(--success)' : 'var(--danger)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.25rem',
-                                fontSize: '0.875rem',
-                                fontWeight: '500'
-                            }}>
-                                {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                                {stock.changePercent !== undefined ? `${stock.changePercent.toFixed(2)}%` : '---'}
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontWeight: 900, fontSize: '0.9375rem', fontFamily: 'monospace', color: 'var(--text-primary)' }}>
+                                    ${stock.price?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </div>
+                                <div style={{
+                                    color: isPositive ? 'var(--success)' : 'var(--danger)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end',
+                                    gap: '0.15rem',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 800,
+                                    fontFamily: 'monospace',
+                                    marginTop: '0.15rem'
+                                }}>
+                                    {isPositive ? '+' : ''}{stock.changePercent !== undefined ? `${stock.changePercent.toFixed(2)}%` : '--'}
+                                </div>
                             </div>
                         </div>
                     );
@@ -200,13 +215,17 @@ export default function WatchlistActivity({ onStockClick }: { onStockClick?: (sy
             </div>
 
             <div style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)', boxShadow: '0 0 6px var(--primary)' }} />
+                    <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)' }}>Market Intelligence</span>
+                </div>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.6, opacity: 0.8 }}>
                     {items.some(i => (i.changePercent ?? 0) > 2)
-                        ? "Some assets in your watchlist are showing strong momentum today."
-                        : "Your watchlist is showing stable performance."}
+                        ? "Institutional volatility detected. Higher-than-average alpha signals across watchlist clusters."
+                        : "Market equilibrium sustained. Maintaining structural monitoring for breakout vectors."}
                 </p>
-                <Link href="/dashboard/watchlist" style={{ display: 'block', marginTop: '1rem', fontSize: '0.875rem', color: 'var(--primary)', fontWeight: '500', textDecoration: 'none' }}>
-                    View Full Watchlist →
+                <Link href="/dashboard/watchlist" style={{ display: 'inline-flex', alignItems: 'center', marginTop: '1.25rem', fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 800, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.1em', gap: '0.35rem' }}>
+                    Terminal Analytics <ArrowUpRight size={14} />
                 </Link>
             </div>
         </div>

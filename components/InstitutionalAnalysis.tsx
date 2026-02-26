@@ -227,7 +227,7 @@ export default function InstitutionalAnalysis({ symbol, insight, isStreaming }: 
                                 alignItems: 'center'
                             }}>
                                 <div>
-                                    <span style={{ fontSize: '0.7rem', fontWeight: '900', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>DR_MAX_DRAWDOWN_ESTIMATE</span>
+                                    <span style={{ fontSize: '0.7rem', fontWeight: '900', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>MAX DRAWDOWN ESTIMATE</span>
                                     <div style={{ fontSize: '1.75rem', fontWeight: '900', color: 'white', letterSpacing: '-0.02em' }}>{insight.riskSensitivity?.worstCaseBand || '---'}</div>
                                 </div>
                                 <ShieldAlert size={40} color="white" style={{ opacity: 0.3 }} />

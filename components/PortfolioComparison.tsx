@@ -109,7 +109,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                 <Target size={48} style={{ color: 'var(--primary)', margin: '0 auto 1rem', opacity: 0.8 }} />
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Beat the AI?</h2>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', maxWidth: '400px', margin: '0 auto 1.5rem' }}>
-                    Generate an institutional-grade AI portfolio based on your capital and compare your performance.
+                    Generate an AI-optimized portfolio based on your capital and compare your performance.
                 </p>
                 <button
                     onClick={onGenerateAI}
@@ -124,7 +124,7 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
     }
 
     return (
-        <div className="card" style={{ overflow: 'hidden', position: 'relative' }}>
+        <div className="glass-hull scan-effect" style={{ overflow: 'hidden', position: 'relative' }}>
 
             {/* ═══ LOADING OVERLAY ═══ */}
             {isGenerating && (
@@ -134,9 +134,9 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                     left: 0,
                     right: 0,
                     zIndex: 20,
-                    background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(139,92,246,0.1) 100%)',
-                    backdropFilter: 'blur(2px)',
-                    borderBottom: '1px solid rgba(59,130,246,0.2)',
+                    background: 'rgba(59, 102, 241, 0.05)',
+                    backdropFilter: 'blur(8px)',
+                    borderBottom: '1px solid var(--primary)',
                     padding: '0.75rem 1.25rem',
                     display: 'flex',
                     alignItems: 'center',
@@ -144,11 +144,8 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                 }}>
                     <Loader2 className="animate-spin" size={16} style={{ color: 'var(--primary)', flexShrink: 0 }} />
                     <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '0.2rem' }}>
-                            Analyzing market & generating AI portfolio...
-                        </div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-                            Fetching live prices, news headlines & optimizing allocation
+                        <div className="precision-data" style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1rem' }}>
+                            AI ENGINE: REBUILDING ALLOCATION MATRIX...
                         </div>
                     </div>
                 </div>
@@ -157,22 +154,16 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
             {/* ═══ HEADER ═══ */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <h2 className="precision-data" style={{ fontSize: '1.25rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0, textTransform: 'uppercase', letterSpacing: '0.1rem' }}>
                             <BrainCircuit size={20} style={{ color: 'var(--primary)' }} />
                             Strategy Overview
                         </h2>
                         {isDemoMode && (
-                            <span style={{
-                                fontSize: '0.625rem',
-                                background: '#F59E0B',
-                                color: 'white',
-                                padding: '0.1rem 0.4rem',
-                                borderRadius: '0.25rem',
-                                fontWeight: 700,
-                                letterSpacing: '0.02em',
-                                marginLeft: '0.5rem'
-                            }}>DEMO SIMULATION</span>
+                            <div className="hud-status-tag" style={{ border: '1px solid #F59E0B', color: '#F59E0B', background: 'rgba(245, 158, 11, 0.05)', fontSize: '0.55rem' }}>
+                                <div className="status-indicator" style={{ background: '#F59E0B', boxShadow: '0 0 8px #F59E0B' }} />
+                                SIMULATION MODE
+                            </div>
                         )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -191,16 +182,16 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignItems: 'center' }}>
-                    <button onClick={onGenerateAI} className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }} disabled={isGenerating}>
-                        <RefreshCw size={14} className={isGenerating ? 'animate-spin' : ''} /> Regenerate
+                    <button onClick={onGenerateAI} className="btn-hud" style={{ fontSize: '0.65rem' }} disabled={isGenerating}>
+                        <RefreshCw size={14} className={isGenerating ? 'animate-spin' : ''} /> RE-SYNC ALPHA
                     </button>
                     {aiAssets.length > 0 && (
                         <button
-                            onClick={() => { if (insight) generateAuditPDF('PORTFOLIO_ADVISORY', insight); }}
-                            className="btn btn-primary"
-                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem', background: !!insight ? 'var(--success)' : 'var(--text-muted)', opacity: !!insight ? 1 : 0.7 }}
+                            onClick={() => { if (insight) generateAuditPDF('PORTFOLIO ADVISORY', insight); }}
+                            className="btn-hud btn-hud-primary"
+                            style={{ fontSize: '0.65rem', background: !!insight ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)', borderColor: !!insight ? 'var(--success)' : 'rgba(255,255,255,0.1)', color: !!insight ? '#10b981' : 'var(--text-muted)' }}
                         >
-                            <FileCheck size={14} /> Audit PDF
+                            <FileCheck size={14} /> EXPORT AUDIT
                         </button>
                     )}
                 </div>
@@ -209,21 +200,21 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
             {/* ═══ METRICS ROW ═══ */}
             {!!insight && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                    <div style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.03) 100%)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px', padding: '0.85rem', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>Alpha Gap</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#059669', lineHeight: 1 }}>+{insightObj?.alphaGap ?? 5.8}%</div>
+                    <div className="hud-data-node">
+                        <div className="precision-data" style={{ fontSize: '0.55rem', fontWeight: 900, color: 'var(--success)', textTransform: 'uppercase', letterSpacing: '0.2rem', marginBottom: '0.5rem' }}>Alpha Variance</div>
+                        <div className="precision-data" style={{ fontSize: '1.75rem', fontWeight: 900, color: 'white', lineHeight: 1 }}>+{insightObj?.alphaGap ?? 5.8}%</div>
                     </div>
-                    <div style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0.03) 100%)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '12px', padding: '0.85rem', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#2563EB', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>Conviction</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#2563EB', lineHeight: 1 }}>{insightObj?.convictionScore ?? 85}<span style={{ fontSize: '0.7rem', fontWeight: 600 }}>/100</span></div>
+                    <div className="hud-data-node">
+                        <div className="precision-data" style={{ fontSize: '0.55rem', fontWeight: 900, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.2rem', marginBottom: '0.5rem' }}>Conviction</div>
+                        <div className="precision-data" style={{ fontSize: '1.75rem', fontWeight: 900, color: 'white', lineHeight: 1 }}>{insightObj?.convictionScore ?? 85}<span style={{ fontSize: '0.8rem', color: 'var(--primary)' }}>%</span></div>
                     </div>
-                    <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(245,158,11,0.03) 100%)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '12px', padding: '0.85rem', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>Risk Score</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#D97706', lineHeight: 1 }}>{riskScore}<span style={{ fontSize: '0.7rem', fontWeight: 600 }}>/10</span></div>
+                    <div className="hud-data-node">
+                        <div className="precision-data" style={{ fontSize: '0.55rem', fontWeight: 900, color: 'var(--warning)', textTransform: 'uppercase', letterSpacing: '0.2rem', marginBottom: '0.5rem' }}>Risk Factor</div>
+                        <div className="precision-data" style={{ fontSize: '1.75rem', fontWeight: 900, color: 'white', lineHeight: 1 }}>{riskScore}<span style={{ fontSize: '0.8rem', opacity: 0.5 }}>/10</span></div>
                     </div>
-                    <div style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(139,92,246,0.03) 100%)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: '12px', padding: '0.85rem', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#7C3AED', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>Top Pick</div>
-                        <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#7C3AED', lineHeight: 1 }}>{topPickSymbol}</div>
+                    <div className="hud-data-node">
+                        <div className="precision-data" style={{ fontSize: '0.55rem', fontWeight: 900, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.2rem', marginBottom: '0.5rem' }}>Alpha Node</div>
+                        <div className="precision-data" style={{ fontSize: '1.25rem', fontWeight: 900, color: 'white', lineHeight: 1 }}>{topPickSymbol}</div>
                     </div>
                 </div>
             )}
@@ -231,9 +222,9 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
             {/* ═══ NARRATIVE ═══ */}
             {!!insight && (
                 <div style={{ marginBottom: '1.5rem' }}>
-                    <div style={{ borderLeft: '4px solid var(--primary)', padding: '1rem 1.25rem', background: 'var(--surface-hover)', borderRadius: '0 12px 12px 0' }}>
-                        <div style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>AI Deep Intelligence</div>
-                        <p style={{ fontSize: '0.9rem', lineHeight: '1.65', margin: 0 }}>{narrativeText}</p>
+                    <div style={{ borderLeft: '4px solid var(--primary)', padding: '1rem 1.25rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '4px' }}>
+                        <div className="precision-data" style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15rem', marginBottom: '0.5rem' }}>Strategy Synthesis</div>
+                        <p className="precision-data" style={{ fontSize: '0.85rem', lineHeight: '1.7', margin: 0, color: 'white' }}>{narrativeText}</p>
                     </div>
                 </div>
             )}
@@ -241,21 +232,23 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
             {/* ═══ CHART VISUALIZATION: Two Columns ═══ */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 {/* User Portfolio Card */}
-                <div style={{ padding: '1.5rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '14px', border: '1px solid var(--border)', position: 'relative', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-md)' }}>
+                <div className="hud-data-node" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>YOUR ALLOCATION</div>
+                        <div className="precision-data" style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.15rem' }}>Asset Distribution</div>
                         <div style={{ display: 'flex', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', padding: '2px', border: '1px solid var(--border)' }}>
                             <button
                                 onClick={() => setUserChartType('doughnut')}
-                                style={{ padding: '4px 8px', borderRadius: '6px', background: userChartType === 'doughnut' ? 'rgba(99, 102, 241, 0.15)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}
+                                className="btn-hud"
+                                style={{ padding: '4px 8px', height: 'auto', background: userChartType === 'doughnut' ? 'rgba(99, 102, 241, 0.15)' : 'transparent', border: 'none' }}
                             >
-                                <PieChartIcon size={14} color={userChartType === 'doughnut' ? 'var(--primary)' : 'var(--text-muted)'} />
+                                <PieChartIcon size={12} color={userChartType === 'doughnut' ? 'var(--primary)' : 'var(--text-muted)'} />
                             </button>
                             <button
                                 onClick={() => setUserChartType('bar')}
-                                style={{ padding: '4px 8px', borderRadius: '6px', background: userChartType === 'bar' ? 'rgba(99, 102, 241, 0.15)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}
+                                className="btn-hud"
+                                style={{ padding: '4px 8px', height: 'auto', background: userChartType === 'bar' ? 'rgba(99, 102, 241, 0.15)' : 'transparent', border: 'none' }}
                             >
-                                <BarChart3 size={14} color={userChartType === 'bar' ? 'var(--primary)' : 'var(--text-muted)'} />
+                                <BarChart3 size={12} color={userChartType === 'bar' ? 'var(--primary)' : 'var(--text-muted)'} />
                             </button>
                         </div>
                     </div>
@@ -264,9 +257,10 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                         {userDrillDownSector && (
                             <button
                                 onClick={() => setUserDrillDownSector(null)}
-                                style={{ position: 'absolute', top: 0, left: 0, zIndex: 5, fontSize: '0.65rem', color: 'var(--primary)', background: 'rgba(59,130,246,0.1)', border: 'none', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer' }}
+                                className="btn-hud"
+                                style={{ position: 'absolute', top: 0, left: 0, zIndex: 5, fontSize: '0.6rem', padding: '0.2rem 0.5rem' }}
                             >
-                                ← Back to Sectors
+                                ← RESET NODE
                             </button>
                         )}
                         <ResponsiveContainer width="100%" height="100%">
@@ -312,23 +306,25 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                 </div>
 
                 {/* AI Optimized Portfolio Card */}
-                <div style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.03) 100%)', borderRadius: '14px', border: '1px solid rgba(99, 102, 241, 0.3)', position: 'relative', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-md)' }}>
+                <div className="hud-data-node" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.03) 100%)', border: '1px solid rgba(99, 102, 241, 0.3)', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <Sparkles size={16} /> AI RECOMMENDED ALLOCATION
+                        <div className="precision-data" style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Sparkles size={14} /> AI Optimization
                         </div>
                         <div style={{ display: 'flex', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', padding: '2px', border: '1px solid var(--border)' }}>
                             <button
                                 onClick={() => setAiChartType('doughnut')}
-                                style={{ padding: '4px 8px', borderRadius: '6px', background: aiChartType === 'doughnut' ? 'rgba(99, 102, 241, 0.2)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}
+                                className="btn-hud"
+                                style={{ padding: '4px 8px', height: 'auto', background: aiChartType === 'doughnut' ? 'rgba(99, 102, 241, 0.2)' : 'transparent', border: 'none' }}
                             >
-                                <PieChartIcon size={14} color={aiChartType === 'doughnut' ? 'var(--primary)' : 'var(--text-muted)'} />
+                                <PieChartIcon size={12} color={aiChartType === 'doughnut' ? 'var(--primary)' : 'var(--text-muted)'} />
                             </button>
                             <button
                                 onClick={() => setAiChartType('bar')}
-                                style={{ padding: '4px 8px', borderRadius: '6px', background: aiChartType === 'bar' ? 'rgba(99, 102, 241, 0.2)' : 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}
+                                className="btn-hud"
+                                style={{ padding: '4px 8px', height: 'auto', background: aiChartType === 'bar' ? 'rgba(99, 102, 241, 0.2)' : 'transparent', border: 'none' }}
                             >
-                                <BarChart3 size={14} color={aiChartType === 'bar' ? 'var(--primary)' : 'var(--text-muted)'} />
+                                <BarChart3 size={12} color={aiChartType === 'bar' ? 'var(--primary)' : 'var(--text-muted)'} />
                             </button>
                         </div>
                     </div>
@@ -337,9 +333,10 @@ export default function PortfolioComparison({ userAssets, aiAssets, onGenerateAI
                         {aiDrillDownSector && (
                             <button
                                 onClick={() => setAiDrillDownSector(null)}
-                                style={{ position: 'absolute', top: 0, left: 0, zIndex: 5, fontSize: '0.65rem', color: 'var(--primary)', background: 'rgba(59,130,246,0.1)', border: 'none', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer' }}
+                                className="btn-hud"
+                                style={{ position: 'absolute', top: 0, left: 0, zIndex: 5, fontSize: '0.6rem', padding: '0.2rem 0.5rem' }}
                             >
-                                ← Back to Sectors
+                                ← RESET NODE
                             </button>
                         )}
                         <ResponsiveContainer width="100%" height="100%">

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Zap, Activity, Signal, BarChart3, TrendingUp, Globe, ShieldCheck } from 'lucide-react';
 import MetricInsightOverlay from './MetricInsightOverlay';
+import InfoTooltip from './InfoTooltip';
 
 interface DeepInsight {
     volatilityRegime: 'Stable' | 'Trending' | 'Chaotic';
@@ -57,7 +58,10 @@ export default function DeepAIInsightCard({ symbol, deepInsight, isStreaming }: 
                     style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', cursor: 'pointer' }}
                 >
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Activity size={14} /> Volatility Regime
+                        <Activity size={14} />
+                        <InfoTooltip content="The current market rhythm: Stable (low movement), Trending (clear direction), or Chaotic (high uncertainty).">
+                            <span>Volatility Regime</span>
+                        </InfoTooltip>
                     </div>
                     <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{renderValue(deepInsight.volatilityRegime)}</div>
                 </div>
@@ -68,7 +72,10 @@ export default function DeepAIInsightCard({ symbol, deepInsight, isStreaming }: 
                     style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', cursor: 'pointer', gridColumn: 'span 1' }}
                 >
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Signal size={14} /> Inst. Conviction
+                        <Signal size={14} />
+                        <InfoTooltip content="Measured confidence of major financial institutions (banks, hedge funds) in this asset's current trajectory.">
+                            <span>Inst. Conviction</span>
+                        </InfoTooltip>
                     </div>
                     <div style={{ fontSize: '1.125rem', fontWeight: 800, color: deepInsight.institutionalConviction === 'High' ? 'var(--success)' : deepInsight.institutionalConviction === 'Low' ? 'var(--danger)' : 'var(--warning)' }}>
                         {renderValue(deepInsight.institutionalConviction)}
@@ -88,7 +95,10 @@ export default function DeepAIInsightCard({ symbol, deepInsight, isStreaming }: 
                     style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', cursor: 'pointer' }}
                 >
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <BarChart3 size={14} /> Alpha Potential
+                        <BarChart3 size={14} />
+                        <InfoTooltip content="The AI's estimate of return above the market benchmark. Higher percentage suggests a stronger tactical edge.">
+                            <span>Alpha Potential</span>
+                        </InfoTooltip>
                     </div>
                     <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{deepInsight.alphaScore !== undefined ? `${deepInsight.alphaScore}%` : renderValue(undefined)}</div>
                 </div>
@@ -99,7 +109,10 @@ export default function DeepAIInsightCard({ symbol, deepInsight, isStreaming }: 
                     style={{ padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', cursor: 'pointer' }}
                 >
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <TrendingUp size={14} /> Risk/Reward
+                        <TrendingUp size={14} />
+                        <InfoTooltip content="The ratio of potential profit to potential loss. A higher ratio (e.g., 1:3) is generally more favorable.">
+                            <span>Risk/Reward</span>
+                        </InfoTooltip>
                     </div>
                     <div style={{ fontSize: '1.125rem', fontWeight: 800 }}>{renderValue(deepInsight.riskRewardRatio)}</div>
                 </div>
