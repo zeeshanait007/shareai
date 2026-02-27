@@ -4,29 +4,7 @@ import { supabase, Subscription } from './supabase';
  * Check if a user's subscription is active (trial or paid)
  */
 export async function isSubscriptionActive(userId: string): Promise<boolean> {
-    const { data, error } = await supabase
-        .from('subscriptions')
-        .select('status, trial_end, subscription_end')
-        .eq('user_id', userId)
-        .single();
-
-    if (error || !data) {
-        return false;
-    }
-
-    // Check if trial is still valid
-    if (data.status === 'trial') {
-        const trialEnd = new Date(data.trial_end);
-        return trialEnd > new Date();
-    }
-
-    // Check if paid subscription is still valid
-    if (data.status === 'active' && data.subscription_end) {
-        const subEnd = new Date(data.subscription_end);
-        return subEnd > new Date();
-    }
-
-    return false;
+    return true; // Trial logic removed per request
 }
 
 /**
@@ -137,35 +115,5 @@ export async function updateExpiredTrials(): Promise<void> {
  * Get subscription status message for UI
  */
 export async function getSubscriptionStatusMessage(userId: string): Promise<string> {
-    const subscription = await getSubscription(userId);
-
-    if (!subscription) {
-        return 'No subscription found';
-    }
-
-    if (subscription.status === 'trial') {
-        const hoursRemaining = await getTrialTimeRemaining(userId);
-        if (hoursRemaining > 24) {
-            const daysRemaining = Math.ceil(hoursRemaining / 24);
-            return `${daysRemaining} day${daysRemaining > 1 ? 's' : ''} left in trial`;
-        } else if (hoursRemaining > 0) {
-            return `${Math.ceil(hoursRemaining)} hour${Math.ceil(hoursRemaining) > 1 ? 's' : ''} left in trial`;
-        } else {
-            return 'Trial expired';
-        }
-    }
-
-    if (subscription.status === 'active') {
-        return 'Active subscription';
-    }
-
-    if (subscription.status === 'expired') {
-        return 'Subscription expired';
-    }
-
-    if (subscription.status === 'cancelled') {
-        return 'Subscription cancelled';
-    }
-
-    return 'Unknown status';
+    return 'Active';
 }

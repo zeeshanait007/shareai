@@ -14,7 +14,6 @@ import AllocationCluster from '@/components/AllocationCluster';
 import WatchlistActivity from '@/components/WatchlistActivity';
 import StockAnalysisPanel from '@/components/StockAnalysisPanel';
 import { addToWatchlist } from '@/lib/watchlist';
-import SubscriptionBanner from '@/components/SubscriptionBanner';
 import AddAssetModal from '@/components/AddAssetModal';
 import PortfolioComparison from '@/components/PortfolioComparison';
 import { Undo2, FileUp, Loader2, LogOut, User, Check, Menu, Plus, Sparkles, BrainCircuit, Zap, Sun, Activity, Eye, EyeOff, LayoutTemplate, Layers, ShieldAlert, Wallet, Banknote } from 'lucide-react';
@@ -688,7 +687,6 @@ export default function DashboardContent() {
                     </div>
                 </div>
 
-                <SubscriptionBanner />
 
                 {/* Main Dashboard Grid with Staggered Entry */}
                 <div className="stagger-entry" style={{

@@ -81,6 +81,21 @@ export default function Sidebar() {
 
     const closeConfirm = () => setConfirmModal(prev => ({ ...prev, isOpen: false }));
 
+    const handleDeleteDashboard = (e: React.MouseEvent, id: string, name: string) => {
+        e.stopPropagation();
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Dashboard',
+            message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+            type: 'danger',
+            confirmText: 'DELETE',
+            onConfirm: () => {
+                deleteDashboard(id);
+                closeConfirm();
+            }
+        });
+    };
+
     return (
         <>
             <aside className="glass-hull" style={{
@@ -188,7 +203,27 @@ export default function Sidebar() {
                                                         }}
                                                         className="sidebar-item"
                                                     >
-                                                        {dash.name}
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dash.name}</span>
+                                                            <button
+                                                                onClick={(e) => handleDeleteDashboard(e, dash.id, dash.name)}
+                                                                style={{
+                                                                    background: 'none',
+                                                                    border: 'none',
+                                                                    padding: '4px',
+                                                                    cursor: 'pointer',
+                                                                    opacity: 0.4,
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    transition: 'all 0.2s',
+                                                                    color: 'var(--text-muted)'
+                                                                }}
+                                                                className="hover-danger"
+                                                                title="Delete Dashboard"
+                                                            >
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </li>
                                             ))}
