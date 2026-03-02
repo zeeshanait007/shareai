@@ -6,9 +6,8 @@ export async function GET() {
     try {
         const symbols = [
             { name: 'Market Fear (VIX)', symbol: '^VIX' },
-            { name: 'US 10Y Rate', symbol: '^TNX' },
+            { name: 'OMXS30 (Stockholm)', symbol: '^OMX' },
             { name: 'S&P 500 (SPY)', symbol: 'SPY' },
-            { name: 'US Dollar (DXY)', symbol: 'DX-Y.NYB' },
             { name: 'Bitcoin (BTC)', symbol: 'BTC-USD' }
         ];
 

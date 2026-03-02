@@ -903,7 +903,8 @@ export async function getGeminiMarketContext(
             
             TASK:
             1. Provide a status for each signal (e.g., "Nominal", "Elevated", "Stable", "Neutral", "Risk-On", "Risk-Off").
-            2. Generate a single "AI Key Insight" (1 sentence) summarizing the current market regime.
+            2. Generate a single "AI Key Insight" (1 sentence) summarizing the current market regime. 
+               - If OMXS30 is present, provide a nuanced perspective on the Swedish/Nordic market relative to US markets.
             
             RETURN JSON:
             {

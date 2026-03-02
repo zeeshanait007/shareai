@@ -16,7 +16,7 @@ import StockAnalysisPanel from '@/components/StockAnalysisPanel';
 import { addToWatchlist } from '@/lib/watchlist';
 import AddAssetModal from '@/components/AddAssetModal';
 import PortfolioComparison from '@/components/PortfolioComparison';
-import { Undo2, FileUp, Loader2, LogOut, User, Check, Menu, Plus, Sparkles, BrainCircuit, Zap, Sun, Activity, Eye, EyeOff, LayoutTemplate, Layers, ShieldAlert, Wallet, Banknote } from 'lucide-react';
+import { Undo2, FileUp, Loader2, LogOut, User, Check, Menu, Plus, Sparkles, BrainCircuit, Zap, Sun, Activity, Eye, EyeOff, LayoutTemplate, Layers, ShieldAlert, Wallet, Banknote, RefreshCw, Save, Target, ArrowRight } from 'lucide-react';
 import { savePortfolioSnapshot } from '@/lib/portfolio-service';
 import { read, utils } from 'xlsx';
 import { useDashboard } from '@/providers/DashboardProvider';
@@ -71,7 +71,7 @@ export default function DashboardContent() {
     const [showActionCenter, setShowActionCenter] = React.useState(false);
     const [showStrategyOverview, setShowStrategyOverview] = React.useState(false);
     const [isDailyCheckInOpen, setIsDailyCheckInOpen] = React.useState(false);
-    const [activeTab, setActiveTab] = React.useState<'strategy' | 'actions' | 'stress' | 'portfolio'>('actions');
+    const [activeTab, setActiveTab] = React.useState<'overview' | 'portfolio' | 'strategy' | 'market'>('overview');
     const [isFocusMode, setIsFocusMode] = React.useState(false);
     const [isWideScreen, setIsWideScreen] = React.useState(false);
 
@@ -577,16 +577,74 @@ export default function DashboardContent() {
             <div className="fade-in hud-mesh scan-line" style={{
                 position: 'relative',
                 zIndex: 2,
-                padding: 'var(--space-6) var(--space-8)',
-                minHeight: '100vh',
-                maxWidth: '1800px', /* Increased from 1600 */
+                padding: 'var(--space-4) var(--space-8)',
+                maxWidth: '1800px',
                 margin: '0 auto'
             }}>
 
 
 
-                {isDemoMode && (
+                {/* Minimalist Executive Header row with Tabs - Perfectly Balanced */}
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 'var(--space-6)',
+                    position: 'relative',
+                    zIndex: 10,
+                    gap: '1rem'
+                }}>
+                    {/* Left: Branding */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                        <div className="shareai-logo-minimal" style={{
+                            background: 'var(--primary)',
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 0 20px rgba(99, 102, 241, 0.3)'
+                        }}>
+                            <Sparkles size={18} color="white" />
+                        </div>
+                        <div className="hidden lg:block">
+                            <h1 className="precision-data" style={{ fontSize: '1rem', fontWeight: 900, letterSpacing: '0.1em', margin: 0, color: 'var(--text-primary)' }}>SHARE<span style={{ color: 'var(--primary)' }}>AI</span></h1>
+                            <div className="precision-data" style={{ fontSize: '0.5rem', color: 'var(--text-muted)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em' }}>v2.1</div>
+                        </div>
+                    </div>
 
+                    {/* Middle: Integrated Tabs (Centered) */}
+                    <div className="dashboard-tabs" style={{ margin: 0, padding: '0.2rem', flexShrink: 0 }}>
+                        <button onClick={() => setActiveTab('overview')} className={`tab-trigger ${activeTab === 'overview' ? 'active' : ''}`} style={{ padding: '0.4rem 0.8rem' }}>
+                            <LayoutTemplate size={12} /> OVERVIEW
+                        </button>
+                        <button onClick={() => setActiveTab('portfolio')} className={`tab-trigger ${activeTab === 'portfolio' ? 'active' : ''}`} style={{ padding: '0.4rem 0.8rem' }}>
+                            <Layers size={12} /> PORTFOLIO
+                        </button>
+                        <button onClick={() => setActiveTab('strategy')} className={`tab-trigger ${activeTab === 'strategy' ? 'active' : ''}`} style={{ padding: '0.4rem 0.8rem' }}>
+                            <BrainCircuit size={12} /> STRATEGY
+                        </button>
+                        <button onClick={() => setActiveTab('market')} className={`tab-trigger ${activeTab === 'market' ? 'active' : ''}`} style={{ padding: '0.4rem 0.8rem' }}>
+                            <Activity size={12} /> MARKET
+                        </button>
+                    </div>
+
+                    {/* Right: Actions */}
+                    <div style={{ display: 'flex', gap: '0.5rem', flex: 1, justifyContent: 'flex-end' }}>
+                        <button onClick={() => setIsAddAssetOpen(true)} className="btn-hud" style={{ fontSize: '0.6rem', padding: '0.4rem 0.8rem' }}>
+                            <Plus size={12} /> ADD
+                        </button>
+                        <button onClick={() => syncWithAI(true)} className="btn-hud" style={{ fontSize: '0.6rem', padding: '0.4rem 0.8rem' }} disabled={isSyncing}>
+                            <RefreshCw size={12} className={isSyncing ? 'animate-spin' : ''} /> SYNC
+                        </button>
+                        <button onClick={() => setIsSaveModalOpen(true)} className="btn-hud btn-hud-primary" style={{ fontSize: '0.6rem', padding: '0.4rem 0.8rem' }}>
+                            <Save size={12} /> SAVE
+                        </button>
+                    </div>
+                </div>
+
+                {isDemoMode && (
                     <div style={{
                         background: 'var(--primary-glow)',
                         border: '1px solid var(--border)',
@@ -604,262 +662,111 @@ export default function DashboardContent() {
                     }}>
                         <BrainCircuit size={16} />
                         <span>PREVIEW MODE: Viewing AI-simulated results. Add your own assets for personalized insights.</span>
-                        <button
-                            onClick={() => setIsAddAssetOpen(true)}
-                            className="btn-hud btn-hud-warning"
-                            style={{ marginLeft: 'auto', padding: '0.25rem 0.75rem', fontSize: '0.65rem' }}
-                        >
-                            Initialize System
-                        </button>
                     </div>
                 )}
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)', position: 'relative' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                        <Banknote size={48} style={{
-                            color: 'var(--primary)',
-                            filter: 'drop-shadow(0 0 12px var(--primary)) drop-shadow(0 0 30px rgba(79, 70, 229, 0.5))',
-                            animation: 'pulse-glow 2s infinite ease-in-out'
-                        }} />
-                        <div>
-                            <span className="precision-data" style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2rem', display: 'block' }}>QUANT ANALYTICS</span>
-                            <h2 style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>SHARE AI</h2>
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center' }}>
-                        <button
-                            onClick={handleSaveAs}
-                            className="btn-hud neon-strike"
-                        >
-                            <FileUp size={14} className="rotate-90" /> SYNC PORTFOLIO
-                        </button>
-
-                        <div style={{ position: 'relative' }}>
-                            <button
-                                onClick={() => setIsDailyCheckInOpen(!isDailyCheckInOpen)}
-                                className="btn-hud btn-hud-warning"
-                            >
-                                <Sun size={14} /> DAILY SUMMARY
-                            </button>
-
-                            {isDailyCheckInOpen && (
-                                <DailyCheckInModal
-                                    isOpen={isDailyCheckInOpen}
-                                    onClose={() => setIsDailyCheckInOpen(false)}
-                                    assets={displayAssets}
-                                    netWorth={stats.netWorth}
-                                    marketNarrative={marketNarrative}
-                                    topAction={actions[0]}
-                                    isLoading={isSyncing}
-                                    onRefresh={handleGenerateAI}
-                                    dailyPerformance={dailyPerformance}
-                                    quantifiedConsequences={comparisonInsight && typeof comparisonInsight === 'object' ? (comparisonInsight as DeepInsight).quantifiedConsequences : []}
-                                    isDemoMode={isDemoMode}
-                                />
-                            )}
-                        </div>
-
-                        <button
-                            onClick={() => setIsFocusMode(!isFocusMode)}
-                            className={`btn-hud ${isFocusMode ? 'btn-hud-primary' : ''}`}
-                        >
-                            {isFocusMode ? <EyeOff size={14} /> : <Eye size={14} />}
-                            {isFocusMode ? 'EXIT FOCUS' : 'FOCUS VIEW'}
-                        </button>
-
-                        <button
-                            onClick={() => setIsAddAssetOpen(true)}
-                            className="btn-hud btn-hud-primary neon-strike"
-                        >
-                            <Plus size={14} /> ADD ASSET
-                        </button>
-
-                        <button
-                            onClick={handleLogout}
-                            className="btn-hud"
-                            style={{ padding: '0.6rem', width: '40px', height: '40px', justifyContent: 'center' }}
-                            title="LOGOUT"
-                        >
-                            <LogOut size={14} />
-                        </button>
-
-                    </div>
-                </div>
-
-
-                {/* Main Dashboard Grid with Staggered Entry */}
-                <div className="stagger-entry" style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 'var(--space-8)',
-                    marginTop: 'var(--space-4)',
-                    padding: 0
-                }}>
-
-                    {/* ══════════════════════════════════════════════════════════════════════════
-                        ZONE 01: THE WHAT (Current State & Performance)
-                        ══════════════════════════════════════════════════════════════════════════ */}
-
-                    {/* STEP 1: Status HUD (Result & Global Trajectory) */}
-                    <div style={{ animationDelay: '0.1s' }}>
-                        <WealthOverview
-                            assets={displayAssets}
-                            netWorth={stats.netWorth}
-                            distribution={stats.distribution}
-                            taxEfficiency={Number(stats.taxStats.efficiency.toFixed(0))}
-                            riskScore={Math.round(stats.beta * 100)}
-                            narrative={marketNarrative}
-                            isDemo={isDemoMode}
-                            aiAssets={aiAssets}
-                            onStockClick={(symbol: string) => setSelectedStock(symbol)}
-                            dailyChangePct={dailyChangePct}
-                            insight={comparisonInsight as DeepInsight}
-                            actions={actions}
-                            isLoadingAI={isGeneratingAI}
-                        />
-                    </div>
-
-                    {/* STEP 2: Portfolio Matrix (Current State & Holdings) */}
-                    <div style={{ animationDelay: '0.2s' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                            <div style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--primary-glow)', border: '1px solid var(--border)' }}>
-                                <LayoutTemplate size={18} style={{ color: 'var(--primary)' }} />
-                            </div>
-                            <div>
-                                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Portfolio Matrix</h3>
-                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>LIVE ASSET REPOSITORY • THE WHAT</div>
-                            </div>
-                        </div>
-                        <AllocationCluster
-                            assets={displayAssets}
-                            netWorth={stats.netWorth}
-                            aiAssets={aiAssets}
-                            onStockClick={setSelectedStock}
-                            onDeleteAsset={handleDeleteAsset}
-                            searchTerm={searchTerm}
-                            onSearchChange={setSearchTerm}
-                            expandedCategory={expandedCategory}
-                            setExpandedCategory={setExpandedCategory}
-                        />
-                    </div>
-
-                    {/* ══════════════════════════════════════════════════════════════════════════
-                        ZONE 02: THE WHY (Market Diagnostics & Internal Divergence)
-                        ══════════════════════════════════════════════════════════════════════════ */}
-
-                    {/* STEP 3: Cluster Insights (Deep Analysis & Divergence) */}
-                    <div style={{ animationDelay: '0.3s' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                            <div style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--primary-glow)', border: '1px solid var(--border)' }}>
-                                <Layers size={18} style={{ color: 'var(--warning)' }} />
-                            </div>
-                            <div>
-                                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Cluster Intelligence</h3>
-                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>AI SECTOR & METRIC ANALYSIS • THE WHY</div>
-                            </div>
-                        </div>
-                        <ClusterIntelligence />
-                    </div>
-
-                    {/* STEP 4: Intelligence Pulse (Market & Watchlist Context) */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: isWideScreen ? '1fr 1fr' : '1fr',
-                        gap: 'var(--space-8)',
-                        animationDelay: '0.4s'
-                    }}>
-                        <div className="card glass-hull" style={{
-                            padding: 'var(--space-4)',
-                            borderRadius: '16px',
-                            border: '1px solid var(--border)',
-                            background: 'var(--grad-surface)'
-                        }}>
-                            <h3 style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Activity size={14} className="text-primary" /> Intelligence Pulse
-                            </h3>
-                            <WatchlistActivity onStockClick={setSelectedStock} />
-                        </div>
-                        <MacroPulse />
-                    </div>
-
-                    {/* ══════════════════════════════════════════════════════════════════════════
-                        ZONE 03: THE HOW (Tactical Execution & Risk Validation)
-                        ══════════════════════════════════════════════════════════════════════════ */}
-
-                    {/* STEP 5: Proactive Action Center (Tactical Execution) */}
-                    <div style={{ animationDelay: '0.5s' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                            <div style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--primary-glow)', border: '1px solid var(--border)' }}>
-                                <Sparkles size={18} style={{ color: 'var(--primary)' }} />
-                            </div>
-                            <div>
-                                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Proactive Action Center</h3>
-                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>TACTICAL ADVISORY • REQUIRES MANUAL AUTHORIZATION</div>
-                            </div>
-                        </div>
-                        <ActionCenter
-                            actions={actions}
-                            assets={displayAssets}
-                            onExecute={setAssets}
-                            isLoading={isSyncing || isActionsLoading}
-                            onGenerate={handleGenerateActions}
-                        />
-                    </div>
-
-                    {/* STEP 6: Strategy Overview (AI Optimization & Alpha Lab) */}
-                    <div style={{ animationDelay: '0.6s' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                            <div style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--primary-glow)', border: '1px solid var(--border)' }}>
-                                <BrainCircuit size={18} style={{ color: 'var(--primary)' }} />
-                            </div>
-                            <div>
-                                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Strategy Overview</h3>
-                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>AI-DRIVEN ALPHA CAPTURE • THE HOW</div>
-                            </div>
-                        </div>
-                        <div className="card glass-hull scan-effect" style={{ padding: 'var(--space-6)', borderRadius: '24px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }}>
-                            <PortfolioComparison
-                                userAssets={displayAssets}
-                                aiAssets={aiAssets}
-                                onGenerateAI={handleGenerateAI}
-                                isGenerating={isGeneratingAI}
-                                insight={comparisonInsight}
-                                isGeneratingInsight={isGeneratingInsight}
-                                isDemoMode={isDemoMode}
-                            />
-                        </div>
-                    </div>
-
-                    {/* STEP 7: Risk Stress Lab (Pressure Testing) */}
-                    <div style={{ animationDelay: '0.7s' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                            <div style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--primary-glow)', border: '1px solid var(--border)' }}>
-                                <ShieldAlert size={18} style={{ color: 'var(--danger)' }} />
-                            </div>
-                            <div>
-                                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Risk Stress Lab</h3>
-                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>VOLATILITY & BLACK SWAN SIMULATION • THE HOW</div>
-                            </div>
-                        </div>
-                        <StressTester assets={displayAssets} />
-                    </div>
-
-                    {/* Stock Analysis Section (Inline) */}
-                    {selectedStock && (
-                        <div id="analysis-section" style={{ scrollMarginTop: '100px', animationDelay: '0.4s' }}>
-                            <StockAnalysisPanel
-                                symbol={selectedStock}
-                                currentPrice={getSelectedStockPrice()}
-                                onClose={() => setSelectedStock(null)}
-                                onBuy={handleBuyStock}
-                                onAddToWatchlist={() => addToWatchlist({ symbol: selectedStock, name: selectedStock })}
-                            />
-                        </div>
-                    )}
-                </div>
             </div>
 
+
+
+            {/* ZONE 01: OVERVIEW */}
+            {activeTab === 'overview' && (
+                <div className="tab-content-area" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8)' }}>
+                    <WealthOverview
+                        assets={displayAssets}
+                        netWorth={stats.netWorth}
+                        distribution={stats.distribution}
+                        taxEfficiency={Number(stats.taxStats.efficiency.toFixed(0))}
+                        riskScore={Math.round(stats.beta * 100)}
+                        narrative={marketNarrative}
+                        isDemo={isDemoMode}
+                        aiAssets={aiAssets}
+                        onStockClick={(symbol: string) => setSelectedStock(symbol)}
+                        dailyChangePct={dailyChangePct}
+                        insight={comparisonInsight as DeepInsight}
+                        actions={actions}
+                        isLoadingAI={isGeneratingAI}
+                    />
+                </div>
+            )}
+
+            {/* ZONE 02: PORTFOLIO */}
+            {activeTab === 'portfolio' && (
+                <div className="tab-content-area" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8)' }}>
+                    <AllocationCluster
+                        assets={displayAssets}
+                        netWorth={stats.netWorth}
+                        aiAssets={aiAssets}
+                        onStockClick={setSelectedStock}
+                        onDeleteAsset={handleDeleteAsset}
+                        searchTerm={searchTerm}
+                        onSearchChange={setSearchTerm}
+                        expandedCategory={expandedCategory}
+                        setExpandedCategory={setExpandedCategory}
+                    />
+                    <ClusterIntelligence />
+                </div>
+            )}
+
+            {/* ZONE 03: STRATEGY */}
+            {activeTab === 'strategy' && (
+                <div className="tab-content-area" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8)' }}>
+                    <ActionCenter
+                        actions={actions}
+                        assets={displayAssets}
+                        onExecute={setAssets}
+                        isLoading={isSyncing || isActionsLoading}
+                        onGenerate={handleGenerateActions}
+                    />
+                    <div className="card glass-hull scan-effect" style={{ padding: 'var(--space-6)', borderRadius: '24px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }}>
+                        <PortfolioComparison
+                            userAssets={displayAssets}
+                            aiAssets={aiAssets}
+                            onGenerateAI={handleGenerateAI}
+                            isGenerating={isGeneratingAI}
+                            insight={comparisonInsight}
+                            isGeneratingInsight={isGeneratingInsight}
+                            isDemoMode={isDemoMode}
+                        />
+                    </div>
+                    <StressTester assets={displayAssets} />
+                </div>
+            )}
+
+            {/* ZONE 04: MARKET */}
+            {activeTab === 'market' && (
+                <div className="tab-content-area" style={{
+                    display: 'grid',
+                    gridTemplateColumns: isWideScreen ? '1fr 1fr' : '1fr',
+                    gap: 'var(--space-8)'
+                }}>
+                    <div className="card glass-hull" style={{
+                        padding: 'var(--space-4)',
+                        borderRadius: '16px',
+                        border: '1px solid var(--border)',
+                        background: 'var(--grad-surface)'
+                    }}>
+                        <h3 style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Activity size={14} className="text-primary" /> Intelligence Pulse
+                        </h3>
+                        <WatchlistActivity onStockClick={setSelectedStock} />
+                    </div>
+                    <MacroPulse />
+                </div>
+            )}
+
+            {/* Stock Analysis Section (Inline) */}
+            {selectedStock && (
+                <div id="analysis-section" style={{ scrollMarginTop: '100px', animationDelay: '0.4s' }}>
+                    <StockAnalysisPanel
+                        symbol={selectedStock}
+                        currentPrice={getSelectedStockPrice()}
+                        onClose={() => setSelectedStock(null)}
+                        onBuy={handleBuyStock}
+                        onAddToWatchlist={() => addToWatchlist({ symbol: selectedStock, name: selectedStock })}
+                    />
+                </div>
+            )}
             {/* Hidden Utils */}
             <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv, .xlsx, .xls" style={{ display: 'none' }} />
 

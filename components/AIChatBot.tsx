@@ -138,7 +138,7 @@ export default function AIChatBot({ assets, netWorth, beta, marketContext }: AIC
                                 <BrainCircuit size={22} color="white" />
                             </div>
                             <div>
-                                <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>ShareAI Assistant</h3>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>Neural Advisor</h3>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.1rem' }}>
                                     <div style={{ width: 6, height: 6, background: 'var(--success)', borderRadius: '50%' }} />
                                     <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--success)', textTransform: 'uppercase' }}>Online</span>

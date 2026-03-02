@@ -28,6 +28,7 @@ export default function Header() {
     }, []);
 
     const vix = tickerData.find(t => t.name.includes('VIX'));
+    const omx = tickerData.find(t => t.name.includes('OMX'));
     const spy = tickerData.find(t => t.name.includes('SPY'));
     const btc = tickerData.find(t => t.name.includes('BTC'));
 
@@ -74,6 +75,14 @@ export default function Header() {
                             <span style={{ color: 'var(--text-primary)' }}>{spy?.value || '---'}</span>
                             <span style={{ color: spy?.change.startsWith('+') ? 'var(--success)' : 'var(--danger)', fontSize: '0.6rem' }}>
                                 {spy?.change || '0.00%'}
+                            </span>
+                        </div>
+                        <div style={{ width: '1px', height: '10px', background: 'var(--border)' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ color: 'var(--text-secondary)', fontWeight: 800 }}>OMX</span>
+                            <span style={{ color: 'var(--text-primary)' }}>{omx?.value || '---'}</span>
+                            <span style={{ color: omx?.change.startsWith('+') ? 'var(--success)' : 'var(--danger)', fontSize: '0.6rem' }}>
+                                {omx?.change || '0.00%'}
                             </span>
                         </div>
                         <div style={{ width: '1px', height: '10px', background: 'var(--border)' }} />

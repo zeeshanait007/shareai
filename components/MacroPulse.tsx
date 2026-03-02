@@ -13,34 +13,49 @@ interface Indicator {
     icon: any;
 }
 
+interface BreadthData {
+    advancers: number;
+    decliners: number;
+    unchanged: number;
+    total: number;
+}
+
 export default function MacroPulse() {
     const [indicators, setIndicators] = useState<Indicator[]>([]);
+    const [breadth, setBreadth] = useState<BreadthData | null>(null);
     const [aiInsight, setAiInsight] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
     const [mounted, setMounted] = useState(false);
 
     const iconMap: Record<string, any> = {
         'Market Fear (VIX)': Activity,
-        'US 10Y Rate': TrendingUp,
+        'OMXS30 (Stockholm)': BarChart3,
         'S&P 500 (SPY)': BarChart3,
-        'US Dollar (DXY)': Globe,
         'Bitcoin (BTC)': Coins
     };
 
     const fetchMarketContext = async () => {
         setIsLoading(true);
         try {
-            const response = await fetch('/api/ai/market-context');
-            if (!response.ok) throw new Error('Failed to fetch market context');
-            const data = await response.json();
+            const [contextRes, breadthRes] = await Promise.all([
+                fetch('/api/ai/market-context'),
+                fetch('/api/market/breadth')
+            ]);
 
-            const enrichedIndicators = data.indicators.map((ind: any) => ({
-                ...ind,
-                icon: iconMap[ind.name] || Zap
-            }));
+            if (contextRes.ok) {
+                const data = await contextRes.json();
+                const enrichedIndicators = data.indicators.map((ind: any) => ({
+                    ...ind,
+                    icon: iconMap[ind.name] || Zap
+                }));
+                setIndicators(enrichedIndicators);
+                setAiInsight(data.aiInsight);
+            }
 
-            setIndicators(enrichedIndicators);
-            setAiInsight(data.aiInsight);
+            if (breadthRes.ok) {
+                const bData = await breadthRes.json();
+                setBreadth(bData);
+            }
         } catch (error) {
             console.error('Error fetching market context:', error);
         } finally {
@@ -132,6 +147,26 @@ export default function MacroPulse() {
                     ))
                 )}
             </div>
+
+            {/* Market Breadth Meter */}
+            {breadth && (
+                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <span>OMXS30 Market Breadth</span>
+                        <span style={{ color: 'var(--primary)' }}>{Math.round((breadth.advancers / breadth.total) * 100)}% Bullish</span>
+                    </div>
+                    <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', background: 'var(--border)' }}>
+                        <div style={{ width: `${(breadth.advancers / breadth.total) * 100}%`, background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }} />
+                        <div style={{ width: `${(breadth.unchanged / breadth.total) * 100}%`, background: 'var(--text-muted)' }} />
+                        <div style={{ width: `${(breadth.decliners / breadth.total) * 100}%`, background: 'var(--danger)', boxShadow: '0 0 8px var(--danger)' }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.6rem', fontSize: '0.65rem', fontWeight: 700 }}>
+                        <span style={{ color: 'var(--success)' }}>{breadth.advancers} ADV</span>
+                        <span style={{ color: 'var(--text-muted)' }}>{breadth.unchanged} UNCH</span>
+                        <span style={{ color: 'var(--danger)' }}>{breadth.decliners} DECL</span>
+                    </div>
+                </div>
+            )}
 
             {/* AI Summary Link */}
             {(aiInsight || isLoading) && (

@@ -683,8 +683,78 @@ a {
   background: var(--primary);
   opacity: 0.6;
 }
+
 @keyframes pulse-glow {
-  0% { transform: scale(1); filter: drop-shadow(0 0 8px var(--primary)) drop-shadow(0 0 20px rgba(79, 70, 229, 0.4)); }
-  50% { transform: scale(1.05); filter: drop-shadow(0 0 12px var(--primary)) drop-shadow(0 0 35px rgba(79, 70, 229, 0.6)); }
-  100% { transform: scale(1); filter: drop-shadow(0 0 8px var(--primary)) drop-shadow(0 0 20px rgba(79, 70, 229, 0.4)); }
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 8px var(--primary)) drop-shadow(0 0 20px rgba(79, 70, 229, 0.4));
+  }
+
+  50% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 12px var(--primary)) drop-shadow(0 0 35px rgba(79, 70, 229, 0.6));
+  }
+
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 8px var(--primary)) drop-shadow(0 0 20px rgba(79, 70, 229, 0.4));
+  }
+}
+
+/* Dashboard Tabs Optimization for V2.1 Integrated Header */
+.dashboard-tabs {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.2rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  margin-bottom: 0;
+  /* Removed margin-bottom since it's integrated */
+  width: fit-content;
+}
+
+.tab-trigger {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.tab-trigger:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-trigger.active {
+  color: white;
+  background: var(--primary);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+}
+
+.tab-content-area {
+  animation: tabEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes tabEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
