@@ -202,6 +202,43 @@ a {
   animation: fadeIn var(--transition-normal) forwards;
 }
 
+/* Institutional Animation Utilities */
+.animate-pulse {
+  animation: pulse-opac 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-opac {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.animate-spin-slow {
+  animation: spinFull 3s linear infinite;
+}
+
+.animate-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(79, 70, 229, 0.2), inset 0 0 5px rgba(255, 255, 255, 0.02);
+  }
+
+  50% {
+    box-shadow: 0 0 15px rgba(79, 70, 229, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.05);
+  }
+}
+
 /* Utilities */
 .container {
   max-width: 1800px;

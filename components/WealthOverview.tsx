@@ -23,19 +23,28 @@ interface WealthOverviewProps {
     onStockClick?: (symbol: string) => void;
     dailyChangePct?: number;
     isLoadingAI?: boolean;
+    marketRegime?: string;
+    primaryDirective?: string;
+    isMarketLoading?: boolean;
 }
 
 export default function WealthOverview({
     assets,
     netWorth,
+    distribution,
     taxEfficiency,
     riskScore,
     insight,
     actions,
     narrative: externalNarrative,
     isDemo,
-    dailyChangePct = 2.41,
-    isLoadingAI
+    aiAssets,
+    onStockClick,
+    dailyChangePct,
+    isLoadingAI,
+    marketRegime,
+    primaryDirective,
+    isMarketLoading
 }: WealthOverviewProps) {
     const [mounted, setMounted] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -327,9 +336,13 @@ export default function WealthOverview({
                         <Activity size={18} />
                     </div>
                     <div>
-                        <div style={{ fontSize: '0.55rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15rem', marginBottom: '0.2rem' }}>AI Market Regime</div>
+                        <GlossaryTooltip term="AI MARKET REGIME">
+                            <div style={{ fontSize: '0.55rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15rem', marginBottom: '0.2rem', cursor: 'help' }}>AI Market Regime</div>
+                        </GlossaryTooltip>
                         <div className="precision-data" style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-primary)' }}>
-                            EXPANSION PHASE
+                            {(isMarketLoading || isLoadingAI) && !marketRegime ? (
+                                <div className="animate-glow" style={{ height: '0.9rem', width: '80px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px' }} />
+                            ) : marketRegime || 'EXPANSION PHASE'}
                         </div>
                     </div>
                 </div>
@@ -340,7 +353,9 @@ export default function WealthOverview({
                         <Target size={18} />
                     </div>
                     <div>
-                        <div style={{ fontSize: '0.55rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15rem', marginBottom: '0.2rem' }}>Alpha Opportunity</div>
+                        <GlossaryTooltip term="ALPHA OPPORTUNITY">
+                            <div style={{ fontSize: '0.55rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15rem', marginBottom: '0.2rem', cursor: 'help' }}>Alpha Opportunity</div>
+                        </GlossaryTooltip>
                         <div className="precision-data" style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--success)' }}>
                             {topAlphaAsset?.symbol || 'NVDA'} +3.2% GAP
                         </div>
@@ -353,9 +368,13 @@ export default function WealthOverview({
                         <Zap size={18} />
                     </div>
                     <div>
-                        <div style={{ fontSize: '0.55rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15rem', marginBottom: '0.2rem' }}>Primary Directive</div>
+                        <GlossaryTooltip term="PRIMARY DIRECTIVE">
+                            <div style={{ fontSize: '0.55rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15rem', marginBottom: '0.2rem', cursor: 'help' }}>Primary Directive</div>
+                        </GlossaryTooltip>
                         <div className="precision-data" style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--warning)' }}>
-                            REBALANCE TECH NODES
+                            {(isMarketLoading || isLoadingAI) && !primaryDirective ? (
+                                <div className="animate-glow" style={{ height: '0.9rem', width: '120px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px' }} />
+                            ) : primaryDirective || 'REBALANCE TECH NODES'}
                         </div>
                     </div>
                 </div>
@@ -372,8 +391,11 @@ export default function WealthOverview({
                 zIndex: 1
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)', marginBottom: '1.25rem' }}>
-                    <Sparkles size={18} />
+                    <Sparkles size={18} className={(isMarketLoading || isLoadingAI) ? "animate-spin-slow" : ""} />
                     <span style={{ fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.25rem' }}>AI Macro Perspective</span>
+                    {(isMarketLoading || isLoadingAI) && (
+                        <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--primary)', letterSpacing: '0.05rem', marginLeft: 'auto' }}>[NEURAL SYNTHESIS]</span>
+                    )}
                 </div>
 
                 <div style={{
@@ -381,14 +403,18 @@ export default function WealthOverview({
                     lineHeight: '1.7',
                     color: 'var(--text-secondary)',
                     fontWeight: 500,
-                    maxWidth: '900px'
+                    maxWidth: '900px',
+                    minHeight: '48px'
                 }}>
-                    {narrative || (
-                        <span>
-                            Your portfolio is currently positioned in a <span style={{ color: 'var(--success)', fontWeight: 800 }}>High-Conviction Expansion</span> phase.
-                            AI nodes indicate a strong structural tailwind in the Technology and Semiconductor sectors.
-                            The current <span style={{ color: 'var(--primary)', fontWeight: 800 }}>8.5 Conviction Score</span> suggests maintaining current alpha-heavy positions while monitoring for potential volatility in global breadth.
-                        </span>
+                    {(isMarketLoading || isLoadingAI) && !narrative ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            <div className="animate-glow" style={{ height: '14px', width: '90%', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }} />
+                            <div className="animate-glow" style={{ height: '14px', width: '70%', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }} />
+                        </div>
+                    ) : (
+                        <span>{narrative || (
+                            <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Narrative intelligence loading...</span>
+                        )}</span>
                     )}
                 </div>
 

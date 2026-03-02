@@ -58,6 +58,9 @@ export default function DashboardContent() {
     // AI Insight State - now managed by context
     // const [comparisonInsight, setComparisonInsight] = React.useState<string>(""); // Removed
     const [marketNarrative, setMarketNarrative] = useState<string>('');
+    const [marketRegime, setMarketRegime] = useState<string>('');
+    const [marketDirective, setMarketDirective] = useState<string>('');
+    const [isMarketContextLoading, setIsMarketContextLoading] = useState(false);
     const [isGeneratingInsight, setIsGeneratingInsight] = React.useState(false);
     const [dailyChangePct, setDailyChangePct] = React.useState<number>(2.41); // Default SIGMA
 
@@ -142,6 +145,36 @@ export default function DashboardContent() {
             localStorage.setItem('ai_portfolio_assets', JSON.stringify(aiAssets));
         }
     }, [aiAssets, mounted, currentDashboardId]);
+
+    // Fetch Market Context on mount to populate AI Macro Perspective
+    React.useEffect(() => {
+        if (!mounted) return;
+
+        const fetchInitialMarketContext = async () => {
+            setIsMarketContextLoading(true);
+            try {
+                const response = await fetch('/api/ai/market-context');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.aiInsight) {
+                        setMarketNarrative(data.aiInsight);
+                    }
+                    if (data.regime) {
+                        setMarketRegime(data.regime);
+                    }
+                    if (data.directive) {
+                        setMarketDirective(data.directive);
+                    }
+                }
+            } catch (err) {
+                console.error("Initial market context fetch failed:", err);
+            } finally {
+                setIsMarketContextLoading(false);
+            }
+        };
+
+        fetchInitialMarketContext();
+    }, [mounted]);
 
     React.useEffect(() => {
         if (mounted && !currentDashboardId && comparisonInsight) {
@@ -686,6 +719,9 @@ export default function DashboardContent() {
                         insight={comparisonInsight as DeepInsight}
                         actions={actions}
                         isLoadingAI={isGeneratingAI}
+                        marketRegime={marketRegime}
+                        primaryDirective={marketDirective}
+                        isMarketLoading={isMarketContextLoading}
                     />
                 </div>
             )}

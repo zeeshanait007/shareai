@@ -52,8 +52,18 @@ const GLOSSARY: Record<string, GlossaryContent> = {
         level: 'Advanced'
     },
     'ALPHA OPPORTUNITY': {
-        title: 'Alpha (Edge)',
-        description: 'A pocket of the market where the AI expects return above the benchmark. This is your "tactical edge."',
+        title: 'Alpha Opportunity',
+        description: 'The highest statistical divergence between an asset\'s price and its AI-modeled intrinsic value.',
+        level: 'Advanced'
+    },
+    'AI MARKET REGIME': {
+        title: 'AI Market Regime',
+        description: 'The current macro-economic phase determined by AI through multi-factor sentiment and volatility analysis.',
+        level: 'Advanced'
+    },
+    'PRIMARY DIRECTIVE': {
+        title: 'Primary Directive',
+        description: 'The singular most impactful tactical action recommended by the AI to optimize your risk-adjusted performance.',
         level: 'Advanced'
     },
     'ALPHA VARIANCE': {

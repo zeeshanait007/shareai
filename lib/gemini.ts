@@ -889,7 +889,7 @@ export async function getPortfolioComparisonInsight(
 export async function getGeminiMarketContext(
     marketData: { name: string; value: string; change: string }[],
     news: string
-): Promise<{ indicators: any[]; aiInsight: string }> {
+): Promise<{ indicators: any[]; aiInsight: string; regime?: string; directive?: string }> {
     try {
         const prompt = `
             YOU ARE A TOP-TIER MACRO STRATEGIST.
@@ -912,7 +912,9 @@ export async function getGeminiMarketContext(
                     { "name": "Market Fear (VIX)", "status": "Nominal", "color": "var(--success)" },
                     ... (matching incoming names)
                 ],
-                "aiInsight": "Your summarized insight here."
+                "aiInsight": "Your summarized insight here.",
+                "regime": "EXPANSION PHASE" (short, uppercase),
+                "directive": "REBALANCE TECH NODES" (short, uppercase)
             }
         `;
 
@@ -922,7 +924,9 @@ export async function getGeminiMarketContext(
         console.error("Gemini Market Context Error:", error);
         return {
             indicators: marketData.map(d => ({ name: d.name, status: "Unknown", color: "var(--text-muted)" })),
-            aiInsight: "Market context temporarily unavailable. Proceed with caution."
+            aiInsight: "Market context temporarily unavailable. Proceed with caution.",
+            regime: "NEUTRAL PHASE",
+            directive: "MONITOR NODES"
         };
     }
 }

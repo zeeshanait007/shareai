@@ -37,7 +37,9 @@ export async function GET() {
 
         return NextResponse.json({
             indicators: finalIndicators,
-            aiInsight: result.aiInsight
+            aiInsight: result.aiInsight,
+            regime: result.regime,
+            directive: result.directive
         });
     } catch (error) {
         console.error('Market Context Route Error:', error);
