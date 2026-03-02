@@ -172,7 +172,7 @@ async function callGeminiWithRetry(prompt: string, maxRetries = 5, options: { re
 // Global Cache & Deduplication
 const aiCache = new Map<string, { data: any, timestamp: number }>();
 const pendingRequests = new Map<string, Promise<any>>();
-const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour (Increased for stability)
 
 function getAssetHash(assets: any[]): string {
     return assets.map(a => `${a.symbol}:${a.quantity}`).sort().join('|');

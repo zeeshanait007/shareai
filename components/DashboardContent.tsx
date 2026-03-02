@@ -61,6 +61,7 @@ export default function DashboardContent() {
     const [marketRegime, setMarketRegime] = useState<string>('');
     const [marketDirective, setMarketDirective] = useState<string>('');
     const [isMarketContextLoading, setIsMarketContextLoading] = useState(false);
+    const hasFetchedMarketContext = React.useRef(false);
     const [isGeneratingInsight, setIsGeneratingInsight] = React.useState(false);
     const [dailyChangePct, setDailyChangePct] = React.useState<number>(2.41); // Default SIGMA
 
@@ -148,7 +149,8 @@ export default function DashboardContent() {
 
     // Fetch Market Context on mount to populate AI Macro Perspective
     React.useEffect(() => {
-        if (!mounted) return;
+        if (!mounted || hasFetchedMarketContext.current) return;
+        hasFetchedMarketContext.current = true;
 
         const fetchInitialMarketContext = async () => {
             setIsMarketContextLoading(true);
