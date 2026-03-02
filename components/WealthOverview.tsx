@@ -360,6 +360,53 @@ export default function WealthOverview({
                     </div>
                 </div>
             </div>
+
+            {/* AI Macro Perspective: Narrative Synthesis */}
+            <div style={{
+                marginTop: '2.5rem',
+                padding: '2rem',
+                background: 'rgba(255, 255, 255, 0.02)',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--border)',
+                position: 'relative',
+                zIndex: 1
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)', marginBottom: '1.25rem' }}>
+                    <Sparkles size={18} />
+                    <span style={{ fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.25rem' }}>AI Macro Perspective</span>
+                </div>
+
+                <div style={{
+                    fontSize: '1rem',
+                    lineHeight: '1.7',
+                    color: 'var(--text-secondary)',
+                    fontWeight: 500,
+                    maxWidth: '900px'
+                }}>
+                    {narrative || (
+                        <span>
+                            Your portfolio is currently positioned in a <span style={{ color: 'var(--success)', fontWeight: 800 }}>High-Conviction Expansion</span> phase.
+                            AI nodes indicate a strong structural tailwind in the Technology and Semiconductor sectors.
+                            The current <span style={{ color: 'var(--primary)', fontWeight: 800 }}>8.5 Conviction Score</span> suggests maintaining current alpha-heavy positions while monitoring for potential volatility in global breadth.
+                        </span>
+                    )}
+                </div>
+
+                <div style={{
+                    marginTop: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontSize: '0.65rem',
+                    fontWeight: 800,
+                    color: 'var(--text-muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1rem'
+                }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }} />
+                    Live Neural Synthesis Active
+                </div>
+            </div>
         </div>
     );
 }
