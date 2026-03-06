@@ -52,7 +52,7 @@ export default function Home() {
         </div>
 
         {/* Demo Video Container */}
-        <div id="demo" style={{
+        <div id="demo" className="video-global-container" style={{
           maxWidth: '1000px',
           margin: '0 auto',
           borderRadius: '1.5rem',
@@ -64,8 +64,9 @@ export default function Home() {
           position: 'relative'
         }}>
           <iframe
-            src="https://www.loom.com/embed/7b4b78fe7e52490e83e7c273846cd7e3?hide_owner=true&hide_share=true&hide_title=true&hide_embed_params=true"
+            src="https://www.youtube.com/embed/7G-6HZva1Qc"
             frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen={true}
             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
           ></iframe>
