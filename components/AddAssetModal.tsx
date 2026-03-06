@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Search, Loader2, Plus, DollarSign, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { X, Search, Loader2, Plus } from 'lucide-react';
 import { Asset } from '@/lib/assets';
 
 interface AddAssetModalProps {
@@ -16,6 +16,7 @@ export default function AddAssetModal({ isOpen, onClose, onAdd }: AddAssetModalP
     const [results, setResults] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedStock, setSelectedStock] = useState<any>(null);
+    const [filter, setFilter] = useState<'all' | 'stock' | 'etf' | 'crypto'>('all');
 
     // Details State
     const [quantity, setQuantity] = useState<string>('');
@@ -33,6 +34,7 @@ export default function AddAssetModal({ isOpen, onClose, onAdd }: AddAssetModalP
             setSelectedStock(null);
             setQuantity('');
             setPrice('');
+            setFilter('all');
             setDate(new Date().toISOString().split('T')[0]);
         }
     }, [isOpen]);
@@ -44,6 +46,7 @@ export default function AddAssetModal({ isOpen, onClose, onAdd }: AddAssetModalP
                 setIsLoading(true);
                 try {
                     const res = await fetch(`/api/search?q=${query}`);
+                    if (!res.ok) throw new Error('Search failed');
                     const data = await res.json();
                     setResults(Array.isArray(data) ? data : []);
                 } catch (error) {
@@ -60,6 +63,17 @@ export default function AddAssetModal({ isOpen, onClose, onAdd }: AddAssetModalP
         return () => clearTimeout(delayDebounceFn);
     }, [query]);
 
+    const filteredResults = useMemo(() => {
+        return results.filter(r => {
+            if (filter === 'all') return true;
+            const type = r.quoteType?.toUpperCase();
+            if (filter === 'stock') return type === 'EQUITY';
+            if (filter === 'etf') return type === 'ETF';
+            if (filter === 'crypto') return type === 'CRYPTOCURRENCY';
+            return true;
+        });
+    }, [results, filter]);
+
     const handleSelectStock = (stock: any) => {
         setSelectedStock(stock);
         setPrice(stock.regularMarketPrice || '');
@@ -69,9 +83,16 @@ export default function AddAssetModal({ isOpen, onClose, onAdd }: AddAssetModalP
     const handleAdd = () => {
         if (!selectedStock || !quantity || !price) return;
 
+        const quoteType = selectedStock.quoteType?.toUpperCase();
+        let assetType: Asset['type'] = 'stock';
+
+        if (quoteType === 'CRYPTOCURRENCY') assetType = 'crypto';
+        else if (quoteType === 'ETF') assetType = 'etf';
+        else assetType = 'stock';
+
         const newAsset: Asset = {
             id: `manual-${Date.now()}`,
-            type: selectedStock.quoteType?.toLowerCase() === 'cryptocurrency' ? 'crypto' : 'stock',
+            type: assetType,
             name: selectedStock.shortname || selectedStock.longname || selectedStock.symbol,
             symbol: selectedStock.symbol,
             quantity: parseFloat(quantity),
@@ -96,7 +117,7 @@ export default function AddAssetModal({ isOpen, onClose, onAdd }: AddAssetModalP
             bottom: 0,
             background: 'rgba(0,0,0,0.7)',
             backdropFilter: 'blur(5px)',
-            zIndex: 10000, // Higher than everything
+            zIndex: 10000,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -134,7 +155,6 @@ export default function AddAssetModal({ isOpen, onClose, onAdd }: AddAssetModalP
 
                 {/* Content */}
                 <div style={{ padding: 'var(--space-6)', overflowY: 'auto' }}>
-
                     {step === 'search' ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <div style={{ position: 'relative' }}>
@@ -163,36 +183,61 @@ export default function AddAssetModal({ isOpen, onClose, onAdd }: AddAssetModalP
                                 )}
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
-                                {results.length > 0 ? results.map((result) => (
+                            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                {(['all', 'stock', 'etf', 'crypto'] as const).map((f) => (
                                     <button
-                                        key={result.symbol}
-                                        onClick={() => handleSelectStock(result)}
+                                        key={f}
+                                        onClick={() => setFilter(f)}
                                         style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            padding: '1rem',
-                                            background: 'rgba(255, 255, 255, 0.02)',
+                                            padding: '0.4rem 0.8rem',
+                                            borderRadius: 'var(--radius-full)',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 600,
+                                            textTransform: 'capitalize',
                                             border: '1px solid var(--border)',
-                                            borderRadius: 'var(--radius-md)',
+                                            background: filter === f ? 'var(--primary)' : 'rgba(255,255,255,0.02)',
+                                            color: filter === f ? 'white' : 'var(--text-secondary)',
                                             cursor: 'pointer',
-                                            textAlign: 'left',
-                                            transition: 'all 0.2s',
-                                            marginBottom: '0.25rem'
+                                            transition: 'all 0.2s'
                                         }}
                                     >
-                                        <div>
-                                            <div style={{ fontWeight: 'bold' }}>{result.symbol}</div>
-                                            <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{result.shortname || result.longname}</div>
-                                        </div>
-                                        <div style={{ fontSize: '0.75rem', padding: '2px 6px', background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '4px' }}>
-                                            {result.quoteType}
-                                        </div>
+                                        {f}
                                     </button>
-                                )) : query.length > 1 && !isLoading && (
+                                ))}
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
+                                {filteredResults.length > 0 ? (
+                                    filteredResults.map((result) => (
+                                        <button
+                                            key={result.symbol}
+                                            onClick={() => handleSelectStock(result)}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                padding: '1rem',
+                                                background: 'rgba(255, 255, 255, 0.02)',
+                                                border: '1px solid var(--border)',
+                                                borderRadius: 'var(--radius-md)',
+                                                cursor: 'pointer',
+                                                textAlign: 'left',
+                                                transition: 'all 0.2s',
+                                                marginBottom: '0.25rem'
+                                            }}
+                                        >
+                                            <div>
+                                                <div style={{ fontWeight: 'bold' }}>{result.symbol}</div>
+                                                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{result.shortname || result.longname}</div>
+                                            </div>
+                                            <div style={{ fontSize: '0.75rem', padding: '2px 6px', background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '4px', textTransform: 'capitalize' }}>
+                                                {result.quoteType?.toLowerCase() === 'equity' ? 'Stock' : result.quoteType}
+                                            </div>
+                                        </button>
+                                    ))
+                                ) : query.length > 1 && !isLoading && (
                                     <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                                        No results found
+                                        No {filter !== 'all' ? filter : ''} results found
                                     </div>
                                 )}
                             </div>

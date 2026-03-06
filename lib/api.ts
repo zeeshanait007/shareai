@@ -124,8 +124,10 @@ class MarketDataService {
      */
     async search(query: string) {
         try {
-            const result: any = await yahooFinance.search(query);
-            return result.quotes.filter((q: any) => q.isYahooFinance);
+            // Disable strict validation because Yahoo changes their API often
+            const result: any = await yahooFinance.search(query, {}, { validateResult: false });
+            // Return quotes, prioritizing those with symbol
+            return (result.quotes || []).filter((q: any) => q.symbol);
         } catch (error) {
             console.error(`Error searching ${query}:`, error);
             return [];

@@ -1,4 +1,4 @@
-export type AssetType = 'stock' | 'crypto' | 'private_equity' | 'real_estate' | 'esop';
+export type AssetType = 'stock' | 'etf' | 'crypto' | 'private_equity' | 'real_estate' | 'esop';
 
 export interface Asset {
     id: string;
@@ -141,6 +141,7 @@ export function calculateNetWorth(assets: Asset[]): number {
 export function getAssetDistribution(assets: Asset[]) {
     const distribution: Record<AssetType, number> = {
         stock: 0,
+        etf: 0,
         crypto: 0,
         private_equity: 0,
         real_estate: 0,

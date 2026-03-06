@@ -11,7 +11,7 @@ import WealthOverview from '@/components/WealthOverview';
 import ActionCenter from '@/components/ActionCenter';
 import AllocationCluster from '@/components/AllocationCluster';
 
-import WatchlistActivity from '@/components/WatchlistActivity';
+
 import StockAnalysisPanel from '@/components/StockAnalysisPanel';
 import { addToWatchlist } from '@/lib/watchlist';
 import AddAssetModal from '@/components/AddAssetModal';
@@ -23,7 +23,6 @@ import { useDashboard } from '@/providers/DashboardProvider';
 import SaveDashboardModal from '@/components/SaveDashboardModal';
 import DailyCheckInModal from '@/components/DailyCheckInModal';
 import ConfirmModal from '@/components/ConfirmModal';
-import MacroPulse from '@/components/MacroPulse';
 import StressTester from '@/components/StressTester';
 import AIChatBot from '@/components/AIChatBot';
 import ClusterIntelligence from '@/components/ClusterIntelligence';
@@ -75,7 +74,7 @@ export default function DashboardContent() {
     const [showActionCenter, setShowActionCenter] = React.useState(false);
     const [showStrategyOverview, setShowStrategyOverview] = React.useState(false);
     const [isDailyCheckInOpen, setIsDailyCheckInOpen] = React.useState(false);
-    const [activeTab, setActiveTab] = React.useState<'overview' | 'portfolio' | 'strategy' | 'market'>('overview');
+    const [activeTab, setActiveTab] = React.useState<'overview' | 'portfolio' | 'strategy'>('overview');
     const [isFocusMode, setIsFocusMode] = React.useState(false);
     const [isWideScreen, setIsWideScreen] = React.useState(false);
 
@@ -660,9 +659,6 @@ export default function DashboardContent() {
                         <button onClick={() => setActiveTab('strategy')} className={`tab-trigger ${activeTab === 'strategy' ? 'active' : ''}`} style={{ padding: '0.4rem 0.8rem' }}>
                             <BrainCircuit size={12} /> STRATEGY
                         </button>
-                        <button onClick={() => setActiveTab('market')} className={`tab-trigger ${activeTab === 'market' ? 'active' : ''}`} style={{ padding: '0.4rem 0.8rem' }}>
-                            <Activity size={12} /> MARKET
-                        </button>
                     </div>
 
                     {/* Right: Actions */}
@@ -771,27 +767,6 @@ export default function DashboardContent() {
                 </div>
             )}
 
-            {/* ZONE 04: MARKET */}
-            {activeTab === 'market' && (
-                <div className="tab-content-area" style={{
-                    display: 'grid',
-                    gridTemplateColumns: isWideScreen ? '1fr 1fr' : '1fr',
-                    gap: 'var(--space-8)'
-                }}>
-                    <div className="card glass-hull" style={{
-                        padding: 'var(--space-4)',
-                        borderRadius: '16px',
-                        border: '1px solid var(--border)',
-                        background: 'var(--grad-surface)'
-                    }}>
-                        <h3 style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Activity size={14} className="text-primary" /> Intelligence Pulse
-                        </h3>
-                        <WatchlistActivity onStockClick={setSelectedStock} />
-                    </div>
-                    <MacroPulse />
-                </div>
-            )}
 
             {/* Stock Analysis Section (Inline) */}
             {selectedStock && (
